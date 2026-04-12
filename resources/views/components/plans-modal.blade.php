@@ -61,9 +61,9 @@
                             @endif
                         </ul>
 
-                        <a href="{{ route('plans.show', $plan->slug) }}" class="w-full text-center py-4 rounded-2xl font-black transition-all duration-300 {{ $plan->is_popular ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-200' : 'bg-gray-900 text-white hover:bg-gray-800' }}">
-                            اشترك الآن
-                        </a>
+                        <a href="{{ route('payment.checkout', $plan->slug) }}" class="w-full text-center py-4 rounded-2xl font-black transition-all duration-300 {{ $plan->is_popular ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-200' : 'bg-gray-900 text-white hover:bg-gray-800' }}">
+    اشترك الآن
+</a>
                     </div>
                 @endforeach
             </div>

@@ -38,7 +38,7 @@ class AiResumeController extends Controller
             $response = Http::withToken(env('COHERE_API_KEY'))
                 ->timeout(120)
                 ->post('https://api.cohere.ai/v1/chat', [
-                    'model' => 'command-a-03-2025',
+                    'model' => 'command-a-03-2025', // تم تصحيح اسم الموديل هنا إلى الموديل المعتمد السريع (أو استخدم command-r-plus للأدق)
                     'preamble' => $this->getSystemPrompt($currentLang), 
                     'message' => "استخرج البيانات من السيرة التالية وقم بإعادتها بصيغة JSON فقط باللغة ({$currentLang}) وبدون أي نصوص توضيحية أخرى:\n\n" . $text,
                     'temperature' => 0.1,
@@ -89,8 +89,10 @@ class AiResumeController extends Controller
                 ]);
             }
 
-            return response()->json(['error' => 'حدث خطأ أثناء الاتصال بـ Cohere API.'], 500);
-
+            return response()->json([
+                'error' => 'حدث خطأ أثناء الاتصال بـ Cohere API.',
+                'details' => $response->json() 
+            ], $response->status());
         } catch (\Exception $e) {
             return response()->json(['error' => 'حدث خطأ غير متوقع: ' . $e->getMessage()], 500);
         }

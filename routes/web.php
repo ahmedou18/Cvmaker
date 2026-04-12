@@ -21,6 +21,7 @@ Route::get('/dashboard', function () {
 Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/templates/choose', [ResumeController::class, 'showTemplates'])->name('templates.choose');
     Route::post('/resumes/start', [ResumeController::class, 'startWithTemplate'])->name('resumes.start');
 Route::get('/cv/{uuid}/edit', [ResumeController::class, 'edit'])->name('resume.edit');
@@ -40,7 +41,7 @@ Route::post('/ai/review', [AiGenerationController::class, 'reviewResume'])->name
 Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume']);
 Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])->name('resume.download');
 Route::post('/api/cv-parse', [AiResumeController::class, 'parseFile'])->name('api.cv.parse');
-
+Route::post('/moosyl/webhook', [App\Http\Controllers\PaymentController::class, 'handleWebhook']);
 Route::get('/lang/{locale}', function ($locale) {
     if (in_array($locale, ['ar', 'en', 'fr'])) {
         session()->put('locale', $locale);
