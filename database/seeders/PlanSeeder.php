@@ -28,60 +28,41 @@ class PlanSeeder extends Seeder
 
         $plans = [
             [
-                'name' => 'الباقة الاقتصادية',
+                'name' => 'باقة الفرصة الواحدة',
                 'slug' => 'basic',
                 'price' => 50.00,
-                'duration_in_days' => 30,
                 'cv_limit' => 1,
-                'ai_credits' => 5,
-                'remove_watermark' => false,
+                'ai_credits' => 10,
+                'remove_watermark' => false, // العلامة المائية هنا تميزها عن باقة الـ 200
                 'has_cover_letter' => false,
-                'priority_support' => false,
                 'is_popular' => false,
                 'is_active' => true,
-                'description' => 'مثالية لإنشاء سيرة ذاتية سريعة بلمسة ذكاء اصطناعي.'
+                'description' => 'سيرة ذاتية واحدة مع علامة مائية للموقع.'
             ],
             [
-                'name' => 'الباقة المتوسطة',
-                'slug' => 'standard',
+                'name' => 'باقة التميز الفردي',
+                'slug' => 'premium',
                 'price' => 200.00,
-                'duration_in_days' => 30,
-                'cv_limit' => 3,
-                'ai_credits' => 20,
-                'remove_watermark' => true,
-                'has_cover_letter' => false,
-                'priority_support' => false,
+                'cv_limit' => 1, // سيرة واحدة أيضاً لكن بمميزات كاملة
+                'ai_credits' => 50,
+                'remove_watermark' => true, // بدون علامة مائية
+                'has_cover_letter' => true, // تشمل رسالة التغطية
                 'is_popular' => true,
                 'is_active' => true,
-                'description' => 'الخيار الأفضل للباحثين عن عمل بشكل جدي.'
+                'description' => 'سيرة ذاتية احترافية بدون علامة مائية + رسالة تغطية (Cover Letter).'
             ],
             [
-                'name' => 'الباقة الاحترافية',
-                'slug' => 'professional',
+                'name' => 'باقة الخبراء',
+                'slug' => 'vip',
                 'price' => 500.00,
-                'duration_in_days' => 90,
-                'cv_limit' => 10,
-                'ai_credits' => 100,
+                'cv_limit' => 5, // خمس سير فقط كما اقترحت
+                'ai_credits' => 200,
                 'remove_watermark' => true,
                 'has_cover_letter' => true,
                 'priority_support' => true,
                 'is_popular' => false,
                 'is_active' => true,
-                'description' => 'احترافية تامة مع رصيد ذكاء اصطناعي ضخم ورسائل تحفيز.'
-            ],
-            [
-                'name' => 'باقة المؤسسات (المقاهي)',
-                'slug' => 'agency',
-                'price' => 1500.00,
-                'duration_in_days' => 30,
-                'cv_limit' => 100,
-                'ai_credits' => 500,
-                'remove_watermark' => true,
-                'has_cover_letter' => true,
-                'priority_support' => true,
-                'is_popular' => false,
-                'is_active' => true,
-                'description' => 'خاصة بأصحاب مقاهي الإنترنت والخدمات الجامعية.'
+                'description' => '5 سير ذاتية كاملة المميزات. مثالية لمن يتقدم لعدة وظائف أو لعدة لغات.'
             ],
         ];
 
