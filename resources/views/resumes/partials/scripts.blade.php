@@ -224,7 +224,7 @@ async reviewEntireResumeAI() {
         };
         const res = await fetch("{{ route('ai.review') }}", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
             body: JSON.stringify(payload)
         });
         const data = await res.json();

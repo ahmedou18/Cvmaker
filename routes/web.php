@@ -18,15 +18,17 @@ Route::get('/dashboard', function () {
     return view('dashboard', compact('resumes'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show');
+Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
     Route::get('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/templates/choose', [ResumeController::class, 'showTemplates'])->name('templates.choose');
     Route::post('/resumes/start', [ResumeController::class, 'startWithTemplate'])->name('resumes.start');
-Route::get('/cv/{uuid}/edit', [ResumeController::class, 'edit'])->name('resume.edit');
-Route::put('/cv/{uuid}/update', [ResumeController::class, 'update'])->name('resume.update');
+    Route::get('/cv/{uuid}/edit', [ResumeController::class, 'edit'])->name('resume.edit');
+    Route::put('/cv/{uuid}/update', [ResumeController::class, 'update'])->name('resume.update');
     Route::post('/ai/generate', [AiGenerationController::class, 'generate'])->name('ai.generate');
+    Route::post('/ai/review', [AiGenerationController::class, 'reviewResume'])->name('ai.review');
+    Route::post('/api/cv-parse', [AiResumeController::class, 'parseFile'])->name('api.cv.parse');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -37,10 +39,8 @@ Route::put('/cv/{uuid}/update', [ResumeController::class, 'update'])->name('resu
     Route::get('/plans/{slug}', [PlanController::class, 'show'])->name('plans.show');
 });
 
-Route::post('/ai/review', [AiGenerationController::class, 'reviewResume'])->name('ai.review');
-Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume']);
-Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])->name('resume.download');
-Route::post('/api/cv-parse', [AiResumeController::class, 'parseFile'])->name('api.cv.parse');
+Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume'])->middleware('auth');
+Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])->name('resume.download')->middleware('auth');
 Route::post('/moosyl/webhook', [App\Http\Controllers\PaymentController::class, 'handleWebhook']);
 Route::get('/lang/{locale}', function ($locale) {
     if (in_array($locale, ['ar', 'en', 'fr'])) {

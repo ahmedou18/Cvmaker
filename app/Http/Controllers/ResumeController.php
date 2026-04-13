@@ -47,6 +47,7 @@ class ResumeController extends Controller
     public function downloadPdf($uuid)
     {
         $resume = Resume::where('uuid', $uuid)
+            ->where('user_id', auth()->id()) // Security: Ensure user owns this resume
             ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages'])
             ->firstOrFail();
 
@@ -75,6 +76,7 @@ class ResumeController extends Controller
     public function show($uuid)
     {
         $resume = Resume::where('uuid', $uuid)
+            ->where('user_id', auth()->id()) // Security: Ensure user owns this resume
             ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages', 'template'])
             ->firstOrFail();
 

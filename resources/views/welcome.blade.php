@@ -113,7 +113,7 @@
                         </ul>
 
                         @auth
-                            <a href="{{ url('/dashboard/upgrade?plan=' . $plan->id) }}" class="w-full text-center {{ $plan->name == 'المتوسطة' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' }} font-bold py-3 rounded-xl transition-colors">
+                            <a href="{{ route('payment.checkout', $plan->slug) }}" class="w-full text-center {{ $plan->name == 'المتوسطة' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' }} font-bold py-3 rounded-xl transition-colors">
                                 {{ __('messages.btn_upgrade') }}
                             </a>
                         @else
