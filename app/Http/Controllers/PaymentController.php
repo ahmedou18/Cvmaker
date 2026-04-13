@@ -110,9 +110,9 @@ class PaymentController extends Controller
     public function manualPayment(Request $request)
     {
         $request->validate([
-            'plan_id' => 'required|exists:plans,id',
-            'payment_method' => 'required',
-            'screenshot' => 'required|image|max:2048',
+        'plan_id' => 'required|exists:plans,id',
+      'payment_method' => 'required|in:bankily,masrivi,click,bimbank', // تحديد الخيارات بدقة
+    'screenshot' => 'required|image|max:2048',
         ], [
             'plan_id.required' => 'يرجى اختيار الباقة',
             'plan_id.exists' => 'الباقة المحددة غير صالحة',
