@@ -5,21 +5,41 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\Plan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    public function checkout($slug)
+    /**
+     * Handle checkout - redirects to payment method selection
+     */
+    public function checkout(Request $request, $slug)
     {
-        // 1. العثور على الباقة أو إظهار خطأ 404
+        $request->validate(['plan_id' => 'required|exists:plans,id']);
         $plan = Plan::where('slug', $slug)->firstOrFail();
-        
-        // 2. إنشاء مرجع فريد للعملية (سنستخدمه للتعرف على الدفع لاحقاً)
+
+        try {
+            // Show payment method selection view (Online via Moosyl or Manual)
+            return view('payments.select_method', compact('plan'));
+        } catch (\Exception $e) {
+            Log::error('Checkout error: ' . $e->getMessage());
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Process online payment via Moosyl API
+     */
+    public function processOnlinePayment(Request $request, $slug)
+    {
+        $request->validate(['plan_id' => 'required|exists:plans,id']);
+        $plan = Plan::where('slug', $slug)->firstOrFail();
+
+        // 1. Create unique transaction reference
         $reference = 'msl_' . Str::random(10);
 
-        // 3. حفظ الطلب في قاعدة البيانات بحالة "Pending" (قيد الانتظار)
-        // هذا يضمن أننا لن نفقد أثر العملية أبداً
+        // 2. Save payment request in database as "Pending"
         $payment = Payment::create([
             'user_id'               => auth()->id(),
             'plan_id'               => $plan->id,
@@ -29,39 +49,44 @@ class PaymentController extends Controller
             'payment_method'        => 'moosyl',
         ]);
 
-        // 4. طلب الدفع من Moosyl عبر API
+        // 3. Request payment from Moosyl via API
         try {
             $response = Http::withHeaders([
                 'Authorization' => env('MOOSYL_SECRET_KEY'),
                 'Content-Type'  => 'application/json',
             ])->post('https://api.moosyl.com/payment-request', [
                 'amount'        => $plan->price,
-                'transactionId' => $reference, // نرسل المرجع الذي حفظناه في قاعدتنا
+                'transactionId' => $reference,
             ]);
 
             if ($response->successful()) {
                 $moosylId = $response->json('transactionId');
                 $publicKey = env('MOOSYL_PUBLISHABLE_KEY');
 
-                // 5. التوجيه لصفحة الدفع في Moosyl
+                // 4. Redirect to Moosyl checkout page
                 return redirect("https://checkout.moosyl.com/{$moosylId}?pk={$publicKey}");
             }
-            
+
+            Log::error('Moosyl API error: ' . $response->body());
             return back()->with('error', 'فشل الاتصال بموسيل: ' . $response->body());
 
         } catch (\Exception $e) {
+            Log::error('Moosyl API exception: ' . $e->getMessage());
             return back()->with('error', 'حدث خطأ تقني: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Handle Moosyl webhook notifications
+     */
     public function handleWebhook(Request $request)
     {
-        // التأكد من أن الإشعار يخص نجاح الدفع
+        // Verify the notification is for successful payment
         if ($request->header('x-webhook-event') === 'payment-created') {
             $data = $request->input('data');
-            $reference = $data['id']; // المرجع الذي أرسلناه سابقاً
+            $reference = $data['id']; // Reference we sent earlier
 
-            // البحث عن الدفعة وتحديث حالتها
+            // Find the payment and update its status
             $payment = Payment::where('transaction_reference', $reference)->first();
 
             if ($payment && $payment->status === 'pending') {
@@ -69,48 +94,46 @@ class PaymentController extends Controller
                     'status' => 'completed',
                     'moosyl_transaction_id' => $reference
                 ]);
-                
-                // هنا تضع الكود الخاص بتفعيل ميزات الباقة للمستخدم
-                // مثال: $payment->user->activatePlan($payment->plan);
+
+                // Activate plan features for the user here
+                // Example: $payment->user->activatePlan($payment->plan);
             }
         }
 
         return response()->json(['status' => 'success']);
     }
 
+    /**
+     * Handle manual payment (bank transfer with screenshot upload)
+     */
     public function manualPayment(Request $request)
     {
         $request->validate([
             'plan_id' => 'required|exists:plans,id',
-            'screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // max 5MB
+            'payment_method' => 'required',
+            'screenshot' => 'required|image|max:2048',
         ], [
             'plan_id.required' => 'يرجى اختيار الباقة',
+            'plan_id.exists' => 'الباقة المحددة غير صالحة',
+            'payment_method.required' => 'يرجى اختيار طريقة الدفع',
             'screenshot.required' => 'يرجى رفع صورة التحويل',
             'screenshot.image' => 'يجب أن يكون الملف صورة',
-            'screenshot.mimes' => 'يجب أن تكون الصورة بصيغة jpeg, png, jpg, gif',
-            'screenshot.max' => 'يجب ألا تتجاوز الصورة 5 ميجابايت',
+            'screenshot.max' => 'يجب ألا تتجاوز الصورة 2 ميجابايت',
         ]);
 
         $plan = Plan::findOrFail($request->plan_id);
-        $reference = 'manual_' . Str::random(10);
+        $path = $request->file('screenshot')->store('payments', 'public');
 
-        // حفظ ملف screenshot
-        $screenshotPath = null;
-        if ($request->hasFile('screenshot')) {
-            $screenshotPath = $request->file('screenshot')->store('payment-screenshots', 'public');
-        }
-
-        // حفظ الطلب في قاعدة البيانات
         Payment::create([
             'user_id'               => auth()->id(),
             'plan_id'               => $plan->id,
-            'transaction_reference' => $reference,
+            'transaction_reference' => 'manual_' . Str::random(10),
             'amount'                => $plan->price,
+            'payment_method'        => $request->payment_method,
+            'screenshot_path'       => $path,
             'status'                => 'pending_manual',
-            'payment_method'        => 'manual',
-            'screenshot_path'       => $screenshotPath,
         ]);
 
-        return redirect()->route('dashboard')->with('success', 'تم إرسال طلب الاشتراك بنجاح! سيتم مراجعته من قبل الإدارة وتفعيل الباقة قريباً.');
+        return redirect()->route('dashboard')->with('success', 'تم رفع الطلب بنجاح، بانتظار المراجعة.');
     }
 }

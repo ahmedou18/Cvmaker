@@ -113,11 +113,15 @@
                         </ul>
 
                         @auth
-                            <a href="{{ route('payment.checkout', $plan->slug) }}" class="w-full text-center {{ $plan->name == 'المتوسطة' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' }} font-bold py-3 rounded-xl transition-colors">
-                                {{ __('messages.btn_upgrade') }}
-                            </a>
+                            <form action="{{ route('payment.checkout', $plan->slug) }}" method="POST" class="w-full">
+                                @csrf
+                                <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                <button type="submit" class="w-full text-center {{ $plan->name == 'المتوسطة' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' }} font-bold py-3 rounded-xl transition-colors block">
+                                    {{ __('messages.btn_upgrade') }}
+                                </button>
+                            </form>
                         @else
-                            <a href="{{ route('register', ['plan' => $plan->id]) }}" class="w-full text-center {{ $plan->name == 'المتوسطة' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' }} font-bold py-3 rounded-xl transition-colors">
+                            <a href="{{ route('register', ['plan' => $plan->id]) }}" class="w-full text-center {{ $plan->name == 'المتوسطة' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' }} font-bold py-3 rounded-xl transition-colors block">
                                 {{ __('messages.btn_choose_plan') }}
                             </a>
                         @endauth

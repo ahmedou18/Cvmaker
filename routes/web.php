@@ -21,7 +21,8 @@ Route::get('/dashboard', function () {
 Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
+    Route::post('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
+    Route::post('/payment/online/{slug}', [App\Http\Controllers\PaymentController::class, 'processOnlinePayment'])->name('payment.online');
     Route::post('/payment/manual', [App\Http\Controllers\PaymentController::class, 'manualPayment'])->name('payment.manual');
     Route::get('/templates/choose', [ResumeController::class, 'showTemplates'])->name('templates.choose');
     Route::post('/resumes/start', [ResumeController::class, 'startWithTemplate'])->name('resumes.start');
