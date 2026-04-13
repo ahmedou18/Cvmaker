@@ -16,7 +16,10 @@ class PaymentController extends Controller
      */
     public function checkout(Request $request, $slug)
     {
-        $request->validate(['plan_id' => 'required|exists:plans,id']);
+        Log::info('Checkout hit', ['slug' => $slug, 'payload' => $request->all()]);
+
+        // Validation temporarily disabled for debugging
+        // $request->validate(['plan_id' => 'required|exists:plans,id']);
         $plan = Plan::where('slug', $slug)->firstOrFail();
 
         try {
