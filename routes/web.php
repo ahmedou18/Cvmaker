@@ -22,6 +22,7 @@ Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show')
 
 Route::middleware('auth')->group(function () {
     Route::get('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
+    Route::post('/payment/manual', [App\Http\Controllers\PaymentController::class, 'manualPayment'])->name('payment.manual');
     Route::get('/templates/choose', [ResumeController::class, 'showTemplates'])->name('templates.choose');
     Route::post('/resumes/start', [ResumeController::class, 'startWithTemplate'])->name('resumes.start');
     Route::get('/cv/{uuid}/edit', [ResumeController::class, 'edit'])->name('resume.edit');
