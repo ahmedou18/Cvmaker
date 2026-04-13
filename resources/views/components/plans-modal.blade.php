@@ -33,7 +33,6 @@
                         <div class="flex items-baseline gap-1 mb-8">
                             <span class="text-5xl font-black text-gray-900">{{ (int)$plan->price }}</span>
                             <span class="text-gray-400 font-bold">أوقية</span>
-                            <span class="text-gray-400 text-sm mr-2">/ {{ $plan->duration_in_days }} يوم</span>
                         </div>
 
                         <ul class="space-y-4 mb-10 flex-1">
@@ -64,6 +63,40 @@
                         <a href="{{ route('payment.checkout', $plan->slug) }}" class="w-full text-center py-4 rounded-2xl font-black transition-all duration-300 {{ $plan->is_popular ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-200' : 'bg-gray-900 text-white hover:bg-gray-800' }}">
     اشترك الآن
 </a>
+
+                        <button type="button" onclick="document.getElementById('manual-payment-{{ $plan->id }}').classList.remove('hidden')" class="mt-3 w-full text-center py-3 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:border-blue-600 hover:text-blue-600 transition-all duration-300">
+    دفع يدوي (Bankily/Masrivi/BAMIS)
+</button>
+
+<div id="manual-payment-{{ $plan->id }}" class="hidden mt-4 bg-slate-50 rounded-xl p-4 border border-slate-200">
+    <form action="{{ route('payment.manual') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+        @csrf
+        <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+        
+        <div class="text-sm text-gray-600 bg-white rounded-lg p-3 border border-gray-200">
+            <p class="font-bold text-gray-900 mb-2">تعليمات الدفع:</p>
+            <p>للتحويل عبر Bankily, Masrivi، أو BAMIS Digital (Click) على الرقم:</p>
+            <p class="text-lg font-black text-blue-600 dir-ltr text-center my-2">26121732</p>
+            <p class="text-xs text-gray-500 mt-2">بعد التحويل، قم برفع صورة الإيصال أدناه.</p>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">صورة التحويل (Screenshot)</label>
+            <input type="file" name="screenshot" accept="image/*" required 
+                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-all text-sm">
+        </div>
+        
+        <div class="flex gap-2">
+            <button type="submit" class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-bold hover:bg-green-700 transition-all">
+                إرسال للإدارة
+            </button>
+            <button type="button" onclick="document.getElementById('manual-payment-{{ $plan->id }}').classList.add('hidden')" 
+                    class="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition-all">
+                إلغاء
+            </button>
+        </div>
+    </form>
+</div>
                     </div>
                 @endforeach
             </div>

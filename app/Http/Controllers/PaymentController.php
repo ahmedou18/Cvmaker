@@ -26,6 +26,7 @@ class PaymentController extends Controller
             'transaction_reference' => $reference,
             'amount'                => $plan->price,
             'status'                => 'pending',
+            'payment_method'        => 'moosyl',
         ]);
 
         // 4. طلب الدفع من Moosyl عبر API
@@ -54,23 +55,62 @@ class PaymentController extends Controller
     }
 
     public function handleWebhook(Request $request)
-{
-    // التأكد من أن الإشعار يخص نجاح الدفع
-    if ($request->header('x-webhook-event') === 'payment-created') {
-        $data = $request->input('data');
-        $reference = $data['id']; // المرجع الذي أرسلناه سابقاً
+    {
+        // التأكد من أن الإشعار يخص نجاح الدفع
+        if ($request->header('x-webhook-event') === 'payment-created') {
+            $data = $request->input('data');
+            $reference = $data['id']; // المرجع الذي أرسلناه سابقاً
 
-        // البحث عن الدفعة وتحديث حالتها
-        $payment = Payment::where('transaction_reference', $reference)->first();
+            // البحث عن الدفعة وتحديث حالتها
+            $payment = Payment::where('transaction_reference', $reference)->first();
 
-        if ($payment && $payment->status === 'pending') {
-            $payment->update(['status' => 'completed']);
-            
-            // هنا تضع الكود الخاص بتفعيل ميزات الباقة للمستخدم
-            // مثال: $payment->user->activatePlan($payment->plan);
+            if ($payment && $payment->status === 'pending') {
+                $payment->update([
+                    'status' => 'completed',
+                    'moosyl_transaction_id' => $reference
+                ]);
+                
+                // هنا تضع الكود الخاص بتفعيل ميزات الباقة للمستخدم
+                // مثال: $payment->user->activatePlan($payment->plan);
+            }
         }
+
+        return response()->json(['status' => 'success']);
     }
 
-    return response()->json(['status' => 'success']);
-}
+    public function manualPayment(Request $request)
+    {
+        $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+            'screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // max 5MB
+        ], [
+            'plan_id.required' => 'يرجى اختيار الباقة',
+            'screenshot.required' => 'يرجى رفع صورة التحويل',
+            'screenshot.image' => 'يجب أن يكون الملف صورة',
+            'screenshot.mimes' => 'يجب أن تكون الصورة بصيغة jpeg, png, jpg, gif',
+            'screenshot.max' => 'يجب ألا تتجاوز الصورة 5 ميجابايت',
+        ]);
+
+        $plan = Plan::findOrFail($request->plan_id);
+        $reference = 'manual_' . Str::random(10);
+
+        // حفظ ملف screenshot
+        $screenshotPath = null;
+        if ($request->hasFile('screenshot')) {
+            $screenshotPath = $request->file('screenshot')->store('payment-screenshots', 'public');
+        }
+
+        // حفظ الطلب في قاعدة البيانات
+        Payment::create([
+            'user_id'               => auth()->id(),
+            'plan_id'               => $plan->id,
+            'transaction_reference' => $reference,
+            'amount'                => $plan->price,
+            'status'                => 'pending_manual',
+            'payment_method'        => 'manual',
+            'screenshot_path'       => $screenshotPath,
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'تم إرسال طلب الاشتراك بنجاح! سيتم مراجعته من قبل الإدارة وتفعيل الباقة قريباً.');
+    }
 }
