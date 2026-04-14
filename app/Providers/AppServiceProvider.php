@@ -26,5 +26,6 @@ class AppServiceProvider extends ServiceProvider
 
         // أضف هذين السطرين
     \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
+     
     }
 }

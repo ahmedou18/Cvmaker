@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ __('messages.page_title') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .gradient-text {
@@ -21,14 +24,111 @@
     <nav class="bg-white shadow-sm py-4 px-8 flex justify-between items-center fixed w-full top-0 z-50" data-aos="fade-down" data-aos-duration="1000">
         <div class="text-2xl font-bold text-blue-600">CV<span class="text-gray-800">maker</span></div>
         <div class="flex items-center gap-3 mx-4 text-sm font-semibold">
-    <a href="{{ route('lang.switch', 'ar') }}" class="{{ app()->getLocale() == 'ar' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500' }}">عربي</a>
-    <a href="{{ route('lang.switch', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500' }}">English</a>
-    <a href="{{ route('lang.switch', 'fr') }}" class="{{ app()->getLocale() == 'fr' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500' }}">Français</a>
-</div>
+            <a href="{{ route('lang.switch', 'ar') }}" class="{{ app()->getLocale() == 'ar' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500' }}">عربي</a>
+            <a href="{{ route('lang.switch', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500' }}">English</a>
+            <a href="{{ route('lang.switch', 'fr') }}" class="{{ app()->getLocale() == 'fr' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500' }}">Français</a>
+        </div>
         
         <div class="flex items-center gap-4">
             @if (Route::has('login'))
                 @auth
+                    {{-- مكون الإشعارات --}}
+                    <div class="relative"
+                         x-data="{
+                            open: false,
+                            unreadCount: {{ auth()->user()->unreadNotifications->count() }},
+                            notifications: @json(
+                                auth()->user()->unreadNotifications->take(5)->map(function($n) {
+                                    return [
+                                        'id' => $n->id,
+                                        'message' => $n->data['message'] ?? 'بدون رسالة',
+                                        'created_at' => $n->created_at->diffForHumans()
+                                    ];
+                                })
+                            ),
+                            markAsRead(notificationId) {
+                                fetch('/notifications/' + notificationId + '/mark-as-read', {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                        'Content-Type': 'application/json'
+                                    }
+                                }).then(response => {
+                                    if (response.ok) {
+                                        this.unreadCount--;
+                                        this.notifications = this.notifications.filter(n => n.id !== notificationId);
+                                    }
+                                });
+                            },
+                            markAllAsRead() {
+                                fetch('/notifications/mark-all-as-read', {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                        'Content-Type': 'application/json'
+                                    }
+                                }).then(response => {
+                                    if (response.ok) {
+                                        this.unreadCount = 0;
+                                        this.notifications = [];
+                                    }
+                                });
+                            }
+                         }">
+                        <button @click="open = !open"
+                                class="relative text-gray-600 hover:text-blue-600 transition-colors p-2">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <span x-show="unreadCount > 0"
+                                  x-text="unreadCount"
+                                  class="absolute top-0 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            </span>
+                        </button>
+
+                        <div x-show="open"
+                             @click.away="open = false"
+                             x-transition
+                             class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-2 {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-left' }}"
+                             dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
+                            <div class="flex justify-between items-center px-4 py-2 border-b">
+                                <h4 class="font-bold text-sm">{{ __('messages.notifications') }}</h4>
+                                <button x-show="notifications.length > 0"
+                                        @click="markAllAsRead()"
+                                        class="text-xs text-blue-600 hover:underline">
+                                    {{ __('messages.mark_all_read') }}
+                                </button>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto">
+                                <template x-if="notifications.length > 0">
+                                    <div>
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 flex justify-between items-start">
+                                                <div class="flex-1">
+                                                    <p class="text-xs text-gray-800" x-text="notification.message"></p>
+                                                    <span class="text-[10px] text-gray-400" x-text="notification.created_at"></span>
+                                                </div>
+                                                <button @click="markAsRead(notification.id)"
+                                                        class="text-blue-500 hover:text-blue-700 text-xs mx-2">
+                                                    ✓
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <p x-show="notifications.length === 0" class="px-4 py-6 text-center text-xs text-gray-400">
+                                    {{ __('messages.no_notifications') }}
+                                </p>
+                            </div>
+                            <div class="border-t px-4 py-2">
+                                <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">
+                                    {{ __('messages.view_all_notifications') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                     <a href="{{ url('/dashboard') }}" class="text-gray-600 hover:text-blue-600 font-bold transition">{{ __('messages.nav_dashboard') }}</a>
                 @else
                     <a href="{{ route('login') }}" class="text-gray-600 hover:text-blue-600 font-semibold transition">{{ __('messages.nav_login') }}</a>

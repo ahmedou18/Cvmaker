@@ -156,24 +156,25 @@ class PaymentResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('approve')
-                    ->label('موافقة')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->status === 'pending_manual')
-                    ->action(function ($record) {
-                        $record->update(['status' => 'completed']);
-                        // Plan activation is handled by PaymentObserver
-                    }),
-                Tables\Actions\Action::make('reject')
-                    ->label('رفض')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->visible(fn ($record) => $record->status === 'pending_manual')
-                    ->action(function ($record) {
-                        $record->update(['status' => 'cancelled']);
-                    }),
+    ->label('موافقة')
+    ->icon('heroicon-o-check-circle')
+    ->color('success')
+    ->requiresConfirmation()
+    ->visible(fn ($record) => $record->status === 'pending_manual')
+    ->action(function ($record) {
+        $record->update(['status' => 'completed']);
+        // سيتم تشغيل PaymentObserver تلقائياً عند التحديث
+    }),
+
+Tables\Actions\Action::make('reject')
+    ->label('رفض')
+    ->icon('heroicon-o-x-circle')
+    ->color('danger')
+    ->requiresConfirmation()
+    ->visible(fn ($record) => $record->status === 'pending_manual')
+    ->action(function ($record) {
+        $record->update(['status' => 'cancelled']);
+    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
