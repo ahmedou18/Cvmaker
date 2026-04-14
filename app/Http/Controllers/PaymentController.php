@@ -96,8 +96,7 @@ class PaymentController extends Controller
                     'moosyl_transaction_id' => $reference
                 ]);
 
-                // Activate plan features for the user here
-                // Example: $payment->user->activatePlan($payment->plan);
+                // Plan activation is handled by PaymentObserver
             }
         }
 

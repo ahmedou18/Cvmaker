@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Storage;
 
 class PaymentResource extends Resource
 {
@@ -30,55 +29,42 @@ class PaymentResource extends Resource
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
                             ->label('المستخدم')
-                            ->required(),
-                        
+                            ->required()
+                            ->disabled(),
+
                         Forms\Components\Select::make('plan_id')
                             ->relationship('plan', 'name')
                             ->label('الباقة')
-                            ->required(),
-                        
-                        Forms\Components\TextInput::make('transaction_reference')
-                            ->label('رقم المعاملة')
+                            ->required()
                             ->disabled(),
-                        
+
                         Forms\Components\TextInput::make('amount')
                             ->label('المبلغ')
                             ->prefix('أوقية')
                             ->disabled(),
-                        
-                        Forms\Components\Select::make('payment_method')
-                            ->options([
-                                'moosyl' => 'Moosyl (إلكتروني)',
-                                'manual' => 'دفع يدوي',
-                            ])
+
+                        Forms\Components\TextInput::make('currency')
+                            ->label('العملة')
+                            ->disabled(),
+
+                        Forms\Components\TextInput::make('payment_method')
                             ->label('طريقة الدفع')
                             ->disabled(),
-                        
+
                         Forms\Components\Select::make('status')
                             ->options([
-                                'pending' => 'قيد الانتظار (Moosyl)',
-                                'pending_manual' => 'قيد المراجعة (يدوي)',
+                                'pending_manual' => 'قيد الانتظار',
                                 'completed' => 'مكتمل',
                                 'failed' => 'فشل',
-                                'cancelled' => 'ملغى',
                             ])
                             ->label('الحالة')
                             ->required()
-                            ->live(),
-                        
-                        Forms\Components\FileUpload::make('screenshot_path')
+                            ->default('pending_manual'),
+
+                        Forms\Components\View::make('filament.forms.components.screenshot-preview')
                             ->label('صورة التحويل')
-                            ->directory('payment-screenshots')
-                            ->visibility('public')
-                            ->image()
-                            ->downloadable()
-                            ->openable()
-                            ->hidden(fn ($record) => !$record || $record->payment_method !== 'manual'),
-                        
-                        Forms\Components\Textarea::make('admin_notes')
-                            ->label('ملاحظات الإدارة')
-                            ->rows(3)
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->hidden(fn ($record) => !$record || !$record->screenshot_path),
                     ])->columns(2),
             ]);
     }
@@ -90,41 +76,61 @@ class PaymentResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('المستخدم')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('plan.name')
                     ->label('الباقة')
                     ->searchable(),
-                
+
                 Tables\Columns\TextColumn::make('amount')
                     ->label('المبلغ')
                     ->formatStateUsing(fn ($state) => number_format($state, 2))
                     ->prefix('أوقية')
                     ->sortable(),
-                
+
+                Tables\Columns\TextColumn::make('currency')
+                    ->label('العملة')
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('payment_method')
+                    ->label('طريقة الدفع')
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'moosyl' => 'Moosyl',
+                        'manual' => 'يدوي',
+                        'bankily' => 'Bankily',
+                        'masrivi' => 'Masrivi',
+                        'click' => 'Click',
+                        'bimbank' => 'BIM Bank',
+                        default => $state,
+                    }),
+
+                Tables\Columns\ImageColumn::make('screenshot_path')
+                    ->label('صورة التحويل')
+                    ->circular(false)
+                    ->size(50)
+                    ->disk('public')
+                    ->visibility('public'),
+
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('الحالة')
                     ->colors([
-                        'warning' => 'pending',
-                        'info' => 'pending_manual',
+                        'warning' => 'pending_manual',
                         'success' => 'completed',
                         'danger' => 'failed',
                         'gray' => 'cancelled',
-                    ]),
-                
-                Tables\Columns\TextColumn::make('payment_method')
-                    ->label('الطريقة')
-                    ->formatStateUsing(fn ($state) => $state === 'manual' ? 'يدوي' : 'Moosyl'),
-                
-                Tables\Columns\IconColumn::make('has_screenshot')
-                    ->label('صورة')
-                    ->boolean()
-                    ->getStateUsing(fn ($record) => $record->screenshot_path !== null),
-                
+                    ])
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'pending_manual' => 'قيد الانتظار',
+                        'completed' => 'مكتمل',
+                        'failed' => 'فشل',
+                        'cancelled' => 'ملغى',
+                        default => $state,
+                    }),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ الطلب')
                     ->dateTime('Y-m-d H:i')
@@ -137,6 +143,7 @@ class PaymentResource extends Resource
                         'pending_manual' => 'قيد المراجعة (يدوي)',
                         'completed' => 'مكتمل',
                         'failed' => 'فشل',
+                        'cancelled' => 'ملغى',
                     ]),
                 
                 Tables\Filters\SelectFilter::make('payment_method')
@@ -156,9 +163,7 @@ class PaymentResource extends Resource
                     ->visible(fn ($record) => $record->status === 'pending_manual')
                     ->action(function ($record) {
                         $record->update(['status' => 'completed']);
-                        
-                        // TODO: Activate plan features for user here
-                        // Example: $record->user->activatePlan($record->plan);
+                        // Plan activation is handled by PaymentObserver
                     }),
                 Tables\Actions\Action::make('reject')
                     ->label('رفض')

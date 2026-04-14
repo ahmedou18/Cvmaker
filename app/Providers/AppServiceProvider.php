@@ -23,5 +23,8 @@ class AppServiceProvider extends ServiceProvider
         // إجبار النظام على استخدام رابط Codespaces و https
         URL::forceScheme('https');
         URL::forceRootUrl(env('APP_URL'));
+
+        // أضف هذين السطرين
+    \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
     }
 }
