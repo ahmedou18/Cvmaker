@@ -68,7 +68,13 @@ class ResumeController extends Controller
         return redirect()->route('templates.choose')
             ->with('warning', 'يرجى اختيار قالب أولاً.');
     }
-    
+
+    if (!auth()->user()->can('create', Resume::class)) {
+        $limit = auth()->user()->plan?->cv_limit ?? 0;
+        return redirect()->route('dashboard')
+            ->with('error', "لقد وصلت الحد الأقصى من السير الذاتية المسموح بها في باقتك الحالية ({$limit} سيرة ذاتية). يرجى ترقية باقتك لإنشاء سيرة ذاتية جديدة.");
+    }
+
     $plans = Plan::where('is_active', true)->get();
     return view('resumes.create', compact('plans'));
 }
@@ -91,6 +97,12 @@ class ResumeController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->can('create', Resume::class)) {
+            $limit = auth()->user()->plan?->cv_limit ?? 0;
+            return redirect()->route('dashboard')
+                ->with('error', "لقد وصلت الحد الأقصى من السير الذاتية المسموح بها في باقتك الحالية ({$limit} سيرة ذاتية). يرجى ترقية باقتك لإنشاء سيرة ذاتية جديدة.");
+        }
+
         // 1. التحقق من صحة البيانات الأساسية مع التحسينات الأمنية
         $request->validate([
             'full_name'   => 'required|string|max:255',

@@ -19,6 +19,7 @@ class User extends Authenticatable
         'plan_id',
         'ai_credits_balance',
         'cover_letters_balance',
+        'support_code',
     ];
 
     protected $hidden = [
@@ -65,5 +66,42 @@ class User extends Authenticatable
     {
         // إذا كان plan_id ليس فارغاً، فهذا يعني أن المستخدم مشترك في باقة
         return !is_null($this->plan_id);
+    }
+
+    /**
+     * توليد رمز دعم فريد مكون من 6 أرقام
+     */
+    public function generateSupportCode(): string
+    {
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $this->update(['support_code' => $code]);
+        return $code;
+    }
+
+    /**
+     * الحصول على رمز الدعم الحالي أو توليد واحد جديد
+     */
+    public function getOrCreateSupportCode(): string
+    {
+        if (is_null($this->support_code)) {
+            return $this->generateSupportCode();
+        }
+        return $this->support_code;
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم مؤهلاً للدعم ذو الأولوية
+     */
+    public function hasPrioritySupport(): bool
+    {
+        return $this->plan?->priority_support ?? false;
+    }
+
+    /**
+     * التحقق مما إذا كان يمكن للمستخدم إنشاء خطابات تغطية
+     */
+    public function canCreateCoverLetters(): bool
+    {
+        return $this->plan?->has_cover_letter ?? false;
     }
 }

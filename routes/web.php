@@ -4,6 +4,7 @@ use App\Models\Plan;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ResumeController;
+use App\Http\Controllers\CoverLetterController;
 use App\Http\Controllers\AiGenerationController;
 use App\Http\Controllers\AiResumeController;
 use App\Http\Controllers\PlanController;
@@ -52,6 +53,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
+
+    // Cover Letters
+    Route::get('/cover-letters/create', [CoverLetterController::class, 'create'])->name('cover-letters.create');
+    Route::post('/cover-letters', [CoverLetterController::class, 'store'])->name('cover-letters.store');
+    Route::get('/cover-letters/{id}', [CoverLetterController::class, 'show'])->name('cover-letters.show');
+    Route::get('/cover-letters/{id}/download', [CoverLetterController::class, 'downloadPdf'])->name('cover-letters.download');
 });
 
 Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume'])->middleware('auth');
