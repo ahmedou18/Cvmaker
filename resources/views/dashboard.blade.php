@@ -30,9 +30,9 @@
                                 + إنشاء سيرة ذاتية جديدة
                             </a>
                         @else
-                            <a href="{{ route('plans.show', $user->plan?->slug ?? 'free') }}" class="bg-amber-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-amber-700 transition">
+                            <button type="button" onclick="openPlansModal()" class="bg-amber-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-amber-700 transition">
                                 ترقية الباقة لإنشاء المزيد
-                            </a>
+                            </button>
                         @endcan
 
                         {{-- زر الدعم ذو الأولوية (واتساب) --}}
@@ -87,9 +87,9 @@
                             <h4 class="text-lg font-bold text-gray-600">خطاب تحفيزي</h4>
                         </div>
                         <p class="text-sm text-gray-500 mb-4">هذه الميزة متاحة فقط في الباقات المدفوعة.</p>
-                        <a href="{{ route('plans.show', $user->plan?->slug ?? 'free') }}" class="inline-block bg-gray-400 text-white px-5 py-2 rounded-lg font-bold text-sm cursor-not-allowed">
+                        <button type="button" onclick="openPlansModal()" class="inline-block bg-gray-400 text-white px-5 py-2 rounded-lg font-bold text-sm cursor-pointer">
                             رقي باقتك للوصول
-                        </a>
+                        </button>
                     </div>
                 @endif
 
@@ -132,9 +132,9 @@
                             <h4 class="text-lg font-bold text-gray-600">الدعم ذو الأولوية</h4>
                         </div>
                         <p class="text-sm text-gray-500 mb-4">احصل على دعم فني سريع عبر واتساب مع رمز تحقق خاص.</p>
-                        <a href="{{ route('plans.show', $user->plan?->slug ?? 'free') }}" class="inline-block bg-gray-400 text-white px-5 py-2 rounded-lg font-bold text-sm">
+                        <button type="button" onclick="openPlansModal()" class="inline-block bg-gray-400 text-white px-5 py-2 rounded-lg font-bold text-sm">
                             رقي باقتك للوصول
-                        </a>
+                        </button>
                     </div>
                 @endif
             </div>
@@ -174,9 +174,9 @@
                             قم بالاشتراك في باقة لإنشاء سير ذاتية.
                         </p>
                         <div class="mt-4">
-                            <a href="{{ route('plans.show', $user->plan?->slug ?? 'free') }}" class="inline-block bg-blue-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
+                            <button type="button" onclick="openPlansModal()" class="inline-block bg-blue-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-blue-700 transition">
                                 عرض الباقات
-                            </a>
+                            </button>
                         </div>
                     @else
                         <p class="text-sm text-gray-600 mb-3">
@@ -196,9 +196,9 @@
                             <span class="text-xs text-gray-500">{{ number_format($usagePercentage, 0) }}% مستخدم</span>
 
                             @if($isLimitReached)
-                                <a href="{{ route('plans.show', $user->plan?->slug ?? 'free') }}" class="inline-block bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-700 transition">
+                                <button type="button" onclick="openPlansModal()" class="inline-block bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-700 transition">
                                     ترقية الباقة
-                                </a>
+                                </button>
                             @endif
                         </div>
                     @endif
@@ -242,9 +242,9 @@
                             </svg>
                         </div>
                         <span class="text-gray-500 font-medium mb-2">تم الوصول للحد الأقصى</span>
-                        <a href="{{ route('plans.show', $user->plan?->slug ?? 'free') }}" class="text-amber-600 font-semibold text-sm hover:underline">
+                        <button type="button" onclick="openPlansModal()" class="text-amber-600 font-semibold text-sm hover:underline">
                             رقي باقتك الآن
-                        </a>
+                        </button>
                     </div>
                 @endcan
 
@@ -285,4 +285,36 @@
             </div>
         </div>
     </div>
+
+    {{-- مودال الباقات (مخفي في البداية) --}}
+    <div id="plansModal" style="display: none;">
+        <x-plans-modal 
+            closeAction="closePlansModal()" 
+            :resumeUuid="null" 
+        />
+    </div>
+
+    {{-- JavaScript لفتح وإغلاق المودال --}}
+    <script>
+        function openPlansModal() {
+            const modal = document.getElementById('plansModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        function closePlansModal() {
+            const modal = document.getElementById('plansModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+        // إغلاق المودال عند الضغط على Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePlansModal();
+            }
+        });
+    </script>
 </x-app-layout>

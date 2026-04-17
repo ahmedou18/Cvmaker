@@ -14,20 +14,20 @@ class PaymentController extends Controller
     /**
      * Handle checkout - redirects to payment method selection
      */
-    public function checkout(Request $request, $slug)
-    {
-        Log::info('Checkout hit', ['slug' => $slug, 'payload' => $request->all()]);
-        $request->validate(['plan_id' => 'required|exists:plans,id']);
-        $plan = Plan::where('slug', $slug)->firstOrFail();
+    public function checkout($slug)
+{
+    Log::info('Checkout hit', ['slug' => $slug]);
+    
+    $plan = Plan::where('slug', $slug)->firstOrFail();
 
-        try {
-            // Show payment method selection view (Online via Moosyl or Manual)
-            return view('payments.select_method', compact('plan'));
-        } catch (\Exception $e) {
-            Log::error('Checkout error: ' . $e->getMessage());
-            return back()->withErrors(['error' => $e->getMessage()]);
-        }
+    try {
+        // عرض صفحة اختيار طريقة الدفع (أونلاين عبر Moosyl أو يدوي)
+        return view('payments.select_method', compact('plan'));
+    } catch (\Exception $e) {
+        Log::error('Checkout error: ' . $e->getMessage());
+        return back()->withErrors(['error' => $e->getMessage()]);
     }
+}
 
     /**
      * Process online payment via Moosyl API

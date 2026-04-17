@@ -24,7 +24,7 @@ Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show')
 
 Route::middleware('auth')->group(function () {
     // Payment
-    Route::post('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
+    Route::get('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::post('/payment/online/{slug}', [App\Http\Controllers\PaymentController::class, 'processOnlinePayment'])->name('payment.online');
     Route::post('/payment/manual', [App\Http\Controllers\PaymentController::class, 'manualPayment'])->name('payment.manual');
     
