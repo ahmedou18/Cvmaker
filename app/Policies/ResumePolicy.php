@@ -13,6 +13,10 @@ class ResumePolicy
      */
     protected function resolveLimit(User $user): int
     {
+        // إذا كانت الباقة منتهية الصلاحية، لا يحق له إنشاء سير جديدة
+        if ($user->plan_expires_at && $user->plan_expires_at->isPast()) {
+            return 0;
+        }
         return $user->plan?->cv_limit ?? 0;
     }
 

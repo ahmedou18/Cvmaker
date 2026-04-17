@@ -14,15 +14,25 @@ class PaymentObserver
             $plan = $payment->plan;
 
             if ($user && $plan) {
-                // تحديث بيانات المستخدم بالباقة الجديدة
-                $updateData = ['plan_id' => $plan->id];
+                // حساب تاريخ انتهاء الصلاحية بناءً على مدة الباقة
+                $expiresAt = now()->addDays($plan->duration_in_days ?? 30);
 
+                // تحديث بيانات المستخدم
+                $updateData = [
+                    'plan_id' => $plan->id,
+                    'plan_expires_at' => $expiresAt,
+                ];
+
+                // رصيد الذكاء الاصطناعي
                 if ($plan->ai_credits !== null) {
                     $updateData['ai_credits_balance'] = $plan->ai_credits;
                 }
 
+                // رصيد خطابات التغطية = عدد السير المسموحة (إذا كانت الباقة تدعمها)
                 if ($plan->has_cover_letter) {
-                    $updateData['cover_letters_balance'] = 1;
+                    $updateData['cover_letters_balance'] = $plan->cv_limit; // عدد الرسائل = عدد السير
+                } else {
+                    $updateData['cover_letters_balance'] = 0;
                 }
 
                 $user->update($updateData);
