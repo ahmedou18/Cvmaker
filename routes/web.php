@@ -8,11 +8,13 @@ use App\Http\Controllers\CoverLetterController;
 use App\Http\Controllers\AiGenerationController;
 use App\Http\Controllers\AiResumeController;
 use App\Http\Controllers\PlanController;
+use App\Models\Template;
 use App\Http\Controllers\NotificationController; // إضافة جديدة للإشعارات
 
 Route::get('/', function () {
     $plans = Plan::all();
-    return view('welcome', compact('plans'));
+    $templates = Template::all(); // جلب جميع القوالب (يمكن إضافة where('is_active', true))
+    return view('welcome', compact('plans', 'templates'));
 });
 
 Route::get('/dashboard', function () {

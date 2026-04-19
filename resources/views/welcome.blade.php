@@ -367,61 +367,54 @@
 
     {{-- ========== سلايدر القوالب (Swiper) ========== --}}
     <section id="templates" class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-12" data-aos="fade-up">
-                <span class="text-indigo-600 font-bold text-sm uppercase tracking-wider">أكثر من 20 قالباً</span>
-                <h2 class="text-3xl md:text-5xl font-extrabold text-slate-900 mt-2 mb-4">قوالب احترافية لكل مجال</h2>
-                <p class="text-slate-500 text-lg max-w-2xl mx-auto">اختر من بين تشكيلة واسعة من القوالب العصرية المصممة لتبرز خبراتك.</p>
-            </div>
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-12" data-aos="fade-up">
+            <span class="text-indigo-600 font-bold text-sm uppercase tracking-wider">أكثر من 20 قالباً</span>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-slate-900 mt-2 mb-4">قوالب احترافية لكل مجال</h2>
+            <p class="text-slate-500 text-lg max-w-2xl mx-auto">اختر من بين تشكيلة واسعة من القوالب العصرية المصممة لتبرز خبراتك.</p>
+        </div>
 
-            <div class="relative" data-aos="fade-up" data-aos-delay="100">
-                <div class="swiper templates-swiper">
-                    <div class="swiper-wrapper pb-8">
-                        @php $templates = $templates ?? []; @endphp
-                        @forelse($templates as $template)
-                        <div class="swiper-slide w-72">
-                            <div class="template-slide bg-white rounded-2xl p-4 border border-slate-100 shadow-md">
-                                <div class="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden mb-4 relative">
-                                    @if($template->thumbnail)
-                                        <img src="{{ asset($template->thumbnail) }}" alt="{{ $template->name }}" class="w-full h-full object-cover">
-                                    @else
-                                        <div class="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-500 font-bold">معاينة القالب</div>
-                                    @endif
-                                </div>
-                                <h3 class="text-lg font-bold text-slate-800">{{ $template->name }}</h3>
-                                @if(isset($template->is_premium) && $template->is_premium)
-                                    <span class="inline-block mt-2 text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-semibold">💎 احترافي</span>
+        <div class="relative" data-aos="fade-up" data-aos-delay="100">
+            <div class="swiper templates-swiper">
+                <div class="swiper-wrapper pb-8">
+                    @forelse($templates ?? [] as $template)
+                    <div class="swiper-slide w-72">
+                        <div class="template-slide bg-white rounded-2xl p-4 border border-slate-100 shadow-md">
+                            <div class="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden mb-4 relative">
+                                @if($template->thumbnail)
+                                    <img src="{{ asset($template->thumbnail) }}" alt="{{ $template->name }}" class="w-full h-full object-cover">
                                 @else
-                                    <span class="inline-block mt-2 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-semibold">✅ مجاني</span>
+                                    <div class="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-slate-500 font-bold">معاينة القالب</div>
                                 @endif
                             </div>
-                        </div>
-                        @empty
-                        @for ($i = 1; $i <= 5; $i++)
-                        <div class="swiper-slide w-72">
-                            <div class="template-slide bg-white rounded-2xl p-4 border border-slate-100 shadow-md">
-                                <div class="aspect-[3/4] bg-gradient-to-br from-slate-200 to-slate-300 rounded-xl overflow-hidden mb-4 flex items-center justify-center text-slate-600 font-bold">قالب {{ $i }}</div>
-                                <h3 class="text-lg font-bold text-slate-800">قالب {{ $i }}</h3>
+                            <h3 class="text-lg font-bold text-slate-800">{{ $template->name }}</h3>
+                            @if(isset($template->is_premium) && $template->is_premium)
+                                <span class="inline-block mt-2 text-xs bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-semibold">💎 احترافي</span>
+                            @else
                                 <span class="inline-block mt-2 text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-semibold">✅ مجاني</span>
-                            </div>
+                            @endif
                         </div>
-                        @endfor
-                        @endforelse
                     </div>
-                    <div class="swiper-button-next"></div>
-                    <div class="swiper-button-prev"></div>
-                    <div class="swiper-pagination !bottom-0"></div>
+                    @empty
+                    <div class="swiper-slide w-full text-center py-20">
+                        <p class="text-slate-500">لا توجد قوالب مضافة حالياً.</p>
+                    </div>
+                    @endforelse
                 </div>
-            </div>
-
-            <div class="mt-12 text-center">
-                <a href="{{ route('templates.choose') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-4 rounded-full shadow-lg shadow-indigo-200 transition transform hover:scale-105">
-                    <span>ابدأ باختيار قالب</span>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </a>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-pagination !bottom-0"></div>
             </div>
         </div>
-    </section>
+
+        <div class="mt-12 text-center">
+            <a href="{{ route('templates.choose') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-4 rounded-full shadow-lg shadow-indigo-200 transition transform hover:scale-105">
+                <span>ابدأ باختيار قالب</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
 
     {{-- ========== قسم الأسعار ========== --}}
     <section id="pricing" class="py-24 bg-slate-50/80">

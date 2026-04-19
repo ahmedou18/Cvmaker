@@ -7,8 +7,8 @@ use App\Models\Resume;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use PDF;
 use Smalot\PdfParser\Parser;
 
@@ -19,12 +19,7 @@ class CoverLetterController extends Controller
      */
     public function create()
     {
-        $this->authorize('create', CoverLetter::class);
-
-        $resumes = Resume::where('user_id', Auth::id())
-            ->latest()
-            ->get();
-
+        $resumes = Resume::where('user_id', Auth::id())->latest()->get();
         return view('cover-letters.create', compact('resumes'));
     }
 
@@ -33,8 +28,6 @@ class CoverLetterController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create', CoverLetter::class);
-
         $request->validate([
             'resume_id'          => 'nullable|exists:resumes,id',
             'uploaded_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
@@ -43,21 +36,15 @@ class CoverLetterController extends Controller
             'job_description'    => 'nullable|string',
             'job_description_url'=> 'nullable|url',
             'language'           => 'required|in:ar,en,fr',
-        ], [], [
-            'resume_id'          => 'السيرة الذاتية',
-            'uploaded_file'      => 'الملف المرفوع',
-            'target_job_title'   => 'المسمى الوظيفي المستهدف',
-            'company_name'       => 'اسم الشركة',
-            'job_description'    => 'وصف الوظيفة',
-            'job_description_url'=> 'رابط وصف الوظيفة',
-            'language'           => 'اللغة',
         ]);
 
-        // يجب توفير إما سيرة ذاتية موجودة أو ملف مرفوع
         if (!$request->filled('resume_id') && !$request->hasFile('uploaded_file')) {
-            return back()
-                ->withErrors(['uploaded_file' => 'يرجى اختيار سيرة ذاتية موجودة أو رفع ملف (PDF/Word).'])
-                ->withInput();
+            return back()->withErrors(['uploaded_file' => 'يرجى اختيار سيرة ذاتية موجودة أو رفع ملف (PDF/Word).'])->withInput();
+        }
+
+        $user = Auth::user();
+        if ($user->ai_credits_balance <= 0) {
+            return back()->withErrors(['error' => 'رصيد الذكاء الاصطناعي غير كافٍ. يرجى الاشتراك في باقة أو تجديد رصيدك.'])->withInput();
         }
 
         $context = $this->extractContext($request);
@@ -66,21 +53,28 @@ class CoverLetterController extends Controller
 
         try {
             $coverLetter = CoverLetter::create([
-                'user_id'          => Auth::id(),
+                'user_id'          => $user->id,
                 'target_job_title' => $request->target_job_title,
                 'company_name'     => $request->company_name,
-                'content'          => '', // سيتم ملؤه بالذكاء الاصطناعي
+                'content'          => '',
             ]);
 
-            // توليد المحتوى بالذكاء الاصطناعي
-            $generatedContent = $this->generateWithAI(
-                coverLetter: $coverLetter,
+            $generatedContent = $this->generateCoverLetterWithAI(
                 context: $context,
-                language: $request->language,
+                targetJobTitle: $request->target_job_title,
+                companyName: $request->company_name,
                 jobDescription: $request->job_description ?? $request->job_description_url ?? '',
+                language: $request->language
             );
 
             $coverLetter->update(['content' => $generatedContent]);
+
+            DB::transaction(function () use ($user) {
+                $user = $user->fresh();
+                if ($user->ai_credits_balance > 0) {
+                    $user->decrement('ai_credits_balance');
+                }
+            });
 
             DB::commit();
 
@@ -90,10 +84,7 @@ class CoverLetterController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Cover letter creation failed: ' . $e->getMessage());
-
-            return back()
-                ->with('error', 'حدث خطأ أثناء إنشاء خطاب التغطية: ' . $e->getMessage())
-                ->withInput();
+            return back()->with('error', 'حدث خطأ أثناء إنشاء خطاب التغطية: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -105,7 +96,6 @@ class CoverLetterController extends Controller
         $coverLetter = CoverLetter::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
-
         return view('cover-letters.show', compact('coverLetter'));
     }
 
@@ -117,8 +107,6 @@ class CoverLetterController extends Controller
         $coverLetter = CoverLetter::where('id', $id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
-
-        $this->authorize('download', $coverLetter);
 
         $pdf = PDF::loadView('cover-letters.pdf', compact('coverLetter'), [], [
             'format'         => 'A4',
@@ -148,15 +136,15 @@ class CoverLetterController extends Controller
             'experiences' => [],
             'educations'  => [],
             'skills'      => [],
+            'uploaded_text' => '',
         ];
 
-        // استخراج السياق من سيرة ذاتية موجودة
+        // 1. إذا اختار سيرة ذاتية موجودة
         if ($request->filled('resume_id')) {
             $resume = Resume::where('id', $request->resume_id)
                 ->where('user_id', Auth::id())
                 ->with(['personalDetail', 'experiences', 'educations', 'skills'])
                 ->first();
-
             if ($resume && $resume->personalDetail) {
                 $context['full_name']   = $resume->personalDetail->full_name ?? '';
                 $context['job_title']   = $resume->personalDetail->job_title ?? '';
@@ -169,18 +157,76 @@ class CoverLetterController extends Controller
             }
         }
 
-        // استخراج النص من ملف مرفوع (PDF أو Word)
+        // 2. إذا رفع ملف – نحاول استخراج بيانات منظمة
         if ($request->hasFile('uploaded_file')) {
             $file = $request->file('uploaded_file');
-            $extractedText = $this->extractTextFromFile($file);
-            $context['uploaded_text'] = $extractedText;
+            $structuredData = $this->extractStructuredDataFromFile($file);
+            
+            if ($structuredData && !empty($structuredData['personal_details'])) {
+                // تحويل أي كائنات إلى مصفوفات
+                $pd = (array) $structuredData['personal_details'];
+                $context['full_name']   = $pd['full_name'] ?? $context['full_name'];
+                $context['job_title']   = $pd['job_title'] ?? $context['job_title'];
+                $context['email']       = $pd['email'] ?? $context['email'];
+                $context['phone']       = $pd['phone'] ?? $context['phone'];
+                $context['summary']     = $pd['summary'] ?? $context['summary'];
+                
+                $context['experiences'] = $this->toArray($structuredData['experiences'] ?? []);
+                $context['educations']  = $this->toArray($structuredData['educations'] ?? []);
+                $context['skills']      = $this->toArray($structuredData['skills'] ?? []);
+            } else {
+                $context['uploaded_text'] = $this->extractTextFromFile($file);
+            }
         }
 
         return $context;
     }
 
     /**
-     * استخراج النص من ملف PDF أو Word.
+     * تحويل البيانات (مصفوفة أو كائن) إلى مصفوفة.
+     */
+    protected function toArray($data): array
+    {
+        if (is_array($data)) {
+            // التأكد من تحويل العناصر الداخلية إذا كانت كائنات
+            return array_map(function($item) {
+                return is_object($item) ? (array) $item : $item;
+            }, $data);
+        }
+        if (is_object($data)) {
+            $array = (array) $data;
+            return array_map(function($item) {
+                return is_object($item) ? (array) $item : $item;
+            }, $array);
+        }
+        return [];
+    }
+
+    /**
+     * استخراج بيانات منظمة من ملف مرفوع باستخدام AiResumeController.
+     */
+    protected function extractStructuredDataFromFile($file): ?array
+    {
+        try {
+            $aiResumeController = app(AiResumeController::class);
+            $mockRequest = new \Illuminate\Http\Request();
+            $mockRequest->files->set('cv_file', $file);
+            $mockRequest->merge(['lang' => session('resume_language', 'ar')]);
+            
+            $response = $aiResumeController->parseFile($mockRequest);
+            $responseData = $response->getData();
+            
+            if ($responseData && ($responseData->success ?? false)) {
+                return (array) $responseData->data;
+            }
+        } catch (\Exception $e) {
+            Log::warning('Structured data extraction failed: ' . $e->getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * استخراج النص الخام من ملف PDF أو Word.
      */
     protected function extractTextFromFile($file): string
     {
@@ -196,13 +242,15 @@ class CoverLetterController extends Controller
                 Log::warning('Failed to extract text from PDF: ' . $e->getMessage());
             }
         } elseif (in_array($extension, ['doc', 'docx'])) {
-            // استخراج نص بسيط من ملفات Word (fallback)
             try {
                 $content = file_get_contents($file->getRealPath());
-                // تنظيف النص من الرموز غير المرئية
                 $content = preg_replace('/[\x00-\x1F\x7F-\xFF]/', '', $content);
+                if (strlen($content) < 50) {
+                    $content = 'لا يمكن استخراج النص من ملف Word بشكل تلقائي. يرجى رفع ملف PDF بدلاً من ذلك.';
+                }
             } catch (\Exception $e) {
                 Log::warning('Failed to extract text from Word: ' . $e->getMessage());
+                $content = 'حدث خطأ أثناء قراءة ملف Word. يرجى استخدام ملف PDF.';
             }
         }
 
@@ -210,102 +258,185 @@ class CoverLetterController extends Controller
     }
 
     /**
-     * توليد خطاب التغطية بالذكاء الاصطناعي.
-     *
-     * @param  \App\Models\CoverLetter  $coverLetter
-     * @param  array  $context
-     * @param  string  $language
-     * @param  string  $jobDescription
-     * @return string
+     * توليد خطاب التغطية باستخدام Cohere API.
      */
-    protected function generateWithAI(CoverLetter $coverLetter, array $context, string $language, string $jobDescription): string
+    protected function generateCoverLetterWithAI(array $context, string $targetJobTitle, ?string $companyName, string $jobDescription, string $language): string
     {
-        // ============================================================
-        // PLACEHOLDER: استبدل هذا بتنفيذك الفعلي للذكاء الاصطناعي
-        // ============================================================
-        // مثال على التكامل:
-        // $response = Http::withToken(config('services.openai.api_key'))
-        //     ->post('https://api.openai.com/v1/chat/completions', [
-        //         'model' => 'gpt-4',
-        //         'messages' => [
-        //             ['role' => 'system', 'content' => 'أنت كاتب خطابات تغطية محترف.'],
-        //             ['role' => 'user', 'content' => $this->buildPrompt($context, $jobDescription, $language)],
-        //         ],
-        //     ]);
-        // return $response->json('choices.0.message.content');
+        $langName = match($language) {
+            'ar' => 'Arabic (العربية)',
+            'fr' => 'French (الفرنسية)',
+            default => 'English (الإنجليزية)',
+        };
 
-        // محتوى افتراضي حتى يتم ربط الذكاء الاصطناعي
-        $name = $context['full_name'] ?: 'المرشح';
-        $jobTitle = $context['target_job_title'] ?? 'الوظيفة المستهدفة';
-        $company = $coverLetter->company_name ?: 'الشركة المحترمة';
+        // تحويل أي بيانات قد تكون كائنات إلى مصفوفات
+        $skills = $this->toArray($context['skills'] ?? []);
+        $experiences = $this->toArray($context['experiences'] ?? []);
+        $educations = $this->toArray($context['educations'] ?? []);
 
-        if ($language === 'ar') {
-            return "السادة في {$company}،
-
-تحية طيبة وبعد،
-
-أتقدم إليكم باسمي {$name} للتقدم لوظيفة {$jobTitle}. أتمنى أن أكون عند حسن ظنكم.
-
-أتمنى منكم التكرم بالنظر في طلبي.
-
-وتفضلوا بقبول فائق الاحترام والتقدير،
-{$name}";
-        } elseif ($language === 'fr') {
-            return "À l'attention de {$company},
-
-Madame, Monsieur,
-
-Je soussigné(e) {$name}, vous adresse ma candidature pour le poste de {$jobTitle}.
-
-Je reste à votre disposition pour un entretien.
-
-Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
-{$name}";
+        // بناء نص السياق
+        $contextText = "الاسم: {$context['full_name']}\n";
+        $contextText .= "المسمى الحالي: {$context['job_title']}\n";
+        $contextText .= "الملخص: {$context['summary']}\n";
+        
+        if (!empty($skills)) {
+            $contextText .= "المهارات: " . implode(', ', $skills) . "\n";
+        }
+        
+        if (!empty($experiences)) {
+            $contextText .= "الخبرات:\n";
+            foreach ($experiences as $exp) {
+                $contextText .= "- {$exp['position']} في {$exp['company']} ({$exp['start_date']} - {$exp['end_date']})\n";
+                if (!empty($exp['description'])) {
+                    $contextText .= "  المهام: {$exp['description']}\n";
+                }
+            }
+        }
+        
+        if (!empty($educations)) {
+            $contextText .= "التعليم:\n";
+            foreach ($educations as $edu) {
+                $contextText .= "- {$edu['degree']} في {$edu['field_of_study']} من {$edu['institution']} ({$edu['graduation_year']})\n";
+            }
+        }
+        
+        if (!empty($context['uploaded_text'])) {
+            $contextText .= "\nنص إضافي من الملف المرفوع:\n" . substr($context['uploaded_text'], 0, 1500);
         }
 
-        // English fallback
-        return "Dear Hiring Manager at {$company},
+        $prompt = "اكتب خطاب تغطية احترافي باللغة {$langName} بناءً على المعلومات التالية:\n\n";
+        $prompt .= "المرشح:\n{$contextText}\n";
+        $prompt .= "الوظيفة المستهدفة: {$targetJobTitle}\n";
+        if ($companyName) {
+            $prompt .= "اسم الشركة: {$companyName}\n";
+        }
+        if ($jobDescription) {
+            $prompt .= "وصف الوظيفة:\n{$jobDescription}\n";
+        }
+        $prompt .= "\n[تعليمات صارمة]:\n";
+        $prompt .= "- يجب أن يكون الخطاب بالكامل باللغة {$langName}.\n";
+        $prompt .= "- ابدأ بتاريخ اليوم (اختياري)، ثم تحية رسمية.\n";
+        $prompt .= "- أبرز المهارات والخبرات ذات الصلة بالوظيفة.\n";
+        $prompt .= "- عبر عن الحماس والقيمة التي سيقدمها المرشح.\n";
+        $prompt .= "- اختتم بعبارة شكر وتقدير.\n";
+        $prompt .= "- الطول المثالي: 200-300 كلمة.\n";
+        $prompt .= "- أخرج نص الخطاب فقط بدون أي إضافات.";
 
-I am writing to express my interest in the {$jobTitle} position.
+        try {
+            $response = Http::withToken(env('COHERE_API_KEY'))
+                ->timeout(45)
+                ->post('https://api.cohere.ai/v1/chat', [
+                    'model'       => 'command-r',
+                    'preamble'    => "أنت كاتب خطابات تغطية محترف. مهمتك كتابة خطاب مميز وجذاب.",
+                    'message'     => $prompt,
+                    'temperature' => 0.7,
+                    'max_tokens'  => 800,
+                ]);
 
-My name is {$name} and I believe I would be a great fit for this role.
+            if ($response->successful()) {
+                $generated = $response->json('text');
+                $generated = trim($generated);
+                if (strlen($generated) < 50) {
+                    throw new \Exception('النص المُولَّد قصير جدًا أو فارغ.');
+                }
+                return $generated;
+            }
 
-Thank you for your consideration.
+            Log::error('Cohere API error for cover letter', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
 
-Sincerely,
-{$name}";
+            throw new \Exception('فشل الاتصال بالذكاء الاصطناعي: ' . $response->body());
+
+        } catch (\Exception $e) {
+            Log::error('Cover letter AI exception: ' . $e->getMessage());
+            session()->flash('warning', 'تعذر استخدام الذكاء الاصطناعي، تم إنشاء خطاب أولي. حاول مرة أخرى لاحقاً.');
+            return $this->enhancedFallbackCoverLetter($context, $targetJobTitle, $companyName, $language);
+        }
     }
 
     /**
-     * بناء الـ Prompt للذكاء الاصطناعي (مستخدم عند التكامل الفعلي).
+     * خطاب احتياطي محسّن (يستخدم البيانات الحقيقية للمستخدم قدر الإمكان).
      */
-    protected function buildPrompt(array $context, string $jobDescription, string $language): string
+    protected function enhancedFallbackCoverLetter(array $context, string $targetJobTitle, ?string $companyName, string $language): string
     {
-        $prompt = "Write a professional cover letter.\n\n";
-        $prompt .= "Candidate: {$context['full_name']}\n";
-        $prompt .= "Current Title: {$context['job_title']}\n";
-        $prompt .= "Email: {$context['email']}\n";
-        $prompt .= "Phone: {$context['phone']}\n";
-        $prompt .= "Summary: {$context['summary']}\n";
+        $name = $context['full_name'] ?: 'المرشح';
+        $company = $companyName ?: 'الشركة المحترمة';
+        $jobTitle = $targetJobTitle;
+        
+        $skills = $this->toArray($context['skills'] ?? []);
+        $skillsList = !empty($skills) ? implode('، ', array_slice($skills, 0, 3)) : '';
+        
+        $experiences = $this->toArray($context['experiences'] ?? []);
+        $latestExp = !empty($experiences) ? $experiences[0] : null;
+        $expText = '';
+        if ($latestExp) {
+            $expText = "خبرتي كـ {$latestExp['position']} في {$latestExp['company']} " . 
+                       ($latestExp['description'] ? "حيث قمت بـ {$latestExp['description']}" : '');
+        }
 
-        if (!empty($context['experiences'])) {
-            $prompt .= "\nExperience:\n";
-            foreach ($context['experiences'] as $exp) {
-                $prompt .= "- {$exp['position']} at {$exp['company']} ({$exp['start_date']} to {$exp['end_date']})\n";
+        if ($language === 'ar') {
+            $body = "السادة في {$company}،
+
+تحية طيبة وبعد،
+
+أتقدم إليكم باسمي {$name} للتقدم لوظيفة {$jobTitle}. ";
+            
+            if ($expText) {
+                $body .= "أمتلك {$expText}. ";
             }
+            if ($skillsList) {
+                $body .= "كما أمتلك مهارات في: {$skillsList}. ";
+            }
+            if (empty($expText) && empty($skillsList) && !empty($context['uploaded_text'])) {
+                $body .= "أرفق معلومات إضافية من سيرتي الذاتية: " . substr($context['uploaded_text'], 0, 200) . ". ";
+            }
+            
+            $body .= "
+
+أؤمن بأن خبراتي ومهاراتي ستضيف قيمة كبيرة لفريقكم. أرفق سيرتي الذاتية وأتطلع إلى فرصة للمقابلة.
+
+وتفضلوا بقبول فائق الاحترام،
+{$name}";
+            return $body;
+        } 
+        elseif ($language === 'fr') {
+            $body = "À l'attention de {$company},
+
+Madame, Monsieur,
+
+Je soussigné(e) {$name}, vous adresse ma candidature pour le poste de {$jobTitle}. ";
+            if ($expText) {
+                $body .= "Je dispose d'une expérience en tant que {$latestExp['position']} chez {$latestExp['company']}. ";
+            }
+            if ($skillsList) {
+                $body .= "Mes compétences incluent : {$skillsList}. ";
+            }
+            $body .= "
+
+Je serais ravi de vous rencontrer pour discuter de ma motivation.
+
+Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+{$name}";
+            return $body;
         }
 
-        if (!empty($context['skills'])) {
-            $prompt .= "\nSkills: " . implode(', ', $context['skills']) . "\n";
+        // English
+        $body = "Dear Hiring Manager at {$company},
+
+I am writing to express my interest in the {$jobTitle} position. ";
+        if ($expText) {
+            $body .= "I have experience as a {$latestExp['position']} at {$latestExp['company']}. ";
         }
-
-        if ($jobDescription) {
-            $prompt .= "\nJob Description: {$jobDescription}\n";
+        if ($skillsList) {
+            $body .= "My skills include: {$skillsList}. ";
         }
+        $body .= "
 
-        $prompt .= "\nLanguage: {$language}\n";
-        $prompt .= "Keep it professional, concise, and tailored to the position.";
+I look forward to the opportunity to discuss how I can contribute to your team.
 
-        return $prompt;
+Sincerely,
+{$name}";
+        return $body;
     }
 }
