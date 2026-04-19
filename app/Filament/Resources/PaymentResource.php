@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 class PaymentResource extends Resource
 {
@@ -20,55 +22,62 @@ class PaymentResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('تفاصيل الدفع')
-                    ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->relationship('user', 'name')
-                            ->label('المستخدم')
-                            ->required()
-                            ->disabled(),
+public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\Section::make('تفاصيل الدفع')
+                ->schema([
+                    Forms\Components\Select::make('user_id')
+                        ->relationship('user', 'name')
+                        ->label('المستخدم')
+                        ->required()
+                        ->disabled(),
 
-                        Forms\Components\Select::make('plan_id')
-                            ->relationship('plan', 'name')
-                            ->label('الباقة')
-                            ->required()
-                            ->disabled(),
+                    Forms\Components\Select::make('plan_id')
+                        ->relationship('plan', 'name')
+                        ->label('الباقة')
+                        ->required()
+                        ->disabled(),
 
-                        Forms\Components\TextInput::make('amount')
-                            ->label('المبلغ')
-                            ->prefix('أوقية')
-                            ->disabled(),
+                    Forms\Components\TextInput::make('amount')
+                        ->label('المبلغ')
+                        ->prefix('أوقية')
+                        ->disabled(),
 
-                        Forms\Components\TextInput::make('currency')
-                            ->label('العملة')
-                            ->disabled(),
+                    Forms\Components\TextInput::make('currency')
+                        ->label('العملة')
+                        ->disabled(),
 
-                        Forms\Components\TextInput::make('payment_method')
-                            ->label('طريقة الدفع')
-                            ->disabled(),
+                    Forms\Components\TextInput::make('payment_method')
+                        ->label('طريقة الدفع')
+                        ->disabled(),
 
-                        Forms\Components\Select::make('status')
-                            ->options([
-                                'pending_manual' => 'قيد الانتظار',
-                                'completed' => 'مكتمل',
-                                'failed' => 'فشل',
-                            ])
-                            ->label('الحالة')
-                            ->required()
-                            ->default('pending_manual'),
+                    Forms\Components\Select::make('status')
+                        ->options([
+                            'pending_manual' => 'قيد الانتظار',
+                            'completed' => 'مكتمل',
+                            'failed' => 'فشل',
+                        ])
+                        ->label('الحالة')
+                        ->required()
+                        ->default('pending_manual'),
 
-                        Forms\Components\View::make('filament.forms.components.screenshot-preview')
-                            ->label('صورة التحويل')
-                            ->columnSpanFull()
-                            ->hidden(fn ($record) => !$record || !$record->screenshot_path),
-                    ])->columns(2),
-            ]);
-    }
-
+                    Forms\Components\Placeholder::make('screenshot_preview')
+                        ->label('صورة التحويل')
+                        ->content(function ($record) {
+                            if (!$record || !$record->screenshot_path) {
+                                return 'لا توجد صورة مرفوعة.';
+                            }
+                            $url = asset('storage/' . $record->screenshot_path);
+                            $html = "<img src='{$url}' style='max-width:300px; max-height:200px; border-radius:8px; border:1px solid #ddd;'><br><a href='{$url}' target='_blank' class='text-primary-600 underline'>فتح الصورة كاملة</a>";
+                            return new HtmlString($html);
+                        })
+                        ->columnSpanFull()
+                        ->hidden(fn ($record) => !$record || !$record->screenshot_path),
+                ])->columns(2),
+        ]);
+}
     public static function table(Table $table): Table
     {
         return $table
