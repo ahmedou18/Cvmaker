@@ -14,7 +14,6 @@
                 </div>
             @endif
 
-            {{-- رأس الصفحة مع أزرار الإجراءات --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-t-lg border-b">
                 <div class="p-6 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
@@ -28,37 +27,80 @@
                             تم الإنشاء: {{ $coverLetter->created_at->format('Y-m-d H:i') }}
                         </p>
                     </div>
-                    <div class="flex gap-3">
-                        <a
-                            href="{{ route('cover-letters.download', $coverLetter->id) }}"
-                            class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition"
-                        >
-                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            تحميل PDF
+                    <div class="flex gap-3 flex-wrap">
+                        <button type="button" id="editCoverLetterBtn" class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg font-bold hover:bg-yellow-700 transition">
+                            ✏️ تعديل الخطاب
+                        </button>
+                        <button type="button" id="saveCoverLetterBtn" style="display:none;" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">
+                            💾 حفظ التعديلات
+                        </button>
+                        <a href="{{ route('cover-letters.download', $coverLetter->id) }}" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">
+                            📄 تحميل PDF (الخطاب فقط)
                         </a>
-                        <a
-                            href="{{ route('cover-letters.create') }}"
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
-                        >
-                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            إنشاء خطاب جديد
+                        <a href="{{ route('cover-letters.combined-download', $coverLetter->id) }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition">
+                            📑 تحميل السيرة + الخطاب (ملف واحد)
+                        </a>
+                        <a href="{{ route('cover-letters.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">
+                            ➕ إنشاء خطاب جديد
                         </a>
                     </div>
                 </div>
             </div>
 
-            {{-- محتوى الخطاب --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-b-lg">
                 <div class="p-8">
-                    <div class="prose prose-lg max-w-none text-gray-800 whitespace-pre-line" dir="auto">
+                    {{-- وضع عرض عادي --}}
+                    <div id="displayContent" class="prose prose-lg max-w-none text-gray-800 whitespace-pre-line" dir="auto">
                         {!! nl2br(e($coverLetter->content)) !!}
                     </div>
+
+                    {{-- وضع التعديل (مخفي في البداية) --}}
+                    <textarea id="editContent" style="display:none;" rows="20" class="w-full border border-gray-300 rounded-lg p-4 font-sans text-gray-800">{{ $coverLetter->content }}</textarea>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        const editBtn = document.getElementById('editCoverLetterBtn');
+        const saveBtn = document.getElementById('saveCoverLetterBtn');
+        const displayDiv = document.getElementById('displayContent');
+        const editTextarea = document.getElementById('editContent');
+        const coverLetterId = {{ $coverLetter->id }};
+        const updateUrl = "{{ route('cover-letters.update', $coverLetter->id) }}";
+
+        editBtn.addEventListener('click', function() {
+            displayDiv.style.display = 'none';
+            editTextarea.style.display = 'block';
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-flex';
+        });
+
+        saveBtn.addEventListener('click', async function() {
+            const newContent = editTextarea.value;
+            try {
+                const response = await fetch(updateUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    displayDiv.innerHTML = newContent.replace(/\n/g, '<br>');
+                    displayDiv.style.display = 'block';
+                    editTextarea.style.display = 'none';
+                    editBtn.style.display = 'inline-flex';
+                    saveBtn.style.display = 'none';
+                    alert('تم حفظ التعديلات بنجاح');
+                } else {
+                    alert('حدث خطأ أثناء الحفظ');
+                }
+            } catch (error) {
+                alert('حدث خطأ تقني');
+            }
+        });
+    </script>
 </x-app-layout>

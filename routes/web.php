@@ -25,6 +25,8 @@ Route::get('/dashboard', function () {
 Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
+    Route::put('/cover-letters/{id}', [CoverLetterController::class, 'update'])->name('cover-letters.update');
+Route::get('/cover-letters/{id}/combined-download', [CoverLetterController::class, 'combinedDownload'])->name('cover-letters.combined-download');
     // Payment
     Route::get('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::post('/payment/online/{slug}', [App\Http\Controllers\PaymentController::class, 'processOnlinePayment'])->name('payment.online');

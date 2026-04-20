@@ -139,37 +139,34 @@ class CoverLetterController extends Controller
             'uploaded_text' => '',
         ];
 
-        // 1. إذا اختار سيرة ذاتية موجودة
         if ($request->filled('resume_id')) {
             $resume = Resume::where('id', $request->resume_id)
                 ->where('user_id', Auth::id())
                 ->with(['personalDetail', 'experiences', 'educations', 'skills'])
                 ->first();
             if ($resume && $resume->personalDetail) {
-                $context['full_name']   = $resume->personalDetail->full_name ?? '';
-                $context['job_title']   = $resume->personalDetail->job_title ?? '';
-                $context['email']       = $resume->personalDetail->email ?? '';
-                $context['phone']       = $resume->personalDetail->phone ?? '';
-                $context['summary']     = $resume->personalDetail->summary ?? '';
+                $context['full_name']   = $this->ensureString($resume->personalDetail->full_name ?? '');
+                $context['job_title']   = $this->ensureString($resume->personalDetail->job_title ?? '');
+                $context['email']       = $this->ensureString($resume->personalDetail->email ?? '');
+                $context['phone']       = $this->ensureString($resume->personalDetail->phone ?? '');
+                $context['summary']     = $this->ensureString($resume->personalDetail->summary ?? '');
                 $context['experiences'] = $resume->experiences->toArray();
                 $context['educations']  = $resume->educations->toArray();
                 $context['skills']      = $resume->skills->pluck('name')->toArray();
             }
         }
 
-        // 2. إذا رفع ملف – نحاول استخراج بيانات منظمة
         if ($request->hasFile('uploaded_file')) {
             $file = $request->file('uploaded_file');
             $structuredData = $this->extractStructuredDataFromFile($file);
             
             if ($structuredData && !empty($structuredData['personal_details'])) {
-                // تحويل أي كائنات إلى مصفوفات
                 $pd = (array) $structuredData['personal_details'];
-                $context['full_name']   = $pd['full_name'] ?? $context['full_name'];
-                $context['job_title']   = $pd['job_title'] ?? $context['job_title'];
-                $context['email']       = $pd['email'] ?? $context['email'];
-                $context['phone']       = $pd['phone'] ?? $context['phone'];
-                $context['summary']     = $pd['summary'] ?? $context['summary'];
+                $context['full_name']   = $this->ensureString($pd['full_name'] ?? $context['full_name']);
+                $context['job_title']   = $this->ensureString($pd['job_title'] ?? $context['job_title']);
+                $context['email']       = $this->ensureString($pd['email'] ?? $context['email']);
+                $context['phone']       = $this->ensureString($pd['phone'] ?? $context['phone']);
+                $context['summary']     = $this->ensureString($pd['summary'] ?? $context['summary']);
                 
                 $context['experiences'] = $this->toArray($structuredData['experiences'] ?? []);
                 $context['educations']  = $this->toArray($structuredData['educations'] ?? []);
@@ -183,12 +180,29 @@ class CoverLetterController extends Controller
     }
 
     /**
+     * دالة مساعدة لضمان تحويل أي قيمة (حتى لو كانت مصفوفة) إلى نص.
+     */
+    protected function ensureString($value): string
+    {
+        if (is_array($value)) {
+            $flattened = [];
+            array_walk_recursive($value, function($a) use (&$flattened) { 
+                $flattened[] = (string) $a; 
+            });
+            return implode('، ', $flattened);
+        }
+        if (is_object($value)) {
+            return method_exists($value, '__toString') ? (string) $value : json_encode($value, JSON_UNESCAPED_UNICODE);
+        }
+        return (string) $value;
+    }
+
+    /**
      * تحويل البيانات (مصفوفة أو كائن) إلى مصفوفة.
      */
     protected function toArray($data): array
     {
         if (is_array($data)) {
-            // التأكد من تحويل العناصر الداخلية إذا كانت كائنات
             return array_map(function($item) {
                 return is_object($item) ? (array) $item : $item;
             }, $data);
@@ -200,6 +214,74 @@ class CoverLetterController extends Controller
             }, $array);
         }
         return [];
+    }
+
+    /**
+     * تطبيع قائمة المهارات.
+     */
+    protected function normalizeSkills(array $skills): array
+    {
+        $normalized = [];
+        foreach ($skills as $skill) {
+            if (is_string($skill)) {
+                $normalized[] = $skill;
+            } elseif (is_array($skill) && isset($skill['name'])) {
+                $normalized[] = $this->ensureString($skill['name']);
+            } elseif (is_object($skill) && property_exists($skill, 'name')) {
+                $normalized[] = $this->ensureString($skill->name);
+            } elseif (is_array($skill) && !empty($skill)) {
+                foreach($skill as $s) {
+                   if (is_string($s)) $normalized[] = $s;
+                }
+            }
+        }
+        return array_unique(array_filter($normalized));
+    }
+
+    /**
+     * تطبيع قائمة الخبرات.
+     */
+    protected function normalizeExperiences(array $experiences): array
+    {
+        $normalized = [];
+        foreach ($experiences as $exp) {
+            if (is_object($exp)) {
+                $exp = (array) $exp;
+            }
+            if (is_array($exp)) {
+                $normalized[] = [
+                    'company'     => $this->ensureString($exp['company'] ?? ''),
+                    'position'    => $this->ensureString($exp['position'] ?? ''),
+                    'start_date'  => $this->ensureString($exp['start_date'] ?? ''),
+                    'end_date'    => $this->ensureString($exp['end_date'] ?? ''),
+                    'is_current'  => (bool) ($exp['is_current'] ?? false),
+                    'description' => $this->ensureString($exp['description'] ?? ''),
+                ];
+            }
+        }
+        return $normalized;
+    }
+
+    /**
+     * تطبيع قائمة المؤهلات الدراسية.
+     */
+    protected function normalizeEducations(array $educations): array
+    {
+        $normalized = [];
+        foreach ($educations as $edu) {
+            if (is_object($edu)) {
+                $edu = (array) $edu;
+            }
+            if (is_array($edu)) {
+                $normalized[] = [
+                    'institution'    => $this->ensureString($edu['institution'] ?? ''),
+                    'degree'         => $this->ensureString($edu['degree'] ?? ''),
+                    'field_of_study' => $this->ensureString($edu['field_of_study'] ?? ''),
+                    'graduation_year'=> $this->ensureString($edu['graduation_year'] ?? ''),
+                ];
+            }
+        }
+        return $normalized;
     }
 
     /**
@@ -268,10 +350,10 @@ class CoverLetterController extends Controller
             default => 'English (الإنجليزية)',
         };
 
-        // تحويل أي بيانات قد تكون كائنات إلى مصفوفات
-        $skills = $this->toArray($context['skills'] ?? []);
-        $experiences = $this->toArray($context['experiences'] ?? []);
-        $educations = $this->toArray($context['educations'] ?? []);
+        // تطبيع البيانات
+        $skills = $this->normalizeSkills($context['skills'] ?? []);
+        $experiences = $this->normalizeExperiences($context['experiences'] ?? []);
+        $educations = $this->normalizeEducations($context['educations'] ?? []);
 
         // بناء نص السياق
         $contextText = "الاسم: {$context['full_name']}\n";
@@ -322,10 +404,15 @@ class CoverLetterController extends Controller
         $prompt .= "- أخرج نص الخطاب فقط بدون أي إضافات.";
 
         try {
-            $response = Http::withToken(env('COHERE_API_KEY'))
+            $apiKey = env('COHERE_API_KEY');
+            if (empty($apiKey)) {
+                throw new \Exception('مفتاح Cohere API غير موجود في ملف .env');
+            }
+
+            $response = Http::withToken($apiKey)
                 ->timeout(45)
                 ->post('https://api.cohere.ai/v1/chat', [
-                    'model'       => 'command-r',
+                    'model'       => 'command-a-03-2025',  // نموذج مجاني ومستقر
                     'preamble'    => "أنت كاتب خطابات تغطية محترف. مهمتك كتابة خطاب مميز وجذاب.",
                     'message'     => $prompt,
                     'temperature' => 0.7,
@@ -346,10 +433,10 @@ class CoverLetterController extends Controller
                 'body'   => $response->body(),
             ]);
 
-            throw new \Exception('فشل الاتصال بالذكاء الاصطناعي: ' . $response->body());
+            throw new \Exception('فشل الاتصال بـ Cohere API: ' . $response->body());
 
         } catch (\Exception $e) {
-            Log::error('Cover letter AI exception: ' . $e->getMessage());
+            Log::error('Cover letter AI exception (Cohere): ' . $e->getMessage());
             session()->flash('warning', 'تعذر استخدام الذكاء الاصطناعي، تم إنشاء خطاب أولي. حاول مرة أخرى لاحقاً.');
             return $this->enhancedFallbackCoverLetter($context, $targetJobTitle, $companyName, $language);
         }
@@ -364,10 +451,10 @@ class CoverLetterController extends Controller
         $company = $companyName ?: 'الشركة المحترمة';
         $jobTitle = $targetJobTitle;
         
-        $skills = $this->toArray($context['skills'] ?? []);
+        $skills = $this->normalizeSkills($context['skills'] ?? []);
         $skillsList = !empty($skills) ? implode('، ', array_slice($skills, 0, 3)) : '';
         
-        $experiences = $this->toArray($context['experiences'] ?? []);
+        $experiences = $this->normalizeExperiences($context['experiences'] ?? []);
         $latestExp = !empty($experiences) ? $experiences[0] : null;
         $expText = '';
         if ($latestExp) {
@@ -439,4 +526,60 @@ Sincerely,
 {$name}";
         return $body;
     }
+
+    /**
+ * تحديث محتوى خطاب التغطية (بعد التعديل المباشر)
+ */
+public function update(Request $request, $id)
+{
+    $coverLetter = CoverLetter::where('id', $id)
+        ->where('user_id', Auth::id())
+        ->firstOrFail();
+
+    $request->validate([
+        'content' => 'required|string'
+    ]);
+
+    $coverLetter->update(['content' => $request->content]);
+
+    return response()->json(['success' => true]);
+}
+
+/**
+ * تنزيل ملف PDF يجمع السيرة الذاتية (الأحدث أو المختارة) وخطاب التغطية معاً
+ */
+public function combinedDownload($id)
+{
+    $coverLetter = CoverLetter::where('id', $id)
+        ->where('user_id', Auth::id())
+        ->firstOrFail();
+
+    // الحصول على السيرة الذاتية المرتبطة (إن وجدت) أو أحدث سيرة للمستخدم
+    $resume = Resume::where('user_id', Auth::id())
+        ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages'])
+        ->latest()
+        ->first();
+
+    if (!$resume) {
+        return back()->with('error', 'لا توجد سيرة ذاتية مسبقة لدمجها. يرجى إنشاء سيرة ذاتية أولاً.');
+    }
+
+    $data = [
+        'coverLetter' => $coverLetter,
+        'resume'      => $resume,
+    ];
+
+    $pdf = PDF::loadView('cover-letters.combined_pdf', $data, [], [
+        'format'         => 'A4',
+        'default_font'   => 'xbriyaz',
+        'directionality' => 'rtl',
+        'margin_left'    => 20,
+        'margin_right'   => 20,
+        'margin_top'     => 20,
+        'margin_bottom'  => 20,
+    ]);
+
+    $fileName = 'resume_and_cover_letter_' . time() . '.pdf';
+    return $pdf->download($fileName);
+}
 }
