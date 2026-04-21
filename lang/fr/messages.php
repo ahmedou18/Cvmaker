@@ -1,6 +1,76 @@
 <?php
 
 return [
+
+    // ... existing keys ...
+    
+    'dashboard_title' => 'Tableau de bord',
+    'welcome_back' => 'Bon retour, :name ! 👋',
+    'manage_resumes' => 'Ici, vous pouvez gérer vos CV, les modifier ou les télécharger à tout moment.',
+    'create_new_resume' => '+ Créer un nouveau CV',
+    'upgrade_to_create_more' => 'Upgrader pour en créer plus',
+    'priority_support' => 'Support prioritaire',
+    'cover_letter' => 'Lettre de motivation',
+    'cover_letter_desc' => 'Créez une lettre de motivation professionnelle par IA adaptée au poste visé.',
+    'create_cover_letter' => 'Nouvelle lettre',
+    'feature_only_paid' => 'Cette fonctionnalité est disponible uniquement dans les offres payantes.',
+    'upgrade_to_access' => 'Upgradez votre offre pour y accéder',
+    'support_code' => 'Votre code de vérification :',
+    'share_code_with_support' => 'Partagez ce code avec l\'équipe support pour vérifier votre identité',
+    'contact_whatsapp' => 'Contacter via WhatsApp',
+    'no_active_plan' => 'Aucun forfait actif',
+    'subscription_usage' => 'Utilisation de l\'abonnement',
+    'not_subscribed' => 'Vous n\'êtes abonné à aucun forfait pour le moment',
+    'limit_reached' => 'Vous avez atteint la limite maximale',
+    'remaining_cv' => ':count CV restant(s)',
+    'subscribe_to_create' => 'Abonnez-vous à un forfait pour créer des CV.',
+    'view_plans' => 'Voir les offres',
+    'used_of' => 'Vous avez utilisé <span class="font-semibold text-gray-800">:used</span> sur <span class="font-semibold text-gray-800">:limit</span> CV.',
+    'percent_used' => ':percent% utilisé',
+    'upgrade_plan' => 'Améliorer mon forfait',
+    'previous_resumes' => 'Vos CV précédents',
+    'start_from_scratch' => 'Commencer de zéro',
+    'max_reached' => 'Limite maximale atteinte',
+    'upgrade_now' => 'Améliorer maintenant',
+    'completed' => 'Complété',
+    'draft' => 'Brouillon',
+    'last_modified' => 'Dernière modification : :date',
+    'default_template' => 'Modèle : Défaut',
+    'view_edit' => 'Voir / Modifier',
+    'pdf' => 'PDF',
+    
+    'cover_letter_title' => 'Lettre de motivation',
+    'cover_letter_create_title' => 'Créer une lettre de motivation',
+    'cover_letter_subtitle' => 'Créer une lettre de motivation par IA',
+    'resume_source' => 'Source des données du CV',
+    'select_existing_resume' => 'Choisissez votre CV existant',
+    'or_upload_file' => 'Ou téléchargez un fichier (PDF / Word)',
+    'max_file_size' => 'Taille max : 5 Mo',
+    'target_job_title' => 'Intitulé du poste visé',
+    'target_job_title_placeholder' => 'ex : Ingénieur logiciel, Graphiste...',
+    'company_name' => 'Nom de l\'entreprise (optionnel)',
+    'company_name_placeholder' => 'ex : Aramco',
+    'job_description_or_url' => 'Description du poste ou lien',
+    'job_description_placeholder' => 'Collez la description du poste ici pour personnaliser la lettre...',
+    'or_enter_url' => 'Ou entrez le lien de l\'annonce :',
+    'language' => 'Langue de la lettre',
+    'cancel' => 'Annuler',
+    'generate_cover_letter' => 'Générer la lettre',
+    'cover_letter_for' => 'Lettre : :job_title',
+    'company' => 'Entreprise : :name',
+    'created_at' => 'Créé le : :date',
+    'download_pdf' => 'Télécharger PDF',
+    'create_new' => 'Nouvelle lettre',
+    'edit_cover_letter' => 'Modifier la lettre',
+    'save_changes' => '💾 Enregistrer les modifications',
+    'combined_download' => '📑 Télécharger CV + Lettre (un seul fichier)',
+    'cover_letter_footer' => 'Cette lettre a été créée par la plateforme Cvmaker',
+
+
+
+
+
+
     'page_title' => 'CVmaker | Créez votre CV intelligemment',
 
     'nav_dashboard' => 'Tableau de bord',
