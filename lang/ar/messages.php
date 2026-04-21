@@ -168,6 +168,113 @@ return [
 'next_fill_data' => 'التالي: ابدأ بتعبئة بياناتك 🚀',
 'alert_enter_job_title_first_skills' => 'أدخل المسمى الوظيفي أولاً',
 
+// Welcome page - Navigation
+'nav_how_it_works' => 'كيف يعمل؟',
+'nav_features' => 'المزايا',
+'nav_templates' => 'القوالب',
+'nav_pricing' => 'الأسعار',
+'nav_dashboard' => 'لوحة التحكم',
+'nav_login' => 'دخول',
+'nav_register' => 'ابدأ مجاناً',
+'btn_browse_templates' => 'استعرض النماذج',
+
+// Welcome page - Hero description
+'hero_description' => 'منصة تساعدك على إنشاء وتحسين سيرتك الذاتية بسرعة وبدون خبرة. قوالب احترافية، اقتراحات ذكية، وتحميل PDF فوري.',
+
+// Welcome page - Problem & Solution
+'problem_title' => 'المشكلة',
+'problem_heading' => 'لماذا يعاني الكثيرون في كتابة سيرتهم الذاتية؟',
+'problem_1' => 'كتابة CV صعبة: لا تعرف كيف تصف مهاراتك وإنجازاتك.',
+'problem_2' => 'لا تعرف الشكل الصحيح: تنسيق غير احترافي يقلل فرصك.',
+'problem_3' => 'تضيع وقتًا طويلاً: ساعات في التصميم والكتابة دون نتيجة مرضية.',
+'solution_title' => 'الحل',
+'solution_heading' => 'CVmaker يجعل العملية سهلة وسريعة',
+'solution_1' => 'قوالب احترافية: اختر من بين 20+ قالب عصري متوافق مع ATS.',
+'solution_2' => 'توليد CV بالذكاء الاصطناعي: اكتب بياناتك ودع الذكاء الاصطناعي يحسنها.',
+'solution_3' => 'تصحيح وتحسين النص: اقتراحات لتحسين الصياغة وإبراز نقاط قوتك.',
+
+// Welcome page - How it works
+'how_it_works_badge' => 'بسيط وسريع',
+'how_it_works_title' => 'كيف يعمل CVmaker؟',
+'how_it_works_subtitle' => 'ثلاث خطوات فقط لتحصل على سيرة ذاتية احترافية جاهزة للتحميل.',
+'step_1_title' => 'أدخل معلوماتك',
+'step_1_desc' => 'املأ الحقول الأساسية: الاسم، الخبرات، التعليم، والمهارات. الواجهة سهلة ومرنة.',
+'step_2_title' => 'دع الذكاء الاصطناعي يحسنها',
+'step_2_desc' => 'بنقرة واحدة، يقوم مساعدنا الذكي باقتراح تحسينات احترافية لعباراتك وإبراز إنجازاتك.',
+'step_3_title' => 'حمّل CV جاهز',
+'step_3_desc' => 'قم بتصدير سيرتك الذاتية بصيغة PDF عالية الجودة، جاهزة للتقديم على الوظائف.',
+'try_now_free' => 'جربها الآن مجاناً',
+
+// Welcome page - Features
+'features_badge' => 'مزايا قوية',
+'features_title' => 'كل ما تحتاجه لسيرة ذاتية مثالية',
+'features_subtitle' => 'أدوات احترافية تجعل سيرتك الذاتية تبرز بين المنافسين.',
+'feature_1_title' => 'قوالب حديثة',
+'feature_1_desc' => 'أكثر من 20 قالباً عصرياً متوافقاً مع أنظمة تتبع طلبات التوظيف (ATS).',
+'feature_2_title' => 'تصدير PDF',
+'feature_2_desc' => 'حمّل سيرتك الذاتية بصيغة PDF عالية الدقة بنقرة واحدة.',
+'feature_3_title' => 'دعم اللغات',
+'feature_3_desc' => 'أنشئ سيرتك الذاتية بالعربية، الإنجليزية، أو الفرنسية.',
+'feature_4_title' => 'تعديل سهل',
+'feature_4_desc' => 'محرر مرن يسمح لك بتعديل المحتوى والتنسيق في أي وقت.',
+'feature_5_title' => 'اقتراحات ذكية',
+'feature_5_desc' => 'الذكاء الاصطناعي يحلل مجالك ويقترح عبارات قوية.',
+'feature_6_title' => 'بدون علامة مائية',
+'feature_6_desc' => 'في الباقات المدفوعة، احصل على CV نظيف بدون علامات.',
+'feature_7_title' => 'تحليلات',
+'feature_7_desc' => 'اعرف مدى قوة سيرتك الذاتية ونصائح لتحسينها.',
+'feature_8_title' => 'دعم فني',
+'feature_8_desc' => 'فريق دعم متاح لمساعدتك في أي استفسار.',
+
+// Welcome page - Social Proof
+'trust_badge' => 'يثق بنا الآلاف',
+'trust_title' => 'انضم إلى أكثر من 15,000 محترف',
+'trust_subtitle' => 'حصلنا على تقييم 4.9 من 5 من قبل مستخدمينا الذين حصلوا على وظائف أحلامهم.',
+'testimonial_1_text' => '"أفضل موقع لصنع السيرة الذاتية. خلال 10 دقائق حصلت على CV احترافي وساعدني في الحصول على مقابلة."',
+'testimonial_1_name' => 'أحمد العلوي',
+'testimonial_1_title' => 'مهندس برمجيات',
+'testimonial_2_text' => '"الذكاء الاصطناعي ساعدني في صياغة خبراتي بشكل لم أتخيله. أنصح به بشدة."',
+'testimonial_2_name' => 'ليلى مراد',
+'testimonial_2_title' => 'مسوقة رقمية',
+'testimonial_3_text' => '"وفرت ساعات من التنسيق. الواجهة سهلة والقوالب أنيقة. شكراً CVmaker!"',
+'testimonial_3_name' => 'كريم بناني',
+'testimonial_3_title' => 'مدير مشاريع',
+
+// Welcome page - Templates Slider
+'templates_badge' => 'أكثر من 20 قالباً',
+'templates_title' => 'قوالب احترافية لكل مجال',
+'templates_subtitle' => 'اختر من بين تشكيلة واسعة من القوالب العصرية المصممة لتبرز خبراتك.',
+'template_preview' => 'معاينة القالب',
+'template_premium' => '💎 احترافي',
+'template_free' => '✅ مجاني',
+'btn_start_template' => 'ابدأ باختيار قالب',
+'no_templates_message' => 'لا توجد قوالب مضافة حالياً.',
+
+// Welcome page - Pricing (additional keys)
+'day' => 'يوم',
+'cv' => 'سيرة ذاتية',
+'ai_credits_label' => 'رصيد ذكاء اصطناعي',
+'no_ai_label' => 'بدون ذكاء اصطناعي',
+'no_watermark_label' => 'بدون علامة مائية',
+'with_watermark_label' => 'مع علامة مائية',
+'cover_letter_label' => 'رسالة تغطية (Cover Letter)',
+'priority_support_label' => 'دعم فني سريع',
+'normal_support_label' => 'دعم عادي',
+'upgrade_btn' => 'ترقية',
+'choose_plan_btn' => 'اختر الباقة',
+'free_plan_btn' => 'ابدأ مجاناً',
+
+// Welcome page - Final CTA
+'final_cta_title' => 'جاهز لإنشاء سيرتك الذاتية الاحترافية؟',
+'final_cta_subtitle' => 'انضم إلى آلاف الباحثين عن عمل الذين حصلوا على وظائفهم بفضل CVmaker.',
+'final_cta_btn' => 'أنشئ سيرتك الذاتية الآن 🚀',
+
+// Footer
+'footer_copyright' => 'جميع الحقوق محفوظة.',
+'footer_terms' => 'الشروط',
+'footer_privacy' => 'الخصوصية',
+'footer_contact' => 'تواصل معنا',
+
 // أضف هذه المفاتيح في نهاية المصفوفة
 'please_select_template_first' => 'يرجى اختيار قالب أولاً.',
 'max_resume_limit_reached' => 'لقد وصلت الحد الأقصى من السير الذاتية المسموح بها في باقتك الحالية (:limit سيرة ذاتية). يرجى ترقية باقتك لإنشاء سيرة ذاتية جديدة.',
