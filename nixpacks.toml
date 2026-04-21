@@ -1,0 +1,6 @@
+[phases.setup]
+nixPkgs = ["...", "php82Extensions.intl", "php82Extensions.gd", "php82Extensions.zip"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["composer install --ignore-platform-req=ext-zip --no-dev --optimize-autoloader"]
