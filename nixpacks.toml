@@ -1,6 +1,13 @@
 [phases.setup]
-nixPkgs = ["...", "php82Extensions.intl", "php82Extensions.gd", "php82Extensions.zip"]
+nixPkgs = ["...", "php82Extensions.intl", "php82Extensions.gd", "php82Extensions.zip", "nodejs"]
 
 [phases.install]
 dependsOn = ["setup"]
-cmds = ["composer install --ignore-platform-req=ext-zip --no-dev --optimize-autoloader"]
+cmds = [
+    "composer install --ignore-platform-req=ext-zip --ignore-platform-req=ext-gd --ignore-platform-req=ext-intl --no-dev --optimize-autoloader",
+    "npm install" # هذا السطر ضروري جداً لتثبيت Vite
+]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = ["npm run build"]
