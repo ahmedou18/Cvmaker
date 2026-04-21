@@ -1,7 +1,23 @@
 <?php
 
 return [
-    
+    // أضف هذه المفاتيح الجديدة:
+'back_to_dashboard' => 'العودة للوحة التحكم',
+'edit_data' => 'تعديل البيانات',
+'profile_photo' => 'صورة شخصية',
+'interests' => 'الاهتمامات',
+'rugby' => 'الرجبي',
+'qualities' => 'الصفات',
+'creative' => 'مبدع',
+'autonomous' => 'مستقل',
+'organized' => 'منظم',
+'professional_certifications' => 'المؤهلات المهنية',
+'certification_hmonp' => 'HMONP',
+'certification_hmonp_school' => 'المدرسة الوطنية العليا للعمارة بغرونوبل',
+'certification_date_range' => 'من 2010 حتى الآن',
+'certification_member_architect' => 'عضو في نقابة المهندسين المعماريين',
+'excellent' => 'ممتاز',
+'field_of_study' => 'مجال الدراسة:',
     // Dashboard
     'dashboard_title' => 'لوحة التحكم',
     'welcome_back' => 'أهلاً بك، :name! 👋',

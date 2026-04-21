@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight text-right" dir="rtl">
-            {{ __('خطاب التغطية') }}
+            {{ __('messages.cover_letter_title') }}
         </h2>
     </x-slot>
 
@@ -17,44 +17,27 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-t-lg border-b">
                 <div class="p-6 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
-                        <h3 class="text-xl font-bold text-gray-800">
-                            خطاب: {{ $coverLetter->target_job_title }}
-                        </h3>
+                        <h3 class="text-xl font-bold text-gray-800">{{ __('messages.cover_letter_for', ['job_title' => $coverLetter->target_job_title]) }}</h3>
                         @if($coverLetter->company_name)
-                            <p class="text-gray-500 mt-1">شركة: {{ $coverLetter->company_name }}</p>
+                            <p class="text-gray-500 mt-1">{{ __('messages.company', ['name' => $coverLetter->company_name]) }}</p>
                         @endif
-                        <p class="text-sm text-gray-400 mt-1">
-                            تم الإنشاء: {{ $coverLetter->created_at->format('Y-m-d H:i') }}
-                        </p>
+                        <p class="text-sm text-gray-400 mt-1">{{ __('messages.created_at', ['date' => $coverLetter->created_at->format('Y-m-d H:i')]) }}</p>
                     </div>
                     <div class="flex gap-3 flex-wrap">
-                        <button type="button" id="editCoverLetterBtn" class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg font-bold hover:bg-yellow-700 transition">
-                            ✏️ تعديل الخطاب
-                        </button>
-                        <button type="button" id="saveCoverLetterBtn" style="display:none;" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">
-                            💾 حفظ التعديلات
-                        </button>
-                        <a href="{{ route('cover-letters.download', $coverLetter->id) }}" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">
-                            📄 تحميل PDF (الخطاب فقط)
-                        </a>
-                        <a href="{{ route('cover-letters.combined-download', $coverLetter->id) }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition">
-                            📑 تحميل السيرة + الخطاب (ملف واحد)
-                        </a>
-                        <a href="{{ route('cover-letters.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">
-                            ➕ إنشاء خطاب جديد
-                        </a>
+                        <button type="button" id="editCoverLetterBtn" class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg font-bold hover:bg-yellow-700 transition">✏️ {{ __('messages.edit_cover_letter') }}</button>
+                        <button type="button" id="saveCoverLetterBtn" style="display:none;" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">{{ __('messages.save_changes') }}</button>
+                        <a href="{{ route('cover-letters.download', $coverLetter->id) }}" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">{{ __('messages.download_pdf') }}</a>
+                        <a href="{{ route('cover-letters.combined-download', $coverLetter->id) }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition">{{ __('messages.combined_download') }}</a>
+                        <a href="{{ route('cover-letters.create') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">{{ __('messages.create_new') }}</a>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-b-lg">
                 <div class="p-8">
-                    {{-- وضع عرض عادي --}}
                     <div id="displayContent" class="prose prose-lg max-w-none text-gray-800 whitespace-pre-line" dir="auto">
                         {!! nl2br(e($coverLetter->content)) !!}
                     </div>
-
-                    {{-- وضع التعديل (مخفي في البداية) --}}
                     <textarea id="editContent" style="display:none;" rows="20" class="w-full border border-gray-300 rounded-lg p-4 font-sans text-gray-800">{{ $coverLetter->content }}</textarea>
                 </div>
             </div>
@@ -81,10 +64,7 @@
             try {
                 const response = await fetch(updateUrl, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                     body: JSON.stringify({ content: newContent })
                 });
                 const data = await response.json();
@@ -94,12 +74,12 @@
                     editTextarea.style.display = 'none';
                     editBtn.style.display = 'inline-flex';
                     saveBtn.style.display = 'none';
-                    alert('تم حفظ التعديلات بنجاح');
+                    alert('{{ __("messages.saved_success") ?? "تم حفظ التعديلات بنجاح" }}');
                 } else {
-                    alert('حدث خطأ أثناء الحفظ');
+                    alert('{{ __("messages.save_error") ?? "حدث خطأ أثناء الحفظ" }}');
                 }
             } catch (error) {
-                alert('حدث خطأ تقني');
+                alert('{{ __("messages.save_error") ?? "حدث خطأ تقني" }}');
             }
         });
     </script>

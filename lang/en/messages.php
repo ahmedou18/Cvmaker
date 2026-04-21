@@ -2,7 +2,22 @@
 
 return [
 
-    
+    'back_to_dashboard' => 'Back to Dashboard',
+'edit_data' => 'Edit Data',
+'profile_photo' => 'Profile Photo',
+'interests' => 'Interests',
+'rugby' => 'Rugby',
+'qualities' => 'Qualities',
+'creative' => 'Creative',
+'autonomous' => 'Autonomous',
+'organized' => 'Organized',
+'professional_certifications' => 'Professional Certifications',
+'certification_hmonp' => 'HMONP',
+'certification_hmonp_school' => 'École Nationale Supérieure d’Architecture de Grenoble',
+'certification_date_range' => '2010 – present',
+'certification_member_architect' => 'Member of the Order of Architects',
+'excellent' => 'Excellent',
+'field_of_study' => 'Field of study:',
     'dashboard_title' => 'Dashboard',
     'welcome_back' => 'Welcome back, :name! 👋',
     'manage_resumes' => 'Here you can manage your resumes, edit them, or download them anytime.',

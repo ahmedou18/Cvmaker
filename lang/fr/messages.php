@@ -2,6 +2,23 @@
 
 return [
 
+    'back_to_dashboard' => 'Retour au tableau de bord',
+'edit_data' => 'Modifier les données',
+'profile_photo' => 'Photo de profil',
+'interests' => 'Centres d\'intérêt',
+'rugby' => 'Rugby',
+'qualities' => 'Qualités',
+'creative' => 'Créatif',
+'autonomous' => 'Autonome',
+'organized' => 'Organisé',
+'professional_certifications' => 'Habilitation professionnelle',
+'certification_hmonp' => 'HMONP',
+'certification_hmonp_school' => 'École Nationale Supérieure d’Architecture de Grenoble',
+'certification_date_range' => 'de 2010 à ce jour',
+'certification_member_architect' => 'Membre de l’Ordre des architectes',
+'excellent' => 'Excellent',
+'field_of_study' => 'Domaine d\'étude :',
+
     // ... existing keys ...
     
     'dashboard_title' => 'Tableau de bord',
