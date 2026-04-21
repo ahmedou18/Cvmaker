@@ -3,15 +3,6 @@ providers = ["php", "node"]
 [variables]
 NIXPACKS_NODE_VERSION = "22"
 
-[phases.setup]
-nixPkgs = [
-        "php82",
-            "php82Extensions.intl",
-                "php82Extensions.gd",
-                    "php82Extensions.zip",
-                        "php82Packages.composer"
-]
-
 [phases.install]
 cmds = [
         "composer install --ignore-platform-reqs --no-dev --optimize-autoloader",
