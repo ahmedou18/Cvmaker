@@ -14,13 +14,6 @@ class TemplateSeeder extends Seeder
 
         DB::table('templates')->insert([
             [
-                'name' => 'Classic',
-                'slug' => 'classic',
-                'thumbnail' => 'assets/images/templates/classic.png', 
-                'view_path' => 'templates.classic', // يشير إلى resources/views/templates/classic.blade.php
-                'is_premium' => false,
-            ],
-            [
                 'name' => 'Green Classic',
                 'slug' => 'green-classic',
                 'thumbnail' => 'assets/images/templates/green-classic.png',
@@ -35,18 +28,11 @@ class TemplateSeeder extends Seeder
                 'is_premium' => false,
             ],
             [
-                'name' => 'Modern',
-                'slug' => 'modern',
-                'thumbnail' => 'assets/images/templates/modern.png',
-                'view_path' => 'templates.modern', // يشير إلى resources/views/templates/modern.blade.php
-                'is_premium' => true, // يمكنك تغييره حسب رغبتك إذا كان مجانياً أم مدفوعاً
-            ],
-            [
-                'name' => 'Modern Split',
-                'slug' => 'modern-split',
-                'thumbnail' => 'assets/images/templates/modern-split.png',
-                'view_path' => 'templates.modern_split', // يشير إلى resources/views/templates/modern_split.blade.php
-                'is_premium' => true,
+                'name' => 'Modern Sidebar',
+                'slug' => 'modern-sidebar',
+                'thumbnail' => 'assets/images/templates/modern-sidebar.png',
+                'view_path' => 'templates.modern_sidebar', 
+                'is_premium' => false, // جعلتها مدفوعة كمثال، يمكنك تغييرها إلى false
             ]
         ]);
     }

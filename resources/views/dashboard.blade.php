@@ -14,7 +14,7 @@
                 $hasPrioritySupport = $user->plan?->priority_support ?? false;
                 $hasCoverLetterAccess = $user->plan?->has_cover_letter ?? false;
                 $supportCode = $user->getOrCreateSupportCode();
-                $whatsappNumber = '966500000000'; // ضع رقم واتساب الخاص بك هنا
+                $whatsappNumber = '22226121732'; // ضع رقم واتساب الخاص بك هنا
             @endphp
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
