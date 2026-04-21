@@ -1,3 +1,14 @@
+@php
+    $unreadCount = auth()->user()->unreadNotifications->count();
+    $notifications = auth()->user()->unreadNotifications->take(5)->map(function($n) {
+        return [
+            'id' => $n->id,
+            'message' => $n->data['message'] ?? __('messages.no_message', [], app()->getLocale()),
+            'created_at' => $n->created_at->diffForHumans()
+        ];
+    });
+@endphp
+
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -29,16 +40,8 @@
                 <div class="relative mr-4"
                      x-data="{
                         open: false,
-                        unreadCount: {{ auth()->user()->unreadNotifications->count() }},
-                        notifications: @json(
-                            auth()->user()->unreadNotifications->take(5)->map(function($n) {
-                                return [
-                                    'id' => $n->id,
-                                    'message' => $n->data['message'] ?? __('messages.no_message', [], app()->getLocale()),
-                                    'created_at' => $n->created_at->diffForHumans()
-                                ];
-                            })
-                        ),
+                        unreadCount: {{ $unreadCount }},
+                        notifications: {{ Js::from($notifications) }},
                         markAsRead(notificationId) {
                             fetch('/notifications/' + notificationId + '/mark-as-read', {
                                 method: 'POST',
