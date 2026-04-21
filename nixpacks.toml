@@ -2,7 +2,10 @@
 nixPkgs = ["php82", "php82Extensions.intl", "php82Extensions.gd", "php82Extensions.zip", "nodejs_22"]
 
 [phases.install]
-cmds = ["composer install --ignore-platform-reqs", "npm install"]
+cmds = [
+      "composer install --ignore-platform-reqs --no-dev --optimize-autoloader",
+        "npm install"
+]
 
 [phases.build]
 cmds = ["npm run build"]
