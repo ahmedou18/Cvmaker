@@ -1,11 +1,17 @@
+[providers]
+php = true
+node = true
+
 [phases.setup]
-nixPkgs = ["php82", "php82Extensions.intl", "php82Extensions.gd", "php82Extensions.zip", "nodejs_22"]
+nixPkgs = ["php82", "php82Extensions.intl", "php82Extensions.gd", "php82Extensions.zip", "nodejs_22", "composer"]
 
 [phases.install]
+dependsOn = ["setup"]
 cmds = [
       "composer install --ignore-platform-reqs --no-dev --optimize-autoloader",
-        "npm install"
+          "npm install"
 ]
 
 [phases.build]
+dependsOn = ["install"]
 cmds = ["npm run build"]
