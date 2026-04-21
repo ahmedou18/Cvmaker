@@ -15,5 +15,6 @@ cmds = [
 
 [phases.build]
 dependsOn = ["install"]
-cmds = ["npm run build"]
+cmds = [
+        "npm run build"
 ]
