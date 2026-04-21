@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختر قالب السيرة الذاتية - CVmaker</title>
+    <title>{{ __('messages.choose_template_title', [], app()->getLocale()) }} - CVmaker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style> body { font-family: 'Cairo', sans-serif; background-color: #f3f4f6; } </style>
@@ -12,14 +12,14 @@
 
     <div class="max-w-6xl mx-auto mb-6">
         <a href="{{ route('dashboard') }}" class="text-gray-500 hover:text-blue-600 font-bold flex items-center gap-2 transition-colors">
-            <span class="text-xl">&rarr;</span> عودة للوحة التحكم
+            <span class="text-xl">&rarr;</span> {{ __('messages.back_to_dashboard', [], app()->getLocale()) }}
         </a>
     </div>
 
     <div class="max-w-6xl mx-auto">
         <div class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">الخطوة الأولى: اختر قالب سيرتك الذاتية</h1>
-            <p class="text-lg text-gray-600">اختر التصميم الذي يعبر عنك، وسنقوم بتوجيهك لتعبئة بياناتك مباشرة.</p>
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">{{ __('messages.choose_template_heading', [], app()->getLocale()) }}</h1>
+            <p class="text-lg text-gray-600">{{ __('messages.choose_template_subheading', [], app()->getLocale()) }}</p>
         </div>
 
         <form action="{{ route('resumes.start') }}" method="POST">
@@ -36,7 +36,7 @@
                             @if($template->thumbnail)
                                 <img src="{{ asset($template->thumbnail) }}" alt="{{ $template->name }}" class="w-full h-full object-cover">
                             @else
-                                <div class="w-full h-full flex items-center justify-center text-gray-400 font-semibold">صورة القالب قريباً</div>
+                                <div class="w-full h-full flex items-center justify-center text-gray-400 font-semibold">{{ __('messages.template_image_soon', [], app()->getLocale()) }}</div>
                             @endif
                             
                             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
@@ -45,9 +45,9 @@
                         <div class="p-5 text-center border-t border-gray-100">
                             <h3 class="text-xl font-bold text-gray-900">{{ $template->name }}</h3>
                             @if($template->is_premium)
-                                <span class="inline-block mt-3 text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full font-bold shadow-sm">💎 قالب احترافي</span>
+                                <span class="inline-block mt-3 text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full font-bold shadow-sm">💎 {{ __('messages.premium_template', [], app()->getLocale()) }}</span>
                             @else
-                                <span class="inline-block mt-3 text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold">✅ مجاني</span>
+                                <span class="inline-block mt-3 text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold">✅ {{ __('messages.free_template', [], app()->getLocale()) }}</span>
                             @endif
                         </div>
                         
@@ -59,23 +59,25 @@
                 @empty
                     <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-200">
                         <span class="text-6xl mb-4 block">🛠️</span>
-                        <h3 class="text-2xl font-bold text-gray-800">لا توجد قوالب مضافة بعد!</h3>
-                        <p class="text-gray-500 mt-2">يرجى إضافة قوالب إلى قاعدة البيانات (جدول templates) أولاً.</p>
+                        <h3 class="text-2xl font-bold text-gray-800">{{ __('messages.no_templates', [], app()->getLocale()) }}</h3>
+                        <p class="text-gray-500 mt-2">{{ __('messages.add_templates_first', [], app()->getLocale()) }}</p>
                     </div>
                 @endforelse
             </div>
-<div class="mt-8 mb-4 max-w-sm mx-auto bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-    <label class="block text-gray-700 font-bold mb-2 text-center">اختر لغة السيرة الذاتية:</label>
-    <select name="resume_language" class="w-full border-gray-300 rounded-lg p-3 text-gray-700 focus:ring-blue-500 focus:border-blue-500">
-        <option value="ar">العربية (Arabic)</option>
-        <option value="en">الإنجليزية (English)</option>
-        <option value="fr">الفرنسية (French)</option>
-    </select>
-</div>
+
+            <div class="mt-8 mb-4 max-w-sm mx-auto bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <label class="block text-gray-700 font-bold mb-2 text-center">{{ __('messages.choose_resume_language', [], app()->getLocale()) }}</label>
+                <select name="resume_language" class="w-full border-gray-300 rounded-lg p-3 text-gray-700 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="ar">{{ __('messages.arabic', [], app()->getLocale()) }}</option>
+                    <option value="en">{{ __('messages.english', [], app()->getLocale()) }}</option>
+                    <option value="fr">{{ __('messages.french', [], app()->getLocale()) }}</option>
+                </select>
+            </div>
+
             @if($templates->count() > 0)
             <div class="mt-12 text-center sticky bottom-8 z-10">
                 <button type="submit" class="bg-blue-600 text-white font-bold py-4 px-12 rounded-full shadow-xl hover:bg-blue-700 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 text-xl border-4 border-white">
-                    التالي: ابدأ بتعبئة بياناتك 🚀
+                    {{ __('messages.next_fill_data', [], app()->getLocale()) }} 🚀
                 </button>
             </div>
             @endif

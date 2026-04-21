@@ -3,7 +3,6 @@
     @include('resumes.partials.styles')
 
     @php
-        // بيانات فارغة للإنشاء
         $initialData = [
             'full_name' => old('full_name', ''),
             'job_title' => old('job_title', ''),
@@ -14,7 +13,7 @@
             'skills' => '',
             'educations' => [['id' => time(), 'institution' => '', 'degree' => '', 'field_of_study' => '', 'graduation_year' => '']],
             'experiences' => [['id' => time(), 'company' => '', 'position' => '', 'start_date' => '', 'end_date' => '', 'is_current' => false, 'description' => '']],
-            'languages' => [['id' => time(), 'name' => '', 'proficiency' => 'متوسط']],
+            'languages' => [['id' => time(), 'name' => '', 'proficiency' => __('messages.intermediate', [], $currentLang)]],
             'extra_sections' => [],
             'existingPhoto' => '',
         ];
@@ -24,27 +23,27 @@
         <div class="max-w-[1400px] mx-auto px-4 lg:px-8">
             <div class="flex flex-col lg:flex-row gap-10">
                 
-                @include('resumes.partials.steps-sidebar', ['title' => 'بناء السيرة'])
+                @include('resumes.partials.steps-sidebar', ['title' => __('messages.build_resume', [], $currentLang), 'currentLang' => $currentLang])
 
                 <main class="w-full lg:w-3/4">
                     <form action="{{ route('resume.store') }}" method="POST" enctype="multipart/form-data" id="mainResumeForm">
                         @csrf
                         <input type="hidden" name="extra_sections" :value="JSON.stringify(extra_sections)">
 
-                        @include('resumes.partials.step-personal', ['isEdit' => false])
-                        @include('resumes.partials.step-education')
-                        @include('resumes.partials.step-experience')
-                        @include('resumes.partials.step-skills-summary')
-                        @include('resumes.partials.step-languages')
-                        @include('resumes.partials.step-final')
+                        @include('resumes.partials.step-personal', ['isEdit' => false, 'currentLang' => $currentLang])
+                        @include('resumes.partials.step-education', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-experience', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-skills-summary', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-languages', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-final', ['currentLang' => $currentLang])
 
-                        @include('resumes.partials.navigation-buttons', ['submitText' => 'حفظ ونشر السيرة ✅'])
+                        @include('resumes.partials.navigation-buttons', ['submitText' => __('messages.save_publish', [], $currentLang), 'currentLang' => $currentLang])
                     </form>
                 </main>
             </div>
         </div>
 
-        @include('resumes.partials.cropper-modal')
+        @include('resumes.partials.cropper-modal', ['currentLang' => $currentLang])
         <x-plans-modal x-show="showPlansModal" x-cloak x-transition close-action="@click='showPlansModal = false'" />
     </div>
 
@@ -52,5 +51,6 @@
         'isEdit' => false,
         'nameLocked' => false,
         'nameChangesLeft' => null,
+        'currentLang' => $currentLang,
     ])
 </x-app-layout>

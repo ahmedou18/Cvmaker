@@ -2,14 +2,14 @@
     <div class="sticky top-8">
         <div class="mb-6 px-2">
             <h1 class="text-2xl font-black text-gray-900 italic">
-                {{ $title ?? 'بناء السيرة' }}
+                {{ __('messages.build_resume', [], $currentLang) }}
             </h1>
             <div class="flex justify-between items-center mt-2">
                 <p class="text-sm text-blue-600 font-bold">
-                    الخطوة <span x-text="step"></span> من <span x-text="maxStep"></span>
+                    {{ __('messages.step', [], $currentLang) }} <span x-text="step"></span> {{ __('messages.of', [], $currentLang) }} <span x-text="maxStep"></span>
                 </p>
                 <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 font-bold">
-                    الرصيد: <span x-text="aiCredits"></span> ✨
+                    {{ __('messages.credits', [], $currentLang) }}: <span x-text="aiCredits"></span> ✨
                 </span>
             </div>
         </div>

@@ -66,17 +66,19 @@ class ResumeController extends Controller
     // التحقق من أن المستخدم اختار قالباً مسبقاً
     if (!session()->has('selected_template_id')) {
         return redirect()->route('templates.choose')
-            ->with('warning', 'يرجى اختيار قالب أولاً.');
+            ->with('warning', __('messages.please_select_template_first'));
     }
 
     if (!auth()->user()->can('create', Resume::class)) {
         $limit = auth()->user()->plan?->cv_limit ?? 0;
         return redirect()->route('dashboard')
-            ->with('error', "لقد وصلت الحد الأقصى من السير الذاتية المسموح بها في باقتك الحالية ({$limit} سيرة ذاتية). يرجى ترقية باقتك لإنشاء سيرة ذاتية جديدة.");
+            ->with('error', __('messages.max_resume_limit_reached', ['limit' => $limit]));
     }
 
     $plans = Plan::where('is_active', true)->get();
-    return view('resumes.create', compact('plans'));
+    $currentLang = session('resume_language', app()->getLocale());
+
+    return view('resumes.create', compact('plans', 'currentLang'));
 }
 
     public function show($uuid)
