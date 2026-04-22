@@ -11,25 +11,6 @@ use App\Http\Controllers\PlanController;
 use App\Models\Template;
 use App\Http\Controllers\NotificationController; // إضافة جديدة للإشعارات
 
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-
-Route::get('/create-admin-xyz', function () {
-    try {
-        $user = User::updateOrCreate(
-            ['email' => 'kmed2498@gmail.com'], // بريدك
-            [
-                'name' => 'AhmedouMed',
-                'password' => Hash::make('Ahmedounaje72021'), // كلمة المرور الجديدة
-                'email_verified_at' => now(),
-                'ai_credits_balance' => 100, // إضافة رصيد تجريبي
-            ]
-        );
-        return "تم إنشاء المستخدم بنجاح: " . $user->email;
-    } catch (\Exception $e) {
-        return "خطأ أثناء الإنشاء: " . $e->getMessage();
-    }
-});
 
 Route::get('/', function () {
     $plans = Plan::all();
