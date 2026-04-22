@@ -7,11 +7,14 @@
             'created_at' => $n->created_at->diffForHumans()
         ];
     });
+    $locale = app()->getLocale();
+    $isRtl = $locale === 'ar';
 @endphp
 
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ mobileMenuOpen: false }" class="bg-white border-b border-gray-100">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
+            {{-- الشعار والروابط الرئيسية --}}
             <div class="flex">
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
@@ -19,25 +22,27 @@
                     </a>
                 </div>
 
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex" dir="ltr">
+                {{-- روابط سطح المكتب (اتجاه تلقائي) --}}
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex" :dir="'{{ $isRtl ? 'rtl' : 'ltr' }}'">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('messages.nav_dashboard', [], app()->getLocale()) }}
+                        {{ __('messages.nav_dashboard', [], $locale) }}
                     </x-nav-link>
                 </div>
             </div>
 
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                {{-- Language Switcher --}}
-                <div class="flex items-center gap-1 text-sm font-semibold ml-4">
-                    <a href="{{ route('lang.switch', 'ar') }}" class="px-2 py-1 {{ app()->getLocale() == 'ar' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-indigo-600' }}">AR</a>
+            {{-- الجانب الأيمن (لغة، إشعارات، مستخدم) --}}
+            <div class="hidden sm:flex sm:items-center {{ $isRtl ? 'sm:mr-auto' : 'sm:ml-auto' }}">
+                {{-- مبدل اللغة --}}
+                <div class="flex items-center gap-1 text-sm font-semibold {{ $isRtl ? 'ml-4' : 'mr-4' }}">
+                    <a href="{{ route('lang.switch', 'ar') }}" class="px-2 py-1 {{ $locale == 'ar' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-indigo-600' }}">AR</a>
                     <span class="text-gray-300">|</span>
-                    <a href="{{ route('lang.switch', 'en') }}" class="px-2 py-1 {{ app()->getLocale() == 'en' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-indigo-600' }}">EN</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="px-2 py-1 {{ $locale == 'en' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-indigo-600' }}">EN</a>
                     <span class="text-gray-300">|</span>
-                    <a href="{{ route('lang.switch', 'fr') }}" class="px-2 py-1 {{ app()->getLocale() == 'fr' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-indigo-600' }}">FR</a>
+                    <a href="{{ route('lang.switch', 'fr') }}" class="px-2 py-1 {{ $locale == 'fr' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-indigo-600' }}">FR</a>
                 </div>
 
-                {{-- Notifications Component --}}
-                <div class="relative mr-4"
+                {{-- مكون الإشعارات (مع إصلاح عدم الفتح التلقائي) --}}
+                <div class="relative {{ $isRtl ? 'mr-4' : 'ml-4' }}"
                      x-data="{
                         open: false,
                         unreadCount: {{ $unreadCount }},
@@ -70,7 +75,8 @@
                                 }
                             });
                         }
-                     }">
+                     }"
+                     x-init="open = false">
                     <button @click="open = !open"
                             class="relative text-gray-600 hover:text-blue-600 transition-colors p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,14 +92,14 @@
                     <div x-show="open"
                          @click.away="open = false"
                          x-transition
-                         class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-2"
-                         dir="rtl">
+                         class="absolute {{ $isRtl ? 'left-0' : 'right-0' }} mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-2"
+                         :dir="'{{ $isRtl ? 'rtl' : 'ltr' }}'">
                         <div class="flex justify-between items-center px-4 py-2 border-b">
-                            <h4 class="font-bold text-sm">{{ __('messages.notifications', [], app()->getLocale()) }}</h4>
+                            <h4 class="font-bold text-sm">{{ __('messages.notifications', [], $locale) }}</h4>
                             <button x-show="notifications.length > 0"
                                     @click="markAllAsRead()"
                                     class="text-xs text-blue-600 hover:underline">
-                                {{ __('messages.mark_all_read', [], app()->getLocale()) }}
+                                {{ __('messages.mark_all_read', [], $locale) }}
                             </button>
                         </div>
                         <div class="max-h-80 overflow-y-auto">
@@ -106,7 +112,7 @@
                                                 <span class="text-[10px] text-gray-400" x-text="notification.created_at"></span>
                                             </div>
                                             <button @click="markAsRead(notification.id)"
-                                                    class="text-blue-500 hover:text-blue-700 text-xs mr-2">
+                                                    class="text-blue-500 hover:text-blue-700 text-xs {{ $isRtl ? 'mr-2' : 'ml-2' }}">
                                                 ✓
                                             </button>
                                         </div>
@@ -114,18 +120,19 @@
                                 </div>
                             </template>
                             <p x-show="notifications.length === 0" class="px-4 py-6 text-center text-xs text-gray-400">
-                                {{ __('messages.no_notifications', [], app()->getLocale()) }}
+                                {{ __('messages.no_notifications', [], $locale) }}
                             </p>
                         </div>
                         <div class="border-t px-4 py-2">
                             <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline">
-                                {{ __('messages.view_all_notifications', [], app()->getLocale()) }}
+                                {{ __('messages.view_all_notifications', [], $locale) }}
                             </a>
                         </div>
                     </div>
                 </div>
 
-                <x-dropdown align="right" width="48">
+                {{-- القائمة المنسدلة للمستخدم --}}
+                <x-dropdown align="{{ $isRtl ? 'left' : 'right' }}" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
@@ -139,35 +146,37 @@
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('messages.profile', [], app()->getLocale()) }}
+                            {{ __('messages.profile', [], $locale) }}
                         </x-dropdown-link>
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault(); this.closest('form').submit();">
-                                {{ __('messages.logout', [], app()->getLocale()) }}
+                                {{ __('messages.logout', [], $locale) }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
                 </x-dropdown>
             </div>
 
+            {{-- زر القائمة للجوال --}}
             <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path :class="{'hidden': mobileMenuOpen, 'inline-flex': !mobileMenuOpen}" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path :class="{'hidden': !mobileMenuOpen, 'inline-flex': mobileMenuOpen}" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
         </div>
     </div>
 
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+    {{-- قائمة الجوال --}}
+    <div :class="{'block': mobileMenuOpen, 'hidden': !mobileMenuOpen}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('messages.nav_dashboard', [], app()->getLocale()) }}
+                {{ __('messages.nav_dashboard', [], $locale) }}
             </x-responsive-nav-link>
         </div>
         <div class="pt-4 pb-1 border-t border-gray-200">
@@ -177,13 +186,13 @@
             </div>
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('messages.profile', [], app()->getLocale()) }}
+                    {{ __('messages.profile', [], $locale) }}
                 </x-responsive-nav-link>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <x-responsive-nav-link :href="route('logout')"
                             onclick="event.preventDefault(); this.closest('form').submit();">
-                        {{ __('messages.logout', [], app()->getLocale()) }}
+                        {{ __('messages.logout', [], $locale) }}
                     </x-responsive-nav-link>
                 </form>
             </div>

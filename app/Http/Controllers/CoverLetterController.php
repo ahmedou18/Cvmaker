@@ -27,67 +27,64 @@ class CoverLetterController extends Controller
      * حفظ خطاب التغطية وتوليد المحتوى بالذكاء الاصطناعي.
      */
     public function store(Request $request)
-    {
-        $request->validate([
-            'resume_id'          => 'nullable|exists:resumes,id',
-            'uploaded_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
-            'target_job_title'   => 'required|string|max:255',
-            'company_name'       => 'nullable|string|max:255',
-            'job_description'    => 'nullable|string',
-            'job_description_url'=> 'nullable|url',
-            'language'           => 'required|in:ar,en,fr',
-        ]);
+{
+    $request->validate([
+        'resume_id'          => 'nullable|exists:resumes,id',
+        'uploaded_file'      => 'nullable|file|mimes:pdf,doc,docx|max:5120',
+        'target_job_title'   => 'required|string|max:255',
+        'company_name'       => 'nullable|string|max:255',
+        'job_description'    => 'nullable|string',
+        'job_description_url'=> 'nullable|url',
+        'language'           => 'required|in:ar,en,fr',
+    ]);
 
-        if (!$request->filled('resume_id') && !$request->hasFile('uploaded_file')) {
-            return back()->withErrors(['uploaded_file' => 'يرجى اختيار سيرة ذاتية موجودة أو رفع ملف (PDF/Word).'])->withInput();
-        }
-
-        $user = Auth::user();
-        if ($user->ai_credits_balance <= 0) {
-            return back()->withErrors(['error' => 'رصيد الذكاء الاصطناعي غير كافٍ. يرجى الاشتراك في باقة أو تجديد رصيدك.'])->withInput();
-        }
-
-        $context = $this->extractContext($request);
-
-        DB::beginTransaction();
-
-        try {
-            $coverLetter = CoverLetter::create([
-                'user_id'          => $user->id,
-                'target_job_title' => $request->target_job_title,
-                'company_name'     => $request->company_name,
-                'content'          => '',
-            ]);
-
-            $generatedContent = $this->generateCoverLetterWithAI(
-                context: $context,
-                targetJobTitle: $request->target_job_title,
-                companyName: $request->company_name,
-                jobDescription: $request->job_description ?? $request->job_description_url ?? '',
-                language: $request->language
-            );
-
-            $coverLetter->update(['content' => $generatedContent]);
-
-            DB::transaction(function () use ($user) {
-                $user = $user->fresh();
-                if ($user->ai_credits_balance > 0) {
-                    $user->decrement('ai_credits_balance');
-                }
-            });
-
-            DB::commit();
-
-            return redirect()->route('cover-letters.show', $coverLetter->id)
-                ->with('success', 'تم إنشاء خطاب التغطية بنجاح! 🎉');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Cover letter creation failed: ' . $e->getMessage());
-            return back()->with('error', 'حدث خطأ أثناء إنشاء خطاب التغطية: ' . $e->getMessage())->withInput();
-        }
+    if (!$request->filled('resume_id') && !$request->hasFile('uploaded_file')) {
+        return back()->withErrors(['uploaded_file' => 'يرجى اختيار سيرة ذاتية موجودة أو رفع ملف (PDF/Word).'])->withInput();
     }
 
+    $user = Auth::user();
+
+    // ✅ التحقق من صلاحية إنشاء خطاب تغطية (الباقة تدعم الميزة والرصيد > 0)
+    if (!$user->can('create', CoverLetter::class)) {
+        return back()->withErrors(['error' => 'لا تملك صلاحية إنشاء خطاب تغطية. تأكد من أن باقتك تدعم هذه الميزة ولديك رصيد كافٍ.'])->withInput();
+    }
+
+    $context = $this->extractContext($request);
+
+    DB::beginTransaction();
+
+    try {
+        $coverLetter = CoverLetter::create([
+            'user_id'          => $user->id,
+            'target_job_title' => $request->target_job_title,
+            'company_name'     => $request->company_name,
+            'content'          => '',
+        ]);
+
+        $generatedContent = $this->generateCoverLetterWithAI(
+            context: $context,
+            targetJobTitle: $request->target_job_title,
+            companyName: $request->company_name,
+            jobDescription: $request->job_description ?? $request->job_description_url ?? '',
+            language: $request->language
+        );
+
+        $coverLetter->update(['content' => $generatedContent]);
+
+        // ✅ خصم من رصيد خطابات التغطية (وليس رصيد AI)
+        $user->decrement('cover_letters_balance');
+
+        DB::commit();
+
+        return redirect()->route('cover-letters.show', $coverLetter->id)
+            ->with('success', 'تم إنشاء خطاب التغطية بنجاح! 🎉');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Cover letter creation failed: ' . $e->getMessage());
+        return back()->with('error', 'حدث خطأ أثناء إنشاء خطاب التغطية: ' . $e->getMessage())->withInput();
+    }
+}
     /**
      * عرض خطاب التغطية المُولد.
      */

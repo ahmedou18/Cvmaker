@@ -35,7 +35,7 @@ class Plan extends Model
      * Get the display price with currency
      */
     public function getFormattedPriceAttribute(): string
-    {
-        return number_format($this->price, 2) . ' ر.س';
-    }
+{
+    return number_format($this->price, 2) . ' MRU';
+}
 }

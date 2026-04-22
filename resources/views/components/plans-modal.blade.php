@@ -7,7 +7,8 @@
 <div {{ $attributes->merge(['class' => 'no-print fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md']) }}>
     <div @click.stop class="bg-white rounded-[2rem] shadow-2xl w-full max-w-6xl overflow-hidden relative max-h-[95vh] flex flex-col">
         
-        <button type="button" {!! $closeAction !!} class="absolute top-6 left-6 z-10 text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 rounded-full p-2 transition-all duration-300">
+        {{-- زر الإغلاق مع onclick صحيح --}}
+        <button type="button" onclick="{!! $closeAction !!}" class="absolute top-6 left-6 z-10 text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 rounded-full p-2 transition-all duration-300">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 

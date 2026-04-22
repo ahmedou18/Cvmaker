@@ -222,8 +222,8 @@
     </div>
 
     <div id="plansModal" style="display: none;">
-        <x-plans-modal closeAction="closePlansModal()" :resumeUuid="null" />
-    </div>
+    <x-plans-modal closeAction="closePlansModal()" :resumeUuid="null" :currentLang="app()->getLocale()" />
+</div>
 
     <script>
         function openPlansModal() { const modal = document.getElementById('plansModal'); if (modal) { modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; } }
