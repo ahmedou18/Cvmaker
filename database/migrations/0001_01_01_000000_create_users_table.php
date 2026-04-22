@@ -21,7 +21,7 @@ return new class extends Migration
 
             // --- حقول نظام الباقات والرصيد ---
             // ربط المستخدم بباقة (Nullable لأن المستخدم قد لا يشترك فوراً)
-            $table->foreignId('plan_id')->nullable()->constrained('plans')->onDelete('set null');
+           // $table->foreignId('plan_id')->nullable()->constrained('plans')->onDelete('set null');
             
             // رصيد الذكاء الاصطناعي (تم حل التعارض باستخدام ai_credits_balance)
             $table->integer('ai_credits_balance')->default(3); // 3 رصيد مجاني عند التسجيل
