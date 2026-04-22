@@ -7,8 +7,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Filament\Models\Contracts\FilamentUser; // أضف هذا السطر
+use Filament\Panel; // أضف هذا السطر
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
 
@@ -104,4 +106,10 @@ class User extends Authenticatable
     {
         return $this->plan?->has_cover_letter ?? false;
     }
+
+    public function canAccessPanel(Panel $panel): bool
+{
+    // السماح بالوصول لبريدك الإلكتروني الشخصي فقط
+    return $this->email === 'kmed2498@gmail.com';
+}
 }
