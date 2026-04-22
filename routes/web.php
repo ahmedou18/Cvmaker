@@ -10,6 +10,20 @@ use App\Http\Controllers\AiResumeController;
 use App\Http\Controllers\PlanController;
 use App\Models\Template;
 use App\Http\Controllers\NotificationController; // إضافة جديدة للإشعارات
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+
+Route::get('/setup-admin', function () {
+    // تأكد من تغيير هذه البيانات لبياناتك الخاصة
+    $user = User::create([
+        'name' => 'Ahmedou Med',
+        'email' => 'kmed2498@gmail.com', // ضع بريدك هنا
+        'password' => Hash::make('Ahmedounaje72021'), // ضع كلمة مرور قوية هنا
+    ]);
+
+    return "Admin created successfully!";
+});
 
 Route::get('/', function () {
     $plans = Plan::all();
