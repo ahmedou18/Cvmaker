@@ -9,23 +9,17 @@ use Illuminate\Support\Facades\DB;
 class PlanSeeder extends Seeder
 {
     public function run(): void
-    {
-        // التعرف على نوع قاعدة البيانات وتغيير أمر الحماية بناءً عليه
-        if (DB::getDriverName() === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = OFF;');
-        } else {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        }
+{
+    // تعطيل الحماية في PostgreSQL
+    if (DB::getDriverName() === 'pgsql') {
+        DB::statement('SET CONSTRAINTS ALL DEFERRED;');
+    } elseif (DB::getDriverName() === 'sqlite') {
+        DB::statement('PRAGMA foreign_keys = OFF;');
+    } else {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+    }
 
-        // مسح البيانات القديمة
-        Plan::truncate();
-
-        if (DB::getDriverName() === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = ON;');
-        } else {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        }
-
+    Plan::truncate();
         $plans = [
             [
                 'name' => 'باقة الفرصة الواحدة',
