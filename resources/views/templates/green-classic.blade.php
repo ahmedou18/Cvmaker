@@ -1,8 +1,11 @@
 @php 
     $profile = $resume->personalDetail; 
+    $user = auth()->user();
+    $canDownload = $user && $user->plan && $user->plan->price > 0;
+    $resumeLanguage = $resume->resume_language;
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $resume->resume_language }}" dir="{{ in_array($resume->resume_language, ['ar']) ? 'rtl' : 'ltr' }}">
+<html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <title>{{ $profile->full_name ?? 'سيرة ذاتية' }} - CV</title>
@@ -13,7 +16,7 @@
             theme: {
                 extend: {
                     colors: {
-                        theme: '#1b7a5a', /* اللون الأخضر الداكن المطابق للصورة */
+                        theme: '#1b7a5a',
                     }
                 }
             }
@@ -24,35 +27,12 @@
         .modal-active { overflow: hidden; }
         .whitespace-pre-line { white-space: pre-line; }
 
-        /* ====== إعدادات الطباعة الاحترافية ====== */
         @media print {
-            @page {
-                margin: 0; 
-                size: A4 portrait;
-            }
-            
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .no-print, .no-print * {
-                display: none !important;
-            }
-
-            body {
-                background-color: white !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            .print-container {
-                padding: 2.5rem !important; 
-                max-width: 100% !important;
-                width: 100% !important;
-            }
-
-            /* ضمان ظهور اللون الأخضر في العناوين أثناء الطباعة */
+            @page { margin: 0; size: A4 portrait; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .no-print, .no-print * { display: none !important; }
+            body { background-color: white !important; margin: 0 !important; padding: 0 !important; }
+            .print-container { padding: 2.5rem !important; max-width: 100% !important; width: 100% !important; }
             .bg-theme { background-color: #1b7a5a !important; color: white !important; }
             .text-theme { color: #1b7a5a !important; }
         }
@@ -74,15 +54,13 @@
                     </svg>
                     تعديل البيانات
                 </a>
-                @if(auth()->check() && auth()->user()->hasActivePlan())
-                    {{-- إذا كان المستخدم مشتركاً، افتح نافذة الطباعة مباشرة --}}
+                @if($canDownload)
                     <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
                         تحميل كـ PDF
                     </button>
                 @else
-                    {{-- إذا لم يكن مشتركاً، افتح المودال الخاص بالباقات --}}
-                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
-                        تحميل كـ PDF
+                    <button onclick="openModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
+                        رقّي باقتك لتحميل السيرة
                     </button>
                 @endif
             </div>
@@ -91,12 +69,12 @@
 
     {{-- الإسم --}}
     <header class="mb-8 text-center break-inside-avoid">
-        <h1 class="text-[2.2rem] text-gray-900 font-bold uppercase">{{ $profile->full_name ?? __('messages.full_name', [], $resume->resume_language) }}</h1>
+        <h1 class="text-[2.2rem] text-gray-900 font-bold uppercase">{{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}</h1>
     </header>
 
     {{-- المعلومات الشخصية --}}
     <section class="mb-6 break-inside-avoid">
-        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.personal_info', [], $resume->resume_language) ?? 'Informations personnelles' }}</h2>
+        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.personal_info', [], $resumeLanguage) ?? 'Informations personnelles' }}</h2>
         <div class="border border-gray-400 border-t-0 p-4 flex flex-wrap sm:flex-nowrap justify-between gap-4">
             <div class="flex-1 grid grid-cols-[150px_1fr] gap-y-3 text-[13px]">
                 @if($profile->email)
@@ -123,7 +101,7 @@
     {{-- الملخص المهني --}}
     @if($profile && $profile->summary)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.summary', [], $resume->resume_language) ?? 'Profil' }}</h2>
+        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.summary', [], $resumeLanguage) ?? 'Profil' }}</h2>
         <div class="border border-gray-400 border-t-0 p-4">
             <p class="text-gray-900 leading-relaxed text-[13px] text-justify whitespace-pre-line">{{ $profile->summary }}</p>
         </div>
@@ -133,7 +111,7 @@
     {{-- الخبرات العملية --}}
     @if($resume->experiences->count() > 0)
     <section class="mb-6">
-        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium break-inside-avoid">{{ __('messages.experience', [], $resume->resume_language) ?? 'Expérience professionnelle' }}</h2>
+        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium break-inside-avoid">{{ __('messages.experience', [], $resumeLanguage) ?? 'Expérience professionnelle' }}</h2>
         <div class="border border-gray-400 border-t-0 p-4 space-y-5">
             @foreach($resume->experiences as $exp)
             <div class="flex flex-col sm:flex-row gap-4 text-[13px] break-inside-avoid">
@@ -144,7 +122,7 @@
                             @if($exp->end_date)
                                 - {{ \Carbon\Carbon::parse($exp->end_date)->format('M Y') }}
                             @elseif($exp->is_current)
-                                - {{ __('messages.present', [], $resume->resume_language) }}
+                                - {{ __('messages.present', [], $resumeLanguage) }}
                             @endif
                         </span>
                     @endif
@@ -165,7 +143,7 @@
     {{-- المؤهلات الدراسية --}}
     @if($resume->educations->count() > 0)
     <section class="mb-6">
-        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium break-inside-avoid">{{ __('messages.education', [], $resume->resume_language) ?? 'Formation' }}</h2>
+        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium break-inside-avoid">{{ __('messages.education', [], $resumeLanguage) ?? 'Formation' }}</h2>
         <div class="border border-gray-400 border-t-0 p-4 space-y-4">
             @foreach($resume->educations as $edu)
             <div class="flex flex-col sm:flex-row gap-4 text-[13px] break-inside-avoid">
@@ -184,20 +162,15 @@
     </section>
     @endif
 
-    {{-- الأقسام الإضافية (ديناميكية معالجة JSON) --}}
+    {{-- الأقسام الإضافية --}}
     @php
-        $extraSections = is_string($resume->extra_sections) 
-                         ? json_decode($resume->extra_sections, true) 
-                         : $resume->extra_sections;
+        $extraSections = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : $resume->extra_sections;
     @endphp
-
     @if(!empty($extraSections) && is_array($extraSections))
         @foreach($extraSections as $section)
             @if(!empty($section['title']) && !empty($section['content']))
             <section class="mb-6 break-inside-avoid">
-                <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">
-                    {{ $section['title'] }}
-                </h2>
+                <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ $section['title'] }}</h2>
                 <div class="border border-gray-400 border-t-0 p-4">
                     <div class="text-[13px] text-gray-900 leading-relaxed whitespace-pre-line">{!! nl2br(e($section['content'])) !!}</div>
                 </div>
@@ -209,7 +182,7 @@
     {{-- المهارات --}}
     @if($resume->skills->count() > 0)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.skills', [], $resume->resume_language) ?? 'Qualités' }}</h2>
+        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.skills', [], $resumeLanguage) ?? 'Qualités' }}</h2>
         <div class="border border-gray-400 border-t-0 p-4">
             <ul class="flex flex-col gap-2">
                 @foreach($resume->skills as $skill)
@@ -226,7 +199,7 @@
     {{-- اللغات --}}
     @if($resume->languages->count() > 0)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.languages', [], $resume->resume_language) ?? 'Langues' }}</h2>
+        <h2 class="bg-theme text-white px-4 py-1.5 text-lg font-medium">{{ __('messages.languages', [], $resumeLanguage) ?? 'Langues' }}</h2>
         <div class="border border-gray-400 border-t-0 p-4">
             <ul class="flex flex-col gap-2">
                 @foreach($resume->languages as $lang)
@@ -241,7 +214,7 @@
     @endif
 
     {{-- مودال الباقات --}}
-    <x-plans-modal id="plansModal" class="hidden" close-action="onclick='closeModal()'" :resume-uuid="$resume->uuid" />
+    <x-plans-modal id="plansModal" class="hidden" close-action="onclick='closeModal()'" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
 
     <script>
         function openModal() {

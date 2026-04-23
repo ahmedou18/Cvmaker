@@ -45,22 +45,27 @@ class ResumeController extends Controller
     // --------------------------------------------------------
 
     public function downloadPdf($uuid)
-    {
-        $resume = Resume::where('uuid', $uuid)
-            ->where('user_id', auth()->id()) // Security: Ensure user owns this resume
-            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages'])
-            ->firstOrFail();
+{
+    $resume = Resume::where('uuid', $uuid)
+        ->where('user_id', auth()->id())
+        ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages'])
+        ->firstOrFail();
 
-        $pdf = PDF::loadView('resumes.pdf_template', compact('resume'), [], [
-            'format' => 'A4',
-            'default_font' => 'xbriyaz',
-            'directionality' => 'rtl',
-        ]);
+    // التحقق من صلاحية التحميل (مستخدم + خطة مدفوعة)
+    $this->authorize('download', $resume);
 
-        $fileName = 'resume_' . time() . '.pdf';
-        return $pdf->download($fileName);
-    }
+    $user = auth()->user();
+    $removeWatermark = $user->plan && $user->plan->remove_watermark; // true إذا كانت الباقة تزيل العلامة
 
+    $pdf = PDF::loadView('resumes.pdf_template', compact('resume', 'removeWatermark'), [], [
+        'format' => 'A4',
+        'default_font' => 'xbriyaz',
+        'directionality' => 'rtl',
+    ]);
+
+    $fileName = 'resume_' . time() . '.pdf';
+    return $pdf->download($fileName);
+}
     public function create()
 {
     // التحقق من أن المستخدم اختار قالباً مسبقاً

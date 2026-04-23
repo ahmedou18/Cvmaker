@@ -72,22 +72,30 @@
             </div>
         </div>
 
-        {{-- قائمة الجوال (بسيطة وعملية) --}}
-        <div x-show="mobileMenuOpen" x-cloak class="md:hidden bg-white border-t border-slate-100 shadow-xl absolute w-full">
-            <div class="flex flex-col p-6 gap-4 text-base font-semibold text-slate-700">
-                <a href="#how-it-works" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_how_it_works') }}</a>
-                <a href="#features" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_features') }}</a>
-                <a href="#templates" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_templates') }}</a>
-                <a href="#pricing" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_pricing') }}</a>
-                <hr class="border-slate-100 my-2">
-                @auth
-                <a href="{{ route('dashboard') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_dashboard') }}</a>
-                @else
-                <a href="{{ route('login') }}" class="text-center p-2">{{ __('messages.nav_login') }}</a>
-                <a href="{{ route('register') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_register') }}</a>
-                @endauth
-            </div>
+        {{-- قائمة الجوال (بسيطة وعملية + مبدل اللغة) --}}
+<div x-show="mobileMenuOpen" x-cloak class="md:hidden bg-white border-t border-slate-100 shadow-xl absolute w-full">
+    <div class="flex flex-col p-6 gap-4 text-base font-semibold text-slate-700">
+        <a href="#how-it-works" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_how_it_works') }}</a>
+        <a href="#features" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_features') }}</a>
+        <a href="#templates" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_templates') }}</a>
+        <a href="#pricing" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_pricing') }}</a>
+
+        {{-- مبدل اللغة للهاتف (نمط كبسولة) --}}
+        <div class="flex items-center justify-center bg-slate-100/50 rounded-full p-1 border border-slate-200/50 w-fit mx-auto my-2">
+            <a href="{{ route('lang.switch', 'ar') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'ar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">AR</a>
+            <a href="{{ route('lang.switch', 'en') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'en' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">EN</a>
+            <a href="{{ route('lang.switch', 'fr') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'fr' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">FR</a>
         </div>
+
+        <hr class="border-slate-100 my-2">
+        @auth
+        <a href="{{ route('dashboard') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_dashboard') }}</a>
+        @else
+        <a href="{{ route('login') }}" class="text-center p-2">{{ __('messages.nav_login') }}</a>
+        <a href="{{ route('register') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_register') }}</a>
+        @endauth
+    </div>
+</div>
     </nav>
 
     {{-- Hero Section --}}

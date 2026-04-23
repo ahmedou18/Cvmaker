@@ -5,7 +5,7 @@
     <title>سيرة ذاتية - {{ $resume->personalDetail->full_name ?? '' }}</title>
     <style>
         body {
-            font-family: 'xbriyaz', sans-serif; /* خط مدعوم افتراضياً في mPDF للعربية */
+            font-family: 'xbriyaz', sans-serif;
             direction: rtl;
             text-align: right;
             color: #333;
@@ -13,7 +13,7 @@
             line-height: 1.6;
         }
         
-        /* تنسيقات الهيدر الجديد */
+        /* تنسيقات الهيدر */
         .header-table {
             width: 100%;
             border-bottom: 2px solid #2c3e50;
@@ -73,6 +73,30 @@
             margin-bottom: 8px;
             font-size: 13px;
         }
+        
+        {{-- إضافة العلامة المائية (نص خلفي) إذا كانت الخطة لا تسمح بإزالتها --}}
+        @if(!$removeWatermark)
+            @page {
+                margin: 1cm;
+            }
+            body::after {
+                content: "Cvmaker - نموذج تجريبي";
+                position: fixed;
+                top: 50%;
+                left: 0;
+                right: 0;
+                bottom: auto;
+                text-align: center;
+                font-size: 40px;
+                font-weight: bold;
+                color: rgba(0,0,0,0.07);
+                transform: rotate(-45deg);
+                pointer-events: none;
+                z-index: -1;
+                white-space: pre;
+                letter-spacing: 4px;
+            }
+        @endif
     </style>
 </head>
 <body>

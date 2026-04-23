@@ -1,50 +1,29 @@
 @php 
     $profile = $resume->personalDetail; 
+    $user = auth()->user();
+    $canDownload = $user && $user->plan && $user->plan->price > 0;
+    $resumeLanguage = $resume->resume_language;
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $resume->resume_language }}" dir="{{ in_array($resume->resume_language, ['ar']) ? 'rtl' : 'ltr' }}">
+<html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
     <title>{{ $profile->full_name ?? 'سيرة ذاتية' }} - Minimalist CV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* استخدام خط قريب من الموجود في الصورة (Geometric Sans) */
         body { font-family: 'Century Gothic', 'Cairo', sans-serif; background-color: white; color: #000; }
         .modal-active { overflow: hidden; }
         .whitespace-pre-line { white-space: pre-line; }
-        
-        /* تنسيق القوائم النقطية لتطابق الصورة */
         .bullet-list { list-style-type: disc; padding-inline-start: 1.5rem; }
         .bullet-list li { margin-bottom: 0.25rem; }
 
-        /* ====== إعدادات الطباعة الاحترافية ====== */
         @media print {
-            @page {
-                margin: 0; 
-                size: A4 portrait;
-            }
-            
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .no-print, .no-print * {
-                display: none !important;
-            }
-
-            body {
-                background-color: white !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            /* تعويض الهوامش المفقودة داخل ورقة الطباعة نفسها */
-            .print-container {
-                padding: 2.5rem !important; 
-                max-width: 100% !important;
-            }
+            @page { margin: 0; size: A4 portrait; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .no-print, .no-print * { display: none !important; }
+            body { background-color: white !important; margin: 0 !important; padding: 0 !important; }
+            .print-container { padding: 2.5rem !important; max-width: 100% !important; }
         }
     </style>
 </head>
@@ -61,15 +40,13 @@
                 <a href="{{ route('resume.edit', $resume->uuid) }}" class="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 flex items-center transition rounded">
                     تعديل البيانات
                 </a>
-                @if(auth()->check() && auth()->user()->hasActivePlan())
-                    {{-- إذا كان المستخدم مشتركاً، افتح نافذة الطباعة مباشرة --}}
+                @if($canDownload)
                     <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
                         تحميل كـ PDF
                     </button>
                 @else
-                    {{-- إذا لم يكن مشتركاً، افتح المودال الخاص بالباقات --}}
-                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
-                        تحميل كـ PDF
+                    <button onclick="openModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
+                        رقّي باقتك لتحميل السيرة
                     </button>
                 @endif
             </div>
@@ -79,10 +56,10 @@
     {{-- الترويسة العلوية --}}
     <header class="mb-8 border-b-2 border-black pb-4 text-center break-inside-avoid">
         <h1 class="text-4xl font-bold uppercase tracking-widest mb-1">
-            {{ $profile->full_name ?? __('messages.full_name', [], $resume->resume_language) }}
+            {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
         </h1>
         <p class="text-lg uppercase tracking-widest text-gray-600 mb-4">
-            {{ $profile->job_title ?? __('messages.job_title', [], $resume->resume_language) }}
+            {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
         </p>
         
         <div class="text-[12px] flex flex-wrap justify-center gap-x-4 gap-y-1 text-gray-700">
@@ -101,7 +78,7 @@
     {{-- الملف الشخصي --}}
     @if($profile && $profile->summary)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="text-xl font-bold mb-2">{{ __('messages.summary', [], $resume->resume_language) ?? 'Profile' }}</h2>
+        <h2 class="text-xl font-bold mb-2">{{ __('messages.summary', [], $resumeLanguage) ?? 'Profile' }}</h2>
         <p class="text-[13px] leading-relaxed text-justify whitespace-pre-line">{!! nl2br(e($profile->summary)) !!}</p>
     </section>
     @endif
@@ -109,7 +86,7 @@
     {{-- المهارات --}}
     @if($resume->skills->count() > 0)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="text-xl font-bold mb-2">{{ __('messages.skills', [], $resume->resume_language) ?? 'Skills' }}</h2>
+        <h2 class="text-xl font-bold mb-2">{{ __('messages.skills', [], $resumeLanguage) ?? 'Skills' }}</h2>
         <p class="text-[13px] leading-relaxed">
             {{ $resume->skills->pluck('name')->implode(' • ') }}
         </p>
@@ -119,7 +96,7 @@
     {{-- التكوين / التعليم --}}
     @if($resume->educations->count() > 0)
     <section class="mb-6">
-        <h2 class="text-xl font-bold mb-3">{{ __('messages.education', [], $resume->resume_language) ?? 'Education' }}</h2>
+        <h2 class="text-xl font-bold mb-3">{{ __('messages.education', [], $resumeLanguage) ?? 'Education' }}</h2>
         <div class="flex flex-col gap-4">
             @foreach($resume->educations as $edu)
             <div class="break-inside-avoid">
@@ -141,7 +118,7 @@
     {{-- الخبرات المهنية --}}
     @if($resume->experiences->count() > 0)
     <section class="mb-6">
-        <h2 class="text-xl font-bold mb-3">{{ __('messages.experience', [], $resume->resume_language) ?? 'Experience' }}</h2>
+        <h2 class="text-xl font-bold mb-3">{{ __('messages.experience', [], $resumeLanguage) ?? 'Experience' }}</h2>
         <div class="flex flex-col gap-5">
             @foreach($resume->experiences as $exp)
             <div class="break-inside-avoid">
@@ -153,7 +130,7 @@
                             @if($exp->end_date)
                                 {{ \Carbon\Carbon::parse($exp->end_date)->format('M Y') }}
                             @elseif($exp->is_current)
-                                {{ __('messages.present', [], $resume->resume_language) }}
+                                {{ __('messages.present', [], $resumeLanguage) }}
                             @endif
                         </span>
                     @endif
@@ -171,7 +148,7 @@
     {{-- اللغات --}}
     @if($resume->languages->count() > 0)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="text-xl font-bold mb-2">{{ __('messages.languages', [], $resume->resume_language) ?? 'Languages' }}</h2>
+        <h2 class="text-xl font-bold mb-2">{{ __('messages.languages', [], $resumeLanguage) ?? 'Languages' }}</h2>
         <ul class="bullet-list text-[13px]">
             @foreach($resume->languages as $lang)
                 <li><strong>{{ $lang->name }}</strong> - {{ $lang->proficiency }}</li>
@@ -180,13 +157,10 @@
     </section>
     @endif
 
-    {{-- الأقسام الإضافية (ديناميكية معالجة JSON) --}}
+    {{-- الأقسام الإضافية --}}
     @php
-        $extraSections = is_string($resume->extra_sections) 
-                         ? json_decode($resume->extra_sections, true) 
-                         : $resume->extra_sections;
+        $extraSections = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : $resume->extra_sections;
     @endphp
-
     @if(!empty($extraSections) && is_array($extraSections))
         @foreach($extraSections as $section)
             @if(!empty($section['title']) && !empty($section['content']))
@@ -201,7 +175,7 @@
     @endif
 
     {{-- مودال الباقات --}}
-    <x-plans-modal id="plansModal" class="hidden" close-action="onclick='closeModal()'" :resume-uuid="$resume->uuid" />
+    <x-plans-modal id="plansModal" class="hidden" close-action="onclick='closeModal()'" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
 
     <script>
         function openModal() {

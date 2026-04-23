@@ -1,5 +1,7 @@
 @php
     $profile = $resume->personalDetail;
+    $user = auth()->user();
+    $canDownload = $user && $user->plan && $user->plan->price > 0;
     $lang = $resume->resume_language; // اللغة المخزنة للسيرة (ar, en, fr)
 @endphp
 <!DOCTYPE html>
@@ -51,13 +53,13 @@
                     </svg>
                     {{ __('messages.edit_data', [], $lang) }}
                 </a>
-                @if(auth()->check() && auth()->user()->hasActivePlan())
+                @if($canDownload)
                     <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
                         {{ __('messages.download_pdf', [], $lang) }}
                     </button>
                 @else
-                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
-                        {{ __('messages.download_pdf', [], $lang) }}
+                    <button onclick="openModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
+                        {{ __('messages.upgrade_to_download', [], $lang) ?? 'رقّي باقتك لتحميل السيرة' }}
                     </button>
                 @endif
             </div>
@@ -280,7 +282,7 @@
     </div>
 
     {{-- مودال الباقات --}}
-    <x-plans-modal id="plansModal" class="hidden" close-action="onclick='closeModal()'" :resume-uuid="$resume->uuid" />
+    <x-plans-modal id="plansModal" class="hidden" close-action="onclick='closeModal()'" :resume-uuid="$resume->uuid" :currentLang="$lang" />
 
     <script>
         function openModal() {
