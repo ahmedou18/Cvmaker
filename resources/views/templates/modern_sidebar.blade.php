@@ -282,8 +282,7 @@
     </div>
 
     {{-- مودال الباقات --}}
-    <x-plans-modal id="plansModal" class="hidden" close-action="onclick='closeModal()'" :resume-uuid="$resume->uuid" :currentLang="$lang" />
-
+    <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
     <script>
         function openModal() {
             const modal = document.getElementById('plansModal');
