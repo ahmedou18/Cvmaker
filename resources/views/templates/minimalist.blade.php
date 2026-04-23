@@ -8,7 +8,7 @@
 <html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{{ $profile->full_name ?? 'سيرة ذاتية' }} - Minimalist CV</title>
+    <title>{{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }} - Minimalist CV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -34,19 +34,19 @@
         <div class="max-w-5xl mx-auto flex justify-between items-center flex-wrap gap-3">
             <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-gray-600 hover:text-blue-600 flex items-center transition">
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                العودة للوحة التحكم
+                {{ __('messages.back_to_dashboard', [], $resumeLanguage) }}
             </a>
             <div class="flex gap-2">
                 <a href="{{ route('resume.edit', $resume->uuid) }}" class="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 flex items-center transition rounded">
-                    تعديل البيانات
+                    {{ __('messages.edit_data', [], $resumeLanguage) }}
                 </a>
                 @if($canDownload)
                     <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
-                        تحميل كـ PDF
+                        {{ __('messages.download_pdf', [], $resumeLanguage) }}
                     </button>
                 @else
                     <button onclick="openModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
-                        رقّي باقتك لتحميل السيرة
+                        {{ __('messages.upgrade_to_download', [], $resumeLanguage) ?? 'رقّي باقتك لتحميل السيرة' }}
                     </button>
                 @endif
             </div>
@@ -78,7 +78,7 @@
     {{-- الملف الشخصي --}}
     @if($profile && $profile->summary)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="text-xl font-bold mb-2">{{ __('messages.summary', [], $resumeLanguage) ?? 'Profile' }}</h2>
+        <h2 class="text-xl font-bold mb-2">{{ __('messages.summary', [], $resumeLanguage) }}</h2>
         <p class="text-[13px] leading-relaxed text-justify whitespace-pre-line">{!! nl2br(e($profile->summary)) !!}</p>
     </section>
     @endif
@@ -86,7 +86,7 @@
     {{-- المهارات --}}
     @if($resume->skills->count() > 0)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="text-xl font-bold mb-2">{{ __('messages.skills', [], $resumeLanguage) ?? 'Skills' }}</h2>
+        <h2 class="text-xl font-bold mb-2">{{ __('messages.skills', [], $resumeLanguage) }}</h2>
         <p class="text-[13px] leading-relaxed">
             {{ $resume->skills->pluck('name')->implode(' • ') }}
         </p>
@@ -96,7 +96,7 @@
     {{-- التكوين / التعليم --}}
     @if($resume->educations->count() > 0)
     <section class="mb-6">
-        <h2 class="text-xl font-bold mb-3">{{ __('messages.education', [], $resumeLanguage) ?? 'Education' }}</h2>
+        <h2 class="text-xl font-bold mb-3">{{ __('messages.education', [], $resumeLanguage) }}</h2>
         <div class="flex flex-col gap-4">
             @foreach($resume->educations as $edu)
             <div class="break-inside-avoid">
@@ -118,7 +118,7 @@
     {{-- الخبرات المهنية --}}
     @if($resume->experiences->count() > 0)
     <section class="mb-6">
-        <h2 class="text-xl font-bold mb-3">{{ __('messages.experience', [], $resumeLanguage) ?? 'Experience' }}</h2>
+        <h2 class="text-xl font-bold mb-3">{{ __('messages.experience', [], $resumeLanguage) }}</h2>
         <div class="flex flex-col gap-5">
             @foreach($resume->experiences as $exp)
             <div class="break-inside-avoid">
@@ -148,7 +148,7 @@
     {{-- اللغات --}}
     @if($resume->languages->count() > 0)
     <section class="mb-6 break-inside-avoid">
-        <h2 class="text-xl font-bold mb-2">{{ __('messages.languages', [], $resumeLanguage) ?? 'Languages' }}</h2>
+        <h2 class="text-xl font-bold mb-2">{{ __('messages.languages', [], $resumeLanguage) }}</h2>
         <ul class="bullet-list text-[13px]">
             @foreach($resume->languages as $lang)
                 <li><strong>{{ $lang->name }}</strong> - {{ $lang->proficiency }}</li>
@@ -175,7 +175,8 @@
     @endif
 
     {{-- مودال الباقات --}}
-   <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
+    <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
+
     <script>
         function openModal() {
             const modal = document.getElementById('plansModal');

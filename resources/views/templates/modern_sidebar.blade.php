@@ -2,13 +2,13 @@
     $profile = $resume->personalDetail;
     $user = auth()->user();
     $canDownload = $user && $user->plan && $user->plan->price > 0;
-    $lang = $resume->resume_language; // اللغة المخزنة للسيرة (ar, en, fr)
+    $resumeLanguage = $resume->resume_language; // اللغة المخزنة للسيرة (ar, en, fr)
 @endphp
 <!DOCTYPE html>
-<html lang="{{ $lang }}" dir="{{ in_array($lang, ['ar']) ? 'rtl' : 'ltr' }}">
+<html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{{ $profile->full_name ?? __('messages.full_name', [], $lang) }} - Modern Sidebar CV</title>
+    <title>{{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }} - Modern Sidebar CV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -44,22 +44,22 @@
         <div class="px-6 py-4 flex justify-between items-center flex-wrap gap-3">
             <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-gray-600 hover:text-blue-600 flex items-center transition">
                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                {{ __('messages.back_to_dashboard', [], $lang) }}
+                {{ __('messages.back_to_dashboard', [], $resumeLanguage) }}
             </a>
             <div class="flex gap-2">
                 <a href="{{ route('resume.edit', $resume->uuid) }}" class="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 flex items-center transition rounded">
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
-                    {{ __('messages.edit_data', [], $lang) }}
+                    {{ __('messages.edit_data', [], $resumeLanguage) }}
                 </a>
                 @if($canDownload)
                     <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
-                        {{ __('messages.download_pdf', [], $lang) }}
+                        {{ __('messages.download_pdf', [], $resumeLanguage) }}
                     </button>
                 @else
                     <button onclick="openModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition cursor-pointer">
-                        {{ __('messages.upgrade_to_download', [], $lang) ?? 'رقّي باقتك لتحميل السيرة' }}
+                        {{ __('messages.upgrade_to_download', [], $resumeLanguage) ?? 'رقّي باقتك لتحميل السيرة' }}
                     </button>
                 @endif
             </div>
@@ -75,7 +75,7 @@
             {{-- صورة دائرية --}}
             @if($profile && $profile->photo_path)
                 <div class="flex justify-center">
-                    <img src="{{ asset($profile->photo_path) }}" alt="{{ __('messages.profile_photo', [], $lang) }}"
+                    <img src="{{ asset($profile->photo_path) }}" alt="{{ __('messages.profile_photo', [], $resumeLanguage) }}"
                          class="w-36 h-36 rounded-full object-cover border-4 border-white shadow-sm">
                 </div>
             @endif
@@ -83,16 +83,16 @@
             {{-- الاسم والمنصب --}}
             <header class="text-center break-inside-avoid">
                 <h1 class="text-2xl font-bold uppercase tracking-wider mb-1">
-                    {{ $profile->full_name ?? __('messages.full_name', [], $lang) }}
+                    {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
                 </h1>
                 <p class="text-[14px] font-semibold text-gray-700">
-                    {{ $profile->job_title ?? __('messages.job_title', [], $lang) }}
+                    {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
                 </p>
             </header>
             
             {{-- المعلومات الشخصية --}}
             <section class="break-inside-avoid">
-                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.personal_info', [], $lang) }}</h2>
+                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.personal_info', [], $resumeLanguage) }}</h2>
                 <div class="flex flex-col gap-3 text-gray-800">
                     @if($profile->email)
                         <div class="flex items-center gap-2 justify-start">
@@ -122,7 +122,7 @@
             {{-- اللغات --}}
             @if($resume->languages->count() > 0)
             <section class="break-inside-avoid">
-                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.languages', [], $lang) }}</h2>
+                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.languages', [], $resumeLanguage) }}</h2>
                 <div class="flex flex-col gap-3 text-gray-800">
                     @foreach($resume->languages as $langItem)
                         <div class="flex items-center justify-between break-inside-avoid">
@@ -139,28 +139,28 @@
             
             {{-- الاهتمامات --}}
             <section class="break-inside-avoid">
-                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.interests', [], $lang) }}</h2>
+                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.interests', [], $resumeLanguage) }}</h2>
                 <div class="flex items-center gap-2 justify-start">
                     <i class="fas fa-rugby-ball text-gray-600"></i>
-                    <span>{{ __('messages.rugby', [], $lang) }}</span>
+                    <span>{{ __('messages.rugby', [], $resumeLanguage) }}</span>
                 </div>
             </section>
             
             {{-- الصفات --}}
             <section class="break-inside-avoid">
-                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.qualities', [], $lang) }}</h2>
+                <h2 class="text-lg font-bold mb-3 border-b border-gray-400 pb-1">{{ __('messages.qualities', [], $resumeLanguage) }}</h2>
                 <div class="flex flex-col gap-3 text-gray-800">
                     <div class="flex items-center gap-2 justify-start">
                         <span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-                        <span>{{ __('messages.creative', [], $lang) }}</span>
+                        <span>{{ __('messages.creative', [], $resumeLanguage) }}</span>
                     </div>
                     <div class="flex items-center gap-2 justify-start">
                         <span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-                        <span>{{ __('messages.autonomous', [], $lang) }}</span>
+                        <span>{{ __('messages.autonomous', [], $resumeLanguage) }}</span>
                     </div>
                     <div class="flex items-center gap-2 justify-start">
                         <span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-                        <span>{{ __('messages.organized', [], $lang) }}</span>
+                        <span>{{ __('messages.organized', [], $resumeLanguage) }}</span>
                     </div>
                 </div>
             </section>
@@ -172,7 +172,7 @@
             {{-- الملف الشخصي (سياق) --}}
             @if($profile && $profile->summary)
             <section class="break-inside-avoid">
-                <h2 class="text-xl font-bold mb-4">{{ __('messages.summary', [], $lang) }}</h2>
+                <h2 class="text-xl font-bold mb-4">{{ __('messages.summary', [], $resumeLanguage) }}</h2>
                 <p class="text-gray-700 leading-relaxed text-justify whitespace-pre-line">{!! nl2br(e($profile->summary)) !!}</p>
             </section>
             @endif
@@ -180,7 +180,7 @@
             {{-- الخبرات المهنية --}}
             @if($resume->experiences->count() > 0)
             <section>
-                <h2 class="text-xl font-bold mb-6 break-inside-avoid">{{ __('messages.experience', [], $lang) }}</h2>
+                <h2 class="text-xl font-bold mb-6 break-inside-avoid">{{ __('messages.experience', [], $resumeLanguage) }}</h2>
                 <div class="flex flex-col gap-8">
                     @foreach($resume->experiences as $exp)
                     <div class="break-inside-avoid grid grid-cols-[150px_1fr] gap-x-6 gap-y-2 text-gray-800">
@@ -191,7 +191,7 @@
                                     @if($exp->end_date)
                                         {{ \Carbon\Carbon::parse($exp->end_date)->format('M Y') }}
                                     @elseif($exp->is_current)
-                                        {{ __('messages.present', [], $lang) }}
+                                        {{ __('messages.present', [], $resumeLanguage) }}
                                     @endif
                                 </span>
                             @endif
@@ -215,7 +215,7 @@
             {{-- التكوين --}}
             @if($resume->educations->count() > 0)
             <section>
-                <h2 class="text-xl font-bold mb-6 break-inside-avoid">{{ __('messages.education', [], $lang) }}</h2>
+                <h2 class="text-xl font-bold mb-6 break-inside-avoid">{{ __('messages.education', [], $resumeLanguage) }}</h2>
                 <div class="flex flex-col gap-6">
                     @foreach($resume->educations as $edu)
                     <div class="break-inside-avoid grid grid-cols-[150px_1fr] gap-x-6 gap-y-2 text-gray-800">
@@ -230,7 +230,7 @@
                             </h3>
                             @if($edu->field_of_study)
                                 <p class="text-gray-700 leading-relaxed mt-1">
-                                    {{ __('messages.field_of_study', [], $lang) }} {{ $edu->field_of_study }}
+                                    {{ __('messages.field_of_study', [], $resumeLanguage) }} {{ $edu->field_of_study }}
                                 </p>
                             @endif
                         </div>
@@ -243,13 +243,13 @@
             {{-- المهارات --}}
             @if($resume->skills->count() > 0)
             <section class="break-inside-avoid">
-                <h2 class="text-xl font-bold mb-4">{{ __('messages.skills', [], $lang) }}</h2>
+                <h2 class="text-xl font-bold mb-4">{{ __('messages.skills', [], $resumeLanguage) }}</h2>
                 <div class="grid grid-cols-[150px_1fr] gap-x-6 gap-y-3 text-gray-800">
                     @foreach($resume->skills as $skill)
                         <div class="flex items-center break-inside-avoid font-bold">
                             <span>{{ $skill->name }}</span>
                         </div>
-                        <span class="text-xs text-gray-600">{{ __('messages.excellent', [], $lang) }}</span>
+                        <span class="text-xs text-gray-600">{{ __('messages.excellent', [], $resumeLanguage) }}</span>
                     @endforeach
                 </div>
             </section>
@@ -257,23 +257,23 @@
             
             {{-- الصفات المهنية (مثال ثابت لكن يمكن جعله ديناميكيًا) --}}
             <section>
-                <h2 class="text-xl font-bold mb-6 break-inside-avoid">{{ __('messages.professional_certifications', [], $lang) }}</h2>
+                <h2 class="text-xl font-bold mb-6 break-inside-avoid">{{ __('messages.professional_certifications', [], $resumeLanguage) }}</h2>
                 <div class="flex flex-col gap-6">
                     <div class="break-inside-avoid grid grid-cols-[150px_1fr] gap-x-6 gap-y-2 text-gray-800">
                         <div class="break-inside-avoid text-gray-700 font-semibold" dir="ltr">
                             <span>2010</span>
                         </div>
                         <div>
-                            <h3 class="font-bold uppercase text-[14px]">{{ __('messages.certification_hmonp', [], $lang) }}</h3>
-                            <p class="text-gray-700 leading-relaxed mt-1">{{ __('messages.certification_hmonp_school', [], $lang) }}</p>
+                            <h3 class="font-bold uppercase text-[14px]">{{ __('messages.certification_hmonp', [], $resumeLanguage) }}</h3>
+                            <p class="text-gray-700 leading-relaxed mt-1">{{ __('messages.certification_hmonp_school', [], $resumeLanguage) }}</p>
                         </div>
                     </div>
                     <div class="break-inside-avoid grid grid-cols-[150px_1fr] gap-x-6 gap-y-2 text-gray-800">
                         <div class="break-inside-avoid text-gray-700 font-semibold" dir="ltr">
-                            <span>{{ __('messages.certification_date_range', [], $lang) }}</span>
+                            <span>{{ __('messages.certification_date_range', [], $resumeLanguage) }}</span>
                         </div>
                         <div>
-                            <h3 class="font-bold uppercase text-[14px]">{{ __('messages.certification_member_architect', [], $lang) }}</h3>
+                            <h3 class="font-bold uppercase text-[14px]">{{ __('messages.certification_member_architect', [], $resumeLanguage) }}</h3>
                         </div>
                     </div>
                 </div>
@@ -283,6 +283,7 @@
 
     {{-- مودال الباقات --}}
     <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
+    
     <script>
         function openModal() {
             const modal = document.getElementById('plansModal');
