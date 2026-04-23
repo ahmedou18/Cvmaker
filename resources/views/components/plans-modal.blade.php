@@ -7,10 +7,9 @@
 <div {{ $attributes->merge(['class' => 'no-print fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md']) }}>
     <div @click.stop class="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden relative max-h-[95vh] flex flex-col">
         
-        {{-- زر الإغلاق مع دعم المتغير closeAction وسكريبت احتياطي --}}
+        {{-- زر الإغلاق مع سكريبت مضمون --}}
         <button type="button" 
-                onclick="{!! $closeAction !!}; this.closest('.fixed.inset-0')?.style?.display = 'none';"
-                class="absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
+                class="close-modal-btn absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
@@ -129,22 +128,27 @@
     </div>
 </div>
 
-{{-- سكريبت احتياطي لضمان إغلاق المودال في أي حالة --}}
+{{-- سكريبت مخصص لإغلاق المودال --}}
 <script>
     (function() {
-        // البحث عن جميع أزرار الإغلاق داخل هذا المودال وإضافة مستمع إضافي
-        const modal = document.currentScript.closest('.fixed.inset-0');
-        if (modal) {
-            const closeButtons = modal.querySelectorAll('button');
-            closeButtons.forEach(btn => {
-                if (btn.querySelector('svg') && btn.classList.contains('absolute')) {
-                    // إضافة مستمع إضافي للزر الذي يحمل شكل الإغلاق
-                    btn.addEventListener('click', function(e) {
-                        modal.style.display = 'none';
-                        document.body.style.overflow = '';
-                    });
-                }
-            });
-        }
+        // البحث عن زر الإغلاق داخل هذا المودال
+        const modalRoot = document.currentScript?.parentElement;
+        if (!modalRoot) return;
+        
+        const closeBtn = modalRoot.querySelector('.close-modal-btn');
+        if (!closeBtn) return;
+        
+        // دالة إغلاق: البحث عن الأب الذي يحتوي على class="fixed inset-0"
+        const modalContainer = modalRoot.closest('.fixed.inset-0');
+        if (!modalContainer) return;
+        
+        closeBtn.addEventListener('click', function() {
+            modalContainer.style.display = 'none';
+            document.body.style.overflow = '';
+            // إذا كانت هناك دالة خارجية (مثلاً closePlansModal) فاستدعها
+            if (typeof window.closePlansModal === 'function') {
+                window.closePlansModal();
+            }
+        });
     })();
 </script>
