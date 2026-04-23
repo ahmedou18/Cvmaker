@@ -7,8 +7,10 @@
 <div {{ $attributes->merge(['class' => 'no-print fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md']) }}>
     <div @click.stop class="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden relative max-h-[95vh] flex flex-col">
         
-        {{-- زر الإغلاق --}}
-        <button type="button" onclick="{!! $closeAction !!}" class="absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
+        {{-- زر الإغلاق مع دعم المتغير closeAction وسكريبت احتياطي --}}
+        <button type="button" 
+                onclick="{!! $closeAction !!}; this.closest('.fixed.inset-0')?.style?.display = 'none';"
+                class="absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
@@ -19,7 +21,7 @@
                 <p class="text-gray-500 text-base max-w-2xl mx-auto">{{ __('messages.choose_plan_subtitle', [], $lang) }}</p>
             </div>
             
-            {{-- حاوية تمرير أفقي للهواتف، شبكة عادية على الشاشات الكبيرة --}}
+            {{-- تمرير أفقي للهواتف --}}
             <div class="overflow-x-auto pb-4 md:overflow-visible">
                 <div class="flex flex-nowrap gap-6 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-8 w-max md:w-full">
                     @foreach(\App\Models\Plan::where('is_active', true)->get() as $plan)
@@ -126,3 +128,23 @@
         </div>
     </div>
 </div>
+
+{{-- سكريبت احتياطي لضمان إغلاق المودال في أي حالة --}}
+<script>
+    (function() {
+        // البحث عن جميع أزرار الإغلاق داخل هذا المودال وإضافة مستمع إضافي
+        const modal = document.currentScript.closest('.fixed.inset-0');
+        if (modal) {
+            const closeButtons = modal.querySelectorAll('button');
+            closeButtons.forEach(btn => {
+                if (btn.querySelector('svg') && btn.classList.contains('absolute')) {
+                    // إضافة مستمع إضافي للزر الذي يحمل شكل الإغلاق
+                    btn.addEventListener('click', function(e) {
+                        modal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    });
+                }
+            });
+        }
+    })();
+</script>
