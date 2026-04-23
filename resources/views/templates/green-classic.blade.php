@@ -215,28 +215,32 @@
 
     {{-- مودال الباقات --}}
     <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
-    <script>
-        function openModal() {
-            const modal = document.getElementById('plansModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                document.body.classList.add('modal-active');
-            }
+    {{-- في نهاية الملف، استبدل كتلة <script> بالكامل بهذا --}}
+<script>
+    function openModal() {
+        const modal = document.getElementById('plansModal');
+        if (modal) {
+            // إزالة الكلاس "hidden" وإلغاء أي تأثير مخفي مسبق من style.display
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            document.body.classList.add('modal-active');
         }
+    }
 
-        function closeModal() {
-            const modal = document.getElementById('plansModal');
-            if (modal) {
-                modal.classList.add('hidden');
-                document.body.classList.remove('modal-active');
-            }
+    function closeModal() {
+        const modal = document.getElementById('plansModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-active');
         }
+    }
 
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
-        });
-    </script>
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
 </body>
 </html>

@@ -7,9 +7,10 @@
 <div {{ $attributes->merge(['class' => 'no-print fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md']) }}>
     <div @click.stop class="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden relative max-h-[95vh] flex flex-col">
         
-        {{-- زر الإغلاق --}}
+        {{-- زر الإغلاق - نستخدم onclick مباشرة للتوافق مع دالة closeModal() من القالب --}}
         <button type="button" 
-                class="close-modal-btn absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
+                onclick="closeModal()" 
+                class="absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
@@ -128,54 +129,15 @@
     </div>
 </div>
 
-{{-- سكريبت مخصص لإغلاق المودال (يدعم closeModal و closePlansModal) --}}
+{{-- سكريبت خفيف للاستماع لـ Escape ولمنع الأخطاء --}}
 <script>
     (function() {
-        const modalRoot = document.currentScript?.parentElement;
-        if (!modalRoot) return;
-        
-        const closeBtn = modalRoot.querySelector('.close-modal-btn');
-        if (!closeBtn) return;
-        
-        const modalContainer = modalRoot.closest('.fixed.inset-0');
-        if (!modalContainer) return;
-        
-        // دالة موحدة للإغلاق (تعمل مع closeModal و closePlansModal وأي دالة أخرى)
-        const closeAny = () => {
-            // إخفاء المودال
-            modalContainer.style.display = 'none';
-            document.body.style.overflow = '';
-            
-            // محاولة استدعاء الدوال الخارجية إن وجدت
-            if (typeof window.closePlansModal === 'function') {
-                window.closePlansModal();
-            }
-            if (typeof window.closeModal === 'function') {
-                window.closeModal();
-            }
-            
-            // إذا كانت الخاصية closeAction تحتوي على onclick (للتوافق مع الإصدارات القديمة)
-            const closeActionAttr = {{ Js::from($closeAction) }};
-            if (closeActionAttr && typeof closeActionAttr === 'string' && closeActionAttr.trim()) {
-                // إزالة البادئة 'onclick=' إذا وجدت
-                let cleanAction = closeActionAttr.replace(/^onclick=['"]?/, '').replace(/['"]?$/, '');
-                try {
-                    if (cleanAction.includes('(')) {
-                        // تنفيذ الدالة مباشرة (مثل closeModal())
-                        new Function(cleanAction)();
-                    } else if (typeof window[cleanAction] === 'function') {
-                        window[cleanAction]();
-                    }
-                } catch(e) { console.warn('Close action error:', e); }
-            }
-        };
-        
-        closeBtn.addEventListener('click', closeAny);
-        
-        // إضافة إغلاق بالضغط على Escape
+        // مستمع عالمي لإغلاق المودال عند الضغط على Escape
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && modalContainer.style.display !== 'none') {
-                closeAny();
+            if (e.key === 'Escape') {
+                if (typeof window.closeModal === 'function') {
+                    window.closeModal();
+                }
             }
         });
     })();
