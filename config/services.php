@@ -34,5 +34,8 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'cohere' => [
+    'key' => env('COHERE_API_KEY'),
+],
 
 ];

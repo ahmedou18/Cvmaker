@@ -11,11 +11,12 @@ class AiGenerationController extends Controller
 {
     /**
      * النموذج الافتراضي المستخدم في طلبات Cohere.
+     * يمكن تغييره إلى 'command-r' أو 'command-r-plus' حسب اشتراكك.
      */
-    private const DEFAULT_MODEL = 'command-a-03-2025';
+    private const DEFAULT_MODEL = 'command-r-plus';
 
     /**
-     * التوجيه الأمني الصارم للحماية من هجمات حقن الأوامر (Prompt Injection)
+     * التوجيه الأمني الصارم للحماية من هجمات حقن الأوامر (Prompt Injection).
      */
     private const SECURITY_GUARDRAIL = "
     [STRICT SECURITY GUARDRAIL] 
@@ -140,7 +141,7 @@ class AiGenerationController extends Controller
 
         if ($user->ai_credits_balance <= 0) {
             return response()->json([
-                'error' => 'عفواً، رصيدك من الذكاء الاصطناعي نفد. يرجى التواصل مع الإدارة لزيادة الرصيد.'
+                'error' => 'عفواً، رصيدك من الذكاء الاصطناعي نفد. يرجى الاشتراك في باقة أو تجديد رصيدك.'
             ], 403);
         }
 
@@ -156,7 +157,7 @@ class AiGenerationController extends Controller
         try {
             $maxTokens = ($type === 'summary' || $type === 'description' || $type === 'cover_letter') ? 400 : 300;
 
-            $response = Http::withToken(env('COHERE_API_KEY'))
+            $response = Http::withToken(config('services.cohere.key'))
                 ->timeout(45)
                 ->post('https://api.cohere.ai/v1/chat', [
                     'model'       => $config['model'],
@@ -184,6 +185,7 @@ class AiGenerationController extends Controller
                 'status' => $response->status(),
                 'body'   => $response->body(),
                 'type'   => $type,
+                'user_id' => auth()->id(),
             ]);
 
             return response()->json([
@@ -194,6 +196,7 @@ class AiGenerationController extends Controller
             Log::error('AI Generation Exception', [
                 'message' => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
             ]);
 
             return response()->json([
@@ -231,28 +234,31 @@ class AiGenerationController extends Controller
         $userMessage = "<user_data>\n" . json_encode($safeData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n</user_data>";
 
         try {
-            $response = Http::withToken(env('COHERE_API_KEY'))
+            $response = Http::withToken(config('services.cohere.key'))
                 ->timeout(60)
                 ->post('https://api.cohere.ai/v1/chat', [
                     'model'           => self::DEFAULT_MODEL,
                     'preamble'        => $systemInstruction,
                     'message'         => $userMessage,
-                    'temperature'     => 0.1, // حرارة منخفضة جداً للتحسين الدقيق
+                    'temperature'     => 0.1,
                     'max_tokens'      => 2500,
-                    'response_format' => ['type' => 'json_object'], // إجبار الموديل على إرجاع JSON
+                    'response_format' => ['type' => 'json_object'],
                 ]);
 
             if ($response->successful()) {
                 $aiOutput = trim($response->json('text'));
-                
-                // تنظيف احتياطي لأي شوائب Markdown
                 $aiOutput = preg_replace('/^```json\s*|\s*```$/i', '', $aiOutput);
                 $aiOutput = str_replace(['<user_data>', '</user_data>'], '', $aiOutput);
 
                 $improvedData = json_decode($aiOutput, true);
 
                 if (json_last_error() !== JSON_ERROR_NONE) {
-                    return response()->json(['error' => 'فشل تحليل المخرجات من الذكاء الاصطناعي: ' . json_last_error_msg()], 500);
+                    Log::error('JSON decode error in reviewResume', [
+                        'json_error' => json_last_error_msg(),
+                        'output' => substr($aiOutput, 0, 500),
+                        'user_id' => auth()->id(),
+                    ]);
+                    return response()->json(['error' => 'فشل تحليل المخرجات من الذكاء الاصطناعي.'], 500);
                 }
 
                 $this->deductCredit($user);
@@ -267,6 +273,7 @@ class AiGenerationController extends Controller
             Log::error('Cohere review API error', [
                 'status' => $response->status(),
                 'body'   => $response->body(),
+                'user_id' => auth()->id(),
             ]);
 
             return response()->json(['error' => 'حدث خطأ من Cohere API.'], 500);
@@ -274,6 +281,7 @@ class AiGenerationController extends Controller
         } catch (\Exception $e) {
             Log::error('AI Review Exception', [
                 'message' => $e->getMessage(),
+                'user_id' => auth()->id(),
             ]);
 
             return response()->json(['error' => 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.'], 500);

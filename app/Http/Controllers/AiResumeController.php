@@ -5,10 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Smalot\PdfParser\Parser;
 
 class AiResumeController extends Controller
 {
+    /**
+     * النموذج المستخدم لاستخراج البيانات (يفضل استخدام نموذج قوي).
+     */
+    private const DEFAULT_MODEL = 'command-r-plus';
+
     /**
      * استخراج البيانات من ملف PDF باستخدام Cohere.
      */
@@ -16,7 +22,7 @@ class AiResumeController extends Controller
     {
         $request->validate([
             'cv_file' => 'required|mimes:pdf|max:5120',
-            'lang'    => 'nullable|string'
+            'lang'    => 'nullable|string|in:ar,en,fr'
         ]);
 
         try {
@@ -31,75 +37,88 @@ class AiResumeController extends Controller
             // 1. إصلاح النص العربي المعكوس
             $text = $this->fixArabicText($rawText);
 
-            // 2. تحديد اللغة بدقة أعلى (الطلب -> الجلسة -> لغة التطبيق الافتراضية)
+            // 2. تحديد اللغة (الطلب -> الجلسة -> لغة التطبيق)
             $currentLang = $request->input('lang') ?? session('resume_language') ?? app()->getLocale();
 
-            // 3. الاتصال بـ Cohere
-            $response = Http::withToken(env('COHERE_API_KEY'))
+            // 3. بناء الـ Prompt المحسن وفقاً للغة
+            $prompt = $this->buildParsingPrompt($text, $currentLang);
+
+            // 4. الاتصال بـ Cohere مع تنسيق JSON مضمون
+            $response = Http::withToken(config('services.cohere.key'))
                 ->timeout(120)
                 ->post('https://api.cohere.ai/v1/chat', [
-                    'model' => 'command-a-03-2025', // تم تصحيح اسم الموديل هنا إلى الموديل المعتمد السريع (أو استخدم command-r-plus للأدق)
-                    'preamble' => $this->getSystemPrompt($currentLang), 
-                    'message' => "استخرج البيانات من السيرة التالية وقم بإعادتها بصيغة JSON فقط باللغة ({$currentLang}) وبدون أي نصوص توضيحية أخرى:\n\n" . $text,
-                    'temperature' => 0.1,
+                    'model'           => self::DEFAULT_MODEL,
+                    'message'         => $prompt,
+                    'temperature'     => 0.1,
+                    'response_format' => ['type' => 'json_object'],
                 ]);
 
-            if ($response->successful()) {
-                $aiOutput = $response->json('text');
-                $aiOutput = preg_replace('/^```json\s*|\s*```$/i', '', trim($aiOutput));
-                
-                preg_match('/\{.*\}/s', $aiOutput, $matches);
-                if (empty($matches)) {
-                    return response()->json(['error' => 'لم يتم العثور على JSON صالح في استجابة الذكاء الاصطناعي.'], 500);
-                }
-
-                $jsonString = $matches[0];
-                $aiData = json_decode($jsonString, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    return response()->json(['error' => 'فشل في تحليل بيانات JSON: ' . json_last_error_msg()], 500);
-                }
-
-                // ✅ خصم الرصيد بشكل آمن (مع قفل الصف)
-                $user = auth()->user();
-                if (!$user) {
-                    return response()->json(['error' => 'يجب تسجيل الدخول أولاً.'], 401);
-                }
-
-                if ($user->ai_credits_balance <= 0) {
-                    return response()->json([
-                        'error' => 'رصيد الذكاء الاصطناعي غير كافٍ لاستخراج البيانات. يرجى الاشتراك في باقة.'
-                    ], 403);
-                }
-
-                DB::transaction(function () use ($user) {
-                    $user = $user->fresh();
-                    if ($user->ai_credits_balance > 0) {
-                        $user->decrement('ai_credits_balance');
-                    }
-                });
-
-                $remainingCredits = $user->fresh()->ai_credits_balance;
-
-                // إرجاع البيانات مع الرصيد المتبقي
-                return response()->json([
-                    'success' => true,
-                    'message' => 'تم استخراج البيانات بنجاح',
-                    'data' => $aiData,
-                    'remaining_credits' => $remainingCredits
+            if ($response->failed()) {
+                Log::error('Cohere parsing API error', [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                    'user_id' => auth()->id(),
                 ]);
+                return response()->json(['error' => 'حدث خطأ أثناء الاتصال بخدمة الذكاء الاصطناعي.'], 500);
             }
 
+            $aiOutput = $response->json('text');
+            $aiOutput = preg_replace('/^```json\s*|\s*```$/i', '', trim($aiOutput));
+            
+            // استخراج JSON من النص
+            preg_match('/\{.*\}/s', $aiOutput, $matches);
+            if (empty($matches)) {
+                Log::error('No valid JSON found in AI response', ['output' => substr($aiOutput, 0, 500)]);
+                return response()->json(['error' => 'لم يتم العثور على JSON صالح في استجابة الذكاء الاصطناعي.'], 500);
+            }
+
+            $jsonString = $matches[0];
+            $aiData = json_decode($jsonString, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('JSON decode error in parseFile', ['error' => json_last_error_msg(), 'json' => $jsonString]);
+                return response()->json(['error' => 'فشل تحليل بيانات JSON: ' . json_last_error_msg()], 500);
+            }
+
+            // ✅ التحقق من صلاحية الرصيد وخصمه (بنفس المنطق القديم)
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['error' => 'يجب تسجيل الدخول أولاً.'], 401);
+            }
+
+            if ($user->ai_credits_balance <= 0) {
+                return response()->json([
+                    'error' => 'رصيد الذكاء الاصطناعي غير كافٍ لاستخراج البيانات. يرجى الاشتراك في باقة.'
+                ], 403);
+            }
+
+            DB::transaction(function () use ($user) {
+                $user = $user->fresh();
+                if ($user->ai_credits_balance > 0) {
+                    $user->decrement('ai_credits_balance');
+                }
+            });
+
+            $remainingCredits = $user->fresh()->ai_credits_balance;
+
             return response()->json([
-                'error' => 'حدث خطأ أثناء الاتصال بـ Cohere API.',
-                'details' => $response->json() 
-            ], $response->status());
+                'success' => true,
+                'message' => 'تم استخراج البيانات بنجاح',
+                'data' => $aiData,
+                'remaining_credits' => $remainingCredits
+            ]);
+
         } catch (\Exception $e) {
+            Log::error('PDF parsing exception', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+            ]);
             return response()->json(['error' => 'حدث خطأ غير متوقع: ' . $e->getMessage()], 500);
         }
     }
 
     /**
-     * إصلاح النص العربي المعكوس الناتج عن استخراج PDF.
+     * إصلاح النص العربي المعكوس الناتج عن استخراج PDF (محسّن مع الاحتفاظ بجميع الدوال المساعدة).
      */
     private function fixArabicText(string $text): string
     {
@@ -161,9 +180,9 @@ class AiResumeController extends Controller
     }
 
     /**
-     * دالة التوجيه الصارمة لضمان الترجمة الكاملة للبيانات
+     * بناء الـ Prompt لاستخراج البيانات بصيغة JSON مع تعليمات صارمة للترجمة.
      */
-    private function getSystemPrompt($lang = 'ar')
+    private function buildParsingPrompt(string $text, string $lang): string
     {
         $languages = [
             'ar' => 'Arabic (العربية)',
@@ -173,55 +192,56 @@ class AiResumeController extends Controller
         $targetLang = $languages[$lang] ?? 'Arabic (العربية)';
 
         return "
-        [STRICT INSTRUCTION / تعليمات صارمة]
-        1. YOU MUST OUTPUT ALL CONTENT IN {$targetLang} ONLY.
-        2. Even if the input CV text is in French, Arabic, or English, you MUST translate everything to {$targetLang}.
-        3. The JSON keys must remain exactly as defined below in English.
-        4. ALL VALUES (names, titles, descriptions, skills, etc.) must be in {$targetLang}.
-        5. For 'languages' section: Translate the language names themselves. (e.g., if you find 'Français', write it as 'French' if target is English, or 'الفرنسية' if target is Arabic).
-        6. NO MARKDOWN: Do not use ```json or any other formatting outside the JSON brackets.
+        [STRICT INSTRUCTION]
+        استخرج البيانات من السيرة الذاتية التالية وأعدها بصيغة JSON فقط باللغة {$targetLang} ودون أي نصوص توضيحية أخرى.
 
-        [JSON STRUCTURE]:
+        [RULES]
+        1. يجب أن يكون ناتجك JSON صالحاً تماماً.
+        2. قم بترجمة جميع القيم إلى {$targetLang} حتى لو كان النص الأصلي بلغة أخرى.
+        3. إذا كان حقل غير موجود، اتركه فارغاً (مصفوفة فارغة أو سلسلة فارغة).
+        4. تواريخ البداية والنهاية بالصيغة YYYY-MM.
+        5. لا تضع أياً من النص داخل علامات ```json أو أي تنسيق Markdown.
+
+        [JSON STRUCTURE]
         {
             \"personal_details\": {
                 \"full_name\": \"\",
-                \"job_title\": \"Translated Job Title\",
+                \"job_title\": \"\",
                 \"email\": \"\",
                 \"phone\": \"\",
-                \"address\": \"Translated Address\",
-                \"summary\": \"Translated Summary\"
+                \"address\": \"\",
+                \"summary\": \"\"
             },
             \"experiences\": [
                 {
-                    \"company\": \"Translated Company Name\",
-                    \"position\": \"Translated Position\",
-                    \"start_date\": \"YYYY-MM\",
-                    \"end_date\": \"YYYY-MM or Present in {$targetLang}\",
+                    \"company\": \"\",
+                    \"position\": \"\",
+                    \"start_date\": \"\",
+                    \"end_date\": \"\",
                     \"is_current\": false,
-                    \"description\": \"Translated Description in bullet points\"
+                    \"description\": \"\"
                 }
             ],
             \"educations\": [
                 {
-                    \"institution\": \"Translated Institution\",
-                    \"degree\": \"Translated Degree\",
-                    \"field_of_study\": \"Translated Field\",
-                    \"graduation_year\": \"YYYY\"
+                    \"institution\": \"\",
+                    \"degree\": \"\",
+                    \"field_of_study\": \"\",
+                    \"graduation_year\": \"\"
                 }
             ],
-            \"skills\": [\"Translated Skill 1\", \"Translated Skill 2\"],
+            \"skills\": [\"Skill 1\", \"Skill 2\"],
             \"languages\": [
                 {
                     \"name\": \"Language Name in {$targetLang}\",
                     \"proficiency\": \"Proficiency Level in {$targetLang}\"
                 }
             ],
-            \"extra_sections\": [
-                {
-                    \"title\": \"Section Title in {$targetLang}\",
-                    \"content\": \"Content in {$targetLang}\"
-                }
-            ]
-        }";
+            \"extra_sections\": []
+        }
+
+        [CV TEXT]
+        {$text}
+        ";
     }
 }
