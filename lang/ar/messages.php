@@ -6,6 +6,55 @@ return [
 'edit_data' => 'تعديل البيانات',
 'profile_photo' => 'صورة شخصية',
 'interests' => 'الاهتمامات',
+// ========== المفاتيح المفقودة في اللغة العربية ==========
+
+// Plans modal
+'ai_credits' => 'رصيد الذكاء الاصطناعي',
+
+// step-experience
+'add_experience' => '+ إضافة خبرة جديدة',
+
+// step-languages
+'language_placeholder' => 'مثال: العربية، الإنجليزية',
+
+// step-personal (messages for name changes)
+'name_locked_message' => '🔒 تم الوصول للحد الأقصى لتغيير الاسم. هوية هذه السيرة مقفلة لحمايتها.',
+'name_changes_left' => 'تبقى لديك :count محاولات لتغيير الاسم.',
+
+// Resume templates (upgrade button)
+'upgrade_to_download' => 'رقّي باقتك لتحميل السيرة',
+
+// Dashboard fallback
+'not_defined' => 'غير محدد',
+
+// Alerts in resume creation (scripts.blade.php)
+'alert_enter_language_first' => 'يرجى كتابة اسم اللغة أولاً',
+'alert_enter_job_title_first' => 'يرجى كتابة المسمى الوظيفي أولاً',
+'alert_enter_company_first' => 'يرجى كتابة اسم الشركة أولاً (لتحسين دقة التوليد)',
+'alert_data_extracted' => 'تم استخراج البيانات بنجاح!',
+'alert_file_processing_failed' => 'فشل معالجة الملف',
+'alert_name_change_warning' => '⚠️ تحذير: هذا آخر تغيير مسموح به للاسم. بعد الحفظ، لن تتمكن من تعديله مرة أخرى.',
+'alert_enter_job_title_first_skills' => 'أدخل المسمى الوظيفي أولاً',
+
+// Payment manual (missing keys in Arabic)
+'back_to_plans' => 'العودة للخطط',
+'activate_subscription' => 'تفعيل اشتراك',
+'unified_transfer_number' => 'الرقم الموحد للتحويل',
+'unified' => 'موحد',
+'send_amount_then_upload' => 'أرسل المبلغ ثم ارفع صورة الوصل أدناه',
+'choose_payment_service' => 'اختر خدمة الدفع المستخدمة:',
+'click_to_upload' => 'اضغط هنا لرفع الصورة',
+'upload_max_size' => 'يُقبل JPG أو PNG (حد أقصى 2MB)',
+'submit_for_activation' => 'إرسال الطلب للتفعيل',
+'activation_time_note' => 'بعد إرسال الطلب، سيقوم فريقنا بمراجعة التحويل وتفعيل باقتك خلال أقل من 15 دقيقة.',
+'file_selected' => 'تم اختيار',
+'edit_resume' => 'تعديل السيرة',
+'update_resume' => 'تحديث السيرة ✅',
+'premium' => 'احترافي',
+'free' => 'مجاني',
+'use_template' => 'استخدام القالب',
+
+
 'rugby' => 'الرجبي',
 'qualities' => 'الصفات',
 'creative' => 'مبدع',

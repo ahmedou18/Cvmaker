@@ -8,6 +8,42 @@ return [
 'interests' => 'Interests',
 'rugby' => 'Rugby',
 'qualities' => 'Qualities',
+
+// ========== Missing keys in English ==========
+
+// Plans modal
+'ai_credits' => 'AI Credits',
+
+// step-experience
+'add_experience' => '+ Add Experience',
+
+// step-languages
+'language_placeholder' => 'e.g., Arabic, English',
+
+// step-personal (messages for name changes)
+'name_locked_message' => '🔒 You have reached the maximum number of name changes. This resume identity is locked for protection.',
+'name_changes_left' => 'You have :count attempts left to change the name.',
+
+// Resume templates (upgrade button)
+'upgrade_to_download' => 'Upgrade your plan to download the resume',
+
+// Dashboard fallback
+'not_defined' => 'Not defined',
+
+// Alerts in resume creation (scripts.blade.php)
+'alert_enter_language_first' => 'Please enter the language name first',
+'alert_enter_job_title_first' => 'Please enter the job title first',
+'alert_enter_company_first' => 'Please enter the company name first (to improve generation accuracy)',
+'alert_data_extracted' => 'Data extracted successfully!',
+'alert_file_processing_failed' => 'File processing failed',
+'alert_name_change_warning' => '⚠️ Warning: This is the last allowed name change. After saving, you will not be able to edit it again.',
+'alert_enter_job_title_first_skills' => 'Please enter the job title first',
+'premium' => 'Premium',
+'free' => 'Free',
+'use_template' => 'Use Template',
+'edit_resume' => 'Edit Resume',
+'update_resume' => 'Update Resume ✅',
+
 'creative' => 'Creative',
 'autonomous' => 'Autonomous',
 'organized' => 'Organized',

@@ -10,6 +10,41 @@ return [
 'qualities' => 'Qualités',
 'creative' => 'Créatif',
 'autonomous' => 'Autonome',
+'edit_resume' => 'Modifier le CV',
+
+// ========== Clés manquantes en français ==========
+
+// Plans modal
+'ai_credits' => 'Crédits IA',
+
+// step-experience
+'add_experience' => '+ Ajouter une expérience',
+
+// step-languages
+'language_placeholder' => 'ex : Arabe, Anglais',
+
+// step-personal (messages for name changes)
+'name_locked_message' => '🔒 Vous avez atteint le nombre maximum de modifications du nom. L\'identité de ce CV est verrouillée pour protection.',
+'name_changes_left' => 'Il vous reste :count tentatives pour modifier le nom.',
+
+// Resume templates (upgrade button)
+'upgrade_to_download' => 'Améliorez votre forfait pour télécharger le CV',
+
+// Dashboard fallback
+'not_defined' => 'Non défini',
+
+// Alerts in resume creation (scripts.blade.php)
+'alert_enter_language_first' => 'Veuillez d\'abord saisir le nom de la langue',
+'alert_enter_job_title_first' => 'Veuillez d\'abord saisir le titre du poste',
+'alert_enter_company_first' => 'Veuillez d\'abord saisir le nom de l\'entreprise (pour améliorer la précision)',
+'alert_data_extracted' => 'Données extraites avec succès !',
+'alert_file_processing_failed' => 'Échec du traitement du fichier',
+'alert_name_change_warning' => '⚠️ Attention : Dernier changement de nom autorisé. Après l\'enregistrement, vous ne pourrez plus le modifier.',
+'alert_enter_job_title_first_skills' => 'Veuillez d\'abord saisir le titre du poste',
+'update_resume' => 'Mettre à jour le CV ✅',
+'premium' => 'Premium',
+'free' => 'Gratuit',
+'use_template' => 'Utiliser le modèle',
 'organized' => 'Organisé',
 'professional_certifications' => 'Habilitation professionnelle',
 'certification_hmonp' => 'HMONP',

@@ -12,8 +12,7 @@
             font-size: 14px;
             line-height: 1.6;
         }
-        
-        /* تنسيقات الهيدر */
+
         .header-table {
             width: 100%;
             border-bottom: 2px solid #2c3e50;
@@ -39,8 +38,7 @@
             color: #555;
             line-height: 1.8;
         }
-        
-        /* باقي التنسيقات */
+
         .section-title {
             color: #2c3e50;
             border-bottom: 1px solid #bdc3c7;
@@ -73,8 +71,7 @@
             margin-bottom: 8px;
             font-size: 13px;
         }
-        
-        {{-- إضافة العلامة المائية (نص خلفي) إذا كانت الخطة لا تسمح بإزالتها --}}
+
         @if(!$removeWatermark)
             @page {
                 margin: 1cm;
@@ -101,21 +98,27 @@
 </head>
 <body>
 
+    @php
+        $photoPath = $resume->personalDetail->photo_path ?? null;
+        $photoFullPath = $photoPath ? \Storage::disk('public')->path($photoPath) : null;
+        $hasPhoto = $photoFullPath && file_exists($photoFullPath);
+    @endphp
+
     <table class="header-table" cellpadding="0" cellspacing="0">
         <tr>
-            @if(!empty($resume->personalDetail->photo_path))
+            @if($hasPhoto)
                 <td width="120" style="vertical-align: top;">
-                    <img src="{{ public_path($resume->personalDetail->photo_path) }}" 
+                    <img src="{{ $photoFullPath }}" 
                          alt="الصورة الشخصية" 
                          style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
                 </td>
             @endif
-            
-            <td class="header-text" style="{{ !empty($resume->personalDetail->photo_path) ? 'padding-right: 15px;' : '' }}">
+
+            <td class="header-text" style="{{ $hasPhoto ? 'padding-right: 15px;' : '' }}">
                 <h1>{{ $resume->personalDetail->full_name ?? 'الاسم غير متوفر' }}</h1>
                 <h3>{{ $resume->personalDetail->job_title ?? '' }}</h3>
                 <div class="contact-info">
-                    {{ $resume->personalDetail->email ?? '' }} 
+                    {{ $resume->personalDetail->email ?? '' }}
                     @if($resume->personalDetail->phone) | {{ $resume->personalDetail->phone }} @endif
                     @if($resume->personalDetail->address) | {{ $resume->personalDetail->address }} @endif
                 </div>
@@ -134,11 +137,11 @@
             <div class="item">
                 <div class="item-title">{{ $exp->position }} - {{ $exp->company }}</div>
                 <div class="item-subtitle">
-                    من: {{ \Carbon\Carbon::parse($exp->start_date)->format('Y-m-d') }} 
-                    @if($exp->end_date) 
-                        | إلى: {{ \Carbon\Carbon::parse($exp->end_date)->format('Y-m-d') }} 
-                    @else 
-                        | إلى: الآن 
+                    من: {{ \Carbon\Carbon::parse($exp->start_date)->format('Y-m-d') }}
+                    @if($exp->end_date)
+                        | إلى: {{ \Carbon\Carbon::parse($exp->end_date)->format('Y-m-d') }}
+                    @else
+                        | إلى: الآن
                     @endif
                 </div>
                 @if($exp->description)
@@ -154,7 +157,7 @@
             <div class="item">
                 <div class="item-title">{{ $edu->degree }} {{ $edu->field_of_study ? 'في ' . $edu->field_of_study : '' }}</div>
                 <div class="item-subtitle">
-                    {{ $edu->institution }} 
+                    {{ $edu->institution }}
                     @if($edu->graduation_year) | سنة التخرج: {{ $edu->graduation_year }} @endif
                 </div>
             </div>
