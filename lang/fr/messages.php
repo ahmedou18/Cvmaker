@@ -12,6 +12,20 @@ return [
 'autonomous' => 'Autonome',
 'edit_resume' => 'Modifier le CV',
 
+// Utilisé dans l'affichage des forfaits
+'cv' => 'CV',
+'day' => 'Jour',
+'ai_credits_label' => 'Crédits IA',
+'cover_letter_label' => 'Lettre de motivation',
+'priority_support_label' => 'Support prioritaire',
+'normal_support_label' => 'Support normal',
+'no_watermark_label' => 'Sans filigrane',
+'with_watermark_label' => 'Avec filigrane',
+'upgrade_btn' => 'Améliorer',
+'choose_plan_btn' => 'Choisir ce forfait',
+'free_plan_btn' => 'Commencer gratuitement',
+'currency' => 'MRU',
+
 // ========== Clés manquantes en français ==========
 
 // Plans modal

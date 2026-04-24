@@ -54,6 +54,21 @@ return [
 'free' => 'مجاني',
 'use_template' => 'استخدام القالب',
 
+// مستخدمة في عرض الباقات
+'cv' => 'سيرة ذاتية',
+'day' => 'يوم',
+'ai_credits_label' => 'رصيد الذكاء الاصطناعي',
+'cover_letter_label' => 'رسالة تغطية',
+'priority_support_label' => 'دعم ذو أولوية',
+'normal_support_label' => 'دعم عادي',
+'no_watermark_label' => 'بدون علامة مائية',
+'with_watermark_label' => 'مع علامة مائية',
+'upgrade_btn' => 'ترقية',
+'choose_plan_btn' => 'اختر الباقة',
+'free_plan_btn' => 'ابدأ مجاناً',
+'currency' => 'MRU',   // رمز العملة الموحد
+
+
 
 'rugby' => 'الرجبي',
 'qualities' => 'الصفات',

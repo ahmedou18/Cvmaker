@@ -44,6 +44,20 @@ return [
 'edit_resume' => 'Edit Resume',
 'update_resume' => 'Update Resume ✅',
 
+// Used in plans display
+'cv' => 'Resume',
+'day' => 'Day',
+'ai_credits_label' => 'AI Credits',
+'cover_letter_label' => 'Cover Letter',
+'priority_support_label' => 'Priority Support',
+'normal_support_label' => 'Normal Support',
+'no_watermark_label' => 'No Watermark',
+'with_watermark_label' => 'Contains Watermark',
+'upgrade_btn' => 'Upgrade',
+'choose_plan_btn' => 'Choose Plan',
+'free_plan_btn' => 'Start Free',
+'currency' => 'MRU',
+
 'creative' => 'Creative',
 'autonomous' => 'Autonomous',
 'organized' => 'Organized',

@@ -22,7 +22,7 @@ class PlanSeeder extends Seeder
     Plan::truncate();
         $plans = [
             [
-                'name' => 'باقة الفرصة الواحدة',
+                'name' => 'باقة البداية', 
                 'slug' => 'basic',
                 'price' => 50.00,
                 'duration_in_days' => 30, // شهر
@@ -36,7 +36,7 @@ class PlanSeeder extends Seeder
                 'description' => 'سيرة ذاتية واحدة مع علامة مائية للموقع.'
             ],
             [
-                'name' => 'باقة التميز الفردي',
+                'name' => 'باقة الاحترافية', 
                 'slug' => 'premium',
                 'price' => 200.00,
                 'duration_in_days' => 90, // 3 أشهر
@@ -50,7 +50,7 @@ class PlanSeeder extends Seeder
                 'description' => 'سيرة ذاتية احترافية بدون علامة مائية + رسالة تغطية (Cover Letter).'
             ],
             [
-                'name' => 'باقة الخبراء',
+                'name' => 'باقة النخبة',  
                 'slug' => 'vip',
                 'price' => 500.00,
                 'duration_in_days' => 365, // سنة كاملة
