@@ -154,24 +154,31 @@
     </section>
 
     {{-- Features --}}
-    <section id="features" class="py-24 bg-slate-50/50">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16" data-aos="fade-up">
-                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4">{{ __('messages.features_title') ?? 'كل ما تحتاجه للنجاح' }}</h2>
-                <p class="text-slate-500 text-lg max-w-2xl mx-auto">{{ __('messages.features_subtitle') ?? 'أدوات قوية مصممة لتبسيط العملية.' }}</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                @php $features = [['icon' => '📄','title' => 'قوالب حديثة','desc' => 'أكثر من 20 قالباً عصرياً متوافقاً مع أنظمة تتبع طلبات التوظيف (ATS).'],['icon' => '📥','title' => 'تصدير PDF','desc' => 'حمّل سيرتك الذاتية بصيغة PDF عالية الدقة بنقرة واحدة.'],['icon' => '🌐','title' => 'دعم اللغات','desc' => 'أنشئ سيرتك الذاتية بالعربية، الإنجليزية، أو الفرنسية.'],['icon' => '🤖','title' => 'اقتراحات ذكية','desc' => 'الذكاء الاصطناعي يحلل مجالك ويقترح عبارات قوية.']]; @endphp
-                @foreach($features as $index => $feature)
+<section id="features" class="py-24 bg-slate-50/50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4">{{ __('messages.features_title') }}</h2>
+            <p class="text-slate-500 text-lg max-w-2xl mx-auto">{{ __('messages.features_subtitle') }}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            @php
+                $featureKeys = [
+                    ['icon' => '📄', 'title_key' => 'feature_1_title', 'desc_key' => 'feature_1_desc'],
+                    ['icon' => '📥', 'title_key' => 'feature_2_title', 'desc_key' => 'feature_2_desc'],
+                    ['icon' => '🌐', 'title_key' => 'feature_3_title', 'desc_key' => 'feature_3_desc'],
+                    ['icon' => '🤖', 'title_key' => 'feature_4_title', 'desc_key' => 'feature_4_desc'],
+                ];
+            @endphp
+            @foreach($featureKeys as $index => $feature)
                 <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:shadow-xl transition-all duration-300 group" data-aos="fade-up" data-aos-delay="{{ $index * 50 }}">
                     <div class="text-3xl mb-4">{{ $feature['icon'] }}</div>
-                    <h3 class="text-lg font-bold mb-2">{{ $feature['title'] }}</h3>
-                    <p class="text-sm text-slate-500">{{ $feature['desc'] }}</p>
+                    <h3 class="text-lg font-bold mb-2">{{ __("messages.{$feature['title_key']}") }}</h3>
+                    <p class="text-sm text-slate-500">{{ __("messages.{$feature['desc_key']}") }}</p>
                 </div>
-                @endforeach
-            </div>
+            @endforeach
         </div>
-    </section>
+    </div>
+</section>
 
     {{-- Templates Slider --}}
     <section id="templates" class="py-20 bg-white overflow-hidden">
