@@ -2,12 +2,19 @@
     $user = $resume->user;
     $removeWatermark = $user->plan && $user->plan->remove_watermark;
     $templateView = $resume->template->view_path ?? 'templates.green-classic';
-    $hideActions = true; // مهم جداً لإخفاء الأزرار والمودال
+    $hideActions = true;
 
-    // إنشاء رابط مطلق للصورة الشخصية (لـ Puppeteer)
+    // إنشاء رابط مطلق للصورة باستخدام Storage::url (يدعم local و S3)
     $photoAbsoluteUrl = null;
     if ($resume->personalDetail && $resume->personalDetail->photo_path) {
-        $photoAbsoluteUrl = url('storage/' . $resume->personalDetail->photo_path);
+        // تأكد من وجود الملف قبل إنشاء الرابط
+        if (Storage::disk('public')->exists($resume->personalDetail->photo_path)) {
+            // استخدم Storage::url للحصول على رابط عام (مطلق)
+            $photoAbsoluteUrl = Storage::disk('public')->url($resume->personalDetail->photo_path);
+        } else {
+            // تسجيل خطأ فقط للمطور (لن يظهر للمستخدم)
+            error_log("Photo file not found: " . $resume->personalDetail->photo_path);
+        }
     }
 @endphp
 
@@ -35,7 +42,14 @@
     @include($templateView, [
         'resume' => $resume,
         'hideActions' => true,
-        'photoAbsoluteUrl' => $photoAbsoluteUrl   // تمرير الرابط المطلق إلى القالب
+        'photoAbsoluteUrl' => $photoAbsoluteUrl
     ])
+
+    <!-- Debug info (لن تظهر في PDF النهائي، ولكن يمكنك رؤيتها في معاينة المتصفح) -->
+    @if(!$hideActions && !$photoAbsoluteUrl)
+        <div style="background:#f8d7da; padding:10px; margin-top:20px; font-size:12px; color:#721c24;">
+            ⚠️ الصورة غير موجودة: لم يتم العثور على ملف الصورة في المسار المخزن.
+        </div>
+    @endif
 </body>
 </html>
