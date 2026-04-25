@@ -237,7 +237,7 @@ class AiGenerationController extends Controller
             $response = Http::withToken(config('services.cohere.key'))
                 ->timeout(60)
                 ->post('https://api.cohere.ai/v1/chat', [
-                    'model'           => self::DEFAULT_MODEL,
+                    'model' => 'command-a-03-2025',
                     'preamble'        => $systemInstruction,
                     'message'         => $userMessage,
                     'temperature'     => 0.1,
