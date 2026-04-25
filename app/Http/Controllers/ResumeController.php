@@ -417,10 +417,10 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
     $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
 
     // التخزين المؤقت (اختياري)
-    $cachePath = "pdfs/{$resume->uuid}.pdf";
+    //$cachePath = "pdfs/{$resume->uuid}.pdf";
    /* if (Storage::exists($cachePath)) {
         return Storage::download($cachePath);*/
-    }
+    //}
 
     try {
         $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
