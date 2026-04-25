@@ -3,7 +3,10 @@
     $user = auth()->user();
     $canDownload = $user && $user->plan && $user->plan->price > 0;
     $resumeLanguage = $resume->resume_language;
-    $hideActions = $hideActions ?? false; // ← أضفنا هذا السطر
+    $hideActions = $hideActions ?? false;
+
+    // تحديد رابط الصورة: مفضلاً الرابط المطلق (لـ PDF) ثم الرابط النسبي (للعرض العادي)
+    $photoUrl = $photoAbsoluteUrl ?? ($profile->photo_path ? asset('storage/' . $profile->photo_path) : null);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
@@ -69,24 +72,37 @@
     </div>
     @endif
 
-    {{-- الترويسة العلوية --}}
-    <header class="mb-8 border-b-2 border-black pb-4 text-center break-inside-avoid">
-        <h1 class="header-title text-3xl sm:text-4xl font-bold uppercase tracking-widest mb-1">
-            {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
-        </h1>
-        <p class="job-subtitle text-base sm:text-lg uppercase tracking-widest text-gray-600 mb-4">
-            {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
-        </p>
-        <div class="contact-info text-[11px] sm:text-[12px] flex flex-wrap justify-center gap-x-4 gap-y-1 text-gray-700">
-            @if($profile->phone)
-                <span dir="ltr">{{ $profile->phone }}</span>
+    {{-- الترويسة العلوية مع الصورة --}}
+    <header class="mb-8 border-b-2 border-black pb-4 break-inside-avoid">
+        <div class="flex flex-col md:flex-row items-center gap-6">
+            {{-- عرض الصورة الشخصية --}}
+            @if($photoUrl)
+                <div class="flex-shrink-0">
+                    <img src="{{ $photoUrl }}" 
+                         alt="{{ $profile->full_name ?? 'Profile Photo' }}"
+                         class="w-32 h-32 object-cover rounded-full shadow-md border-2 border-gray-200">
+                </div>
             @endif
-            @if($profile->email)
-                <span>•</span> <span dir="ltr">{{ $profile->email }}</span>
-            @endif
-            @if($profile->address)
-                <span>•</span> <span>{{ $profile->address }}</span>
-            @endif
+
+            <div class="flex-1 text-center md:text-left {{ $resumeLanguage == 'ar' ? 'md:text-right' : '' }}">
+                <h1 class="header-title text-3xl sm:text-4xl font-bold uppercase tracking-widest mb-1">
+                    {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
+                </h1>
+                <p class="job-subtitle text-base sm:text-lg uppercase tracking-widest text-gray-600 mb-4">
+                    {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
+                </p>
+                <div class="contact-info text-[11px] sm:text-[12px] flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-gray-700">
+                    @if($profile->phone)
+                        <span dir="ltr">{{ $profile->phone }}</span>
+                    @endif
+                    @if($profile->email)
+                        <span>•</span> <span dir="ltr">{{ $profile->email }}</span>
+                    @endif
+                    @if($profile->address)
+                        <span>•</span> <span>{{ $profile->address }}</span>
+                    @endif
+                </div>
+            </div>
         </div>
     </header>
 
