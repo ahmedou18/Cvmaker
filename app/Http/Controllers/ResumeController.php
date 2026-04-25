@@ -15,7 +15,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 
 class ResumeController extends Controller
 {
@@ -128,7 +129,7 @@ class ResumeController extends Controller
                 'summary'   => $request->summary,
             ];
 
-            // معالجة الصورة (الحفظ بنفس اسم الحقل القديم photo_path)
+            // معالجة الصورة
             if ($request->filled('cropped_photo_base64')) {
                 $imageData = $request->input('cropped_photo_base64');
                 $image = base64_decode(preg_replace('/^data:image\/[^;]+;base64,/', '', $imageData));
@@ -308,7 +309,6 @@ class ResumeController extends Controller
 
             // معالجة الصورة (حذف القديمة عند رفع جديدة)
             if ($request->filled('cropped_photo_base64')) {
-                // حذف الصورة القديمة إذا وجدت
                 if ($personalDetail->photo_path && Storage::disk('public')->exists($personalDetail->photo_path)) {
                     Storage::disk('public')->delete($personalDetail->photo_path);
                 }
@@ -387,31 +387,57 @@ class ResumeController extends Controller
     }
 
     /**
-     * تحميل السيرة الذاتية كملف PDF (مع صلاحية الخطة المدفوعة والعلامة المائية).
+     * صفحة معاينة السيرة (خالية من الأزرار، مناسبة لـ Puppeteer)
+     */
+    public function pdfPreview($uuid)
+    {
+        // لا نضيف شرط user_id لأن الرابط موقع (signed) ومؤقت
+        $resume = Resume::where('uuid', $uuid)
+            ->with(['user.plan', 'personalDetail', 'experiences', 'educations', 'skills', 'languages', 'template'])
+            ->firstOrFail();
+
+        return view('resumes.pdf-preview', compact('resume'));
+    }
+
+    /**
+     * تحميل السيرة الذاتية كملف PDF باستخدام Puppeteer (مع تخزين مؤقت)
      */
     public function downloadPdf($uuid)
     {
         $resume = Resume::where('uuid', $uuid)
             ->where('user_id', auth()->id())
-            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages', 'template'])
             ->firstOrFail();
 
-        // التحقق من صلاحية التحميل عبر ResumePolicy
+        // التحقق من صلاحية التحميل عبر ResumePolicy (price > 0)
         $this->authorize('download', $resume);
 
-        $user = auth()->user();
-        $plan = $user->plan;
-        $removeWatermark = $plan && $plan->remove_watermark; // true إذا كانت الباقة تزيل العلامة
+        // التخزين المؤقت
+        $cachePath = "pdfs/{$resume->uuid}.pdf";
+        if (Storage::exists($cachePath)) {
+            return Storage::download($cachePath, "cv_{$resume->uuid}.pdf");
+        }
 
-        $templateView = $resume->template->view_path ?? 'resumes.templates.modern_sidebar';
+        // إنشاء رابط المعاينة بتوقيع (signed) لمدة 5 دقائق
+        $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
 
-        $pdf = PDF::loadView($templateView, [
-            'resume'          => $resume,
-            'resumeLanguage'  => $resume->resume_language,
-            'removeWatermark' => $removeWatermark,
-        ]);
+        $pdfServiceUrl = env('PDF_SERVICE_URL', 'http://localhost:3001') . '/generate?url=' . urlencode($previewUrl);
 
-        $fileName = 'CV_' . ($resume->personalDetail->full_name ?? 'resume') . '_' . time() . '.pdf';
-        return $pdf->download($fileName);
+        try {
+            $response = Http::timeout(60)->get($pdfServiceUrl);
+
+            if ($response->failed()) {
+                throw new \Exception('PDF service error: ' . $response->status());
+            }
+
+            $pdfContent = $response->body();
+            Storage::put($cachePath, $pdfContent);
+
+            return response($pdfContent)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="cv.pdf"');
+        } catch (\Exception $e) {
+            Log::error('PDF generation failed: ' . $e->getMessage());
+            return back()->with('error', 'حدث خطأ في توليد الملف، حاول مرة أخرى.');
+        }
     }
 }

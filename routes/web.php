@@ -9,12 +9,11 @@ use App\Http\Controllers\AiGenerationController;
 use App\Http\Controllers\AiResumeController;
 use App\Http\Controllers\PlanController;
 use App\Models\Template;
-use App\Http\Controllers\NotificationController; // إضافة جديدة للإشعارات
-
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     $plans = Plan::all();
-    $templates = Template::all(); // جلب جميع القوالب (يمكن إضافة where('is_active', true))
+    $templates = Template::all();
     return view('welcome', compact('plans', 'templates'));
 });
 
@@ -26,8 +25,10 @@ Route::get('/dashboard', function () {
 Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
+    // Cover Letters
     Route::put('/cover-letters/{id}', [CoverLetterController::class, 'update'])->name('cover-letters.update');
-Route::get('/cover-letters/{id}/combined-download', [CoverLetterController::class, 'combinedDownload'])->name('cover-letters.combined-download');
+    Route::get('/cover-letters/{id}/combined-download', [CoverLetterController::class, 'combinedDownload'])->name('cover-letters.combined-download');
+    
     // Payment
     Route::get('/payment/checkout/{slug}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::post('/payment/online/{slug}', [App\Http\Controllers\PaymentController::class, 'processOnlinePayment'])->name('payment.online');
@@ -59,15 +60,25 @@ Route::get('/cover-letters/{id}/combined-download', [CoverLetterController::clas
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-as-read');
 
-    // Cover Letters
+    // Cover Letters create/show/download
     Route::get('/cover-letters/create', [CoverLetterController::class, 'create'])->name('cover-letters.create');
     Route::post('/cover-letters', [CoverLetterController::class, 'store'])->name('cover-letters.store');
     Route::get('/cover-letters/{id}', [CoverLetterController::class, 'show'])->name('cover-letters.show');
     Route::get('/cover-letters/{id}/download', [CoverLetterController::class, 'downloadPdf'])->name('cover-letters.download');
+
+    // ========== مسارات PDF الجديدة (Puppeteer) ==========
+    // صفحة المعاينة النظيفة (بدون أزرار) – تستخدم مع signed URL
+    Route::get('/resume/pdf-preview/{uuid}', [ResumeController::class, 'pdfPreview'])
+        ->name('resume.pdf-preview')
+        ->middleware('signed'); // <-- مهم لمنع الوصول العشوائي
+
+    // تحميل PDF عبر Puppeteer (يستبدل الراوت القديم)
+    Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])
+        ->name('resume.download')
+        ->middleware('auth');
 });
 
 Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume'])->middleware('auth');
-Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])->name('resume.download')->middleware('auth');
 Route::post('/moosyl/webhook', [App\Http\Controllers\PaymentController::class, 'handleWebhook']);
 Route::get('/lang/{locale}', function ($locale) {
     if (in_array($locale, ['ar', 'en', 'fr'])) {

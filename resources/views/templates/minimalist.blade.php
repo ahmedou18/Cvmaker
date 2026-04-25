@@ -3,6 +3,7 @@
     $user = auth()->user();
     $canDownload = $user && $user->plan && $user->plan->price > 0;
     $resumeLanguage = $resume->resume_language;
+    $hideActions = $hideActions ?? false; // ← أضفنا هذا السطر
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
@@ -42,7 +43,8 @@
 </head>
 <body class="print-container p-6 sm:p-10 max-w-4xl mx-auto relative bg-white">
 
-    {{-- شريط الإجراءات العلوي (للطباعة والتحكم) --}}
+    {{-- شريط الإجراءات العلوي (للطباعة والتحكم) - يظهر فقط في وضع العرض العادي --}}
+    @if(!$hideActions)
     <div class="no-print bg-gray-50 shadow-sm border-b mb-8 -mx-6 sm:-mx-10 px-6 sm:px-10 py-4">
         <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
             <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-gray-600 hover:text-blue-600 flex items-center transition">
@@ -65,6 +67,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     {{-- الترويسة العلوية --}}
     <header class="mb-8 border-b-2 border-black pb-4 text-center break-inside-avoid">
@@ -186,8 +189,10 @@
         @endforeach
     @endif
 
-    {{-- مودال الباقات --}}
+    {{-- مودال الباقات - يظهر فقط في وضع العرض العادي --}}
+    @if(!$hideActions)
     <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
+    @endif
 
     <script>
         function openModal() {
