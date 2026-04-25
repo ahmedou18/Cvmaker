@@ -3,6 +3,12 @@
     $removeWatermark = $user->plan && $user->plan->remove_watermark;
     $templateView = $resume->template->view_path ?? 'templates.green-classic';
     $hideActions = true; // مهم جداً لإخفاء الأزرار والمودال
+
+    // إنشاء رابط مطلق للصورة الشخصية (لـ Puppeteer)
+    $photoAbsoluteUrl = null;
+    if ($resume->personalDetail && $resume->personalDetail->photo_path) {
+        $photoAbsoluteUrl = url('storage/' . $resume->personalDetail->photo_path);
+    }
 @endphp
 
 <!DOCTYPE html>
@@ -26,6 +32,10 @@
         </div>
     @endif
 
-    @include($templateView, ['resume' => $resume, 'hideActions' => true])
+    @include($templateView, [
+        'resume' => $resume,
+        'hideActions' => true,
+        'photoAbsoluteUrl' => $photoAbsoluteUrl   // تمرير الرابط المطلق إلى القالب
+    ])
 </body>
 </html>
