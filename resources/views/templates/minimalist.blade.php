@@ -80,44 +80,36 @@
     @endif
 
     {{-- الترويسة العلوية مع الصورة --}}
-    <header class="mb-8 border-b-2 border-black pb-4 break-inside-avoid">
-        <div class="flex flex-col md:flex-row items-center gap-6">
-            {{-- عرض الصورة إذا كان الرابط موجوداً --}}
-            @if($photoUrl)
-                <div class="flex-shrink-0">
-                    <img src="{{ $photoUrl }}" 
-                         alt="{{ $profile->full_name ?? 'Profile Photo' }}"
-                         class="w-32 h-32 object-cover rounded-full shadow-md border-2 border-gray-200"
-                         onerror="this.onerror=null; this.style.display='none'; console.log('Image failed to load: {{ $photoUrl }}');">
-                </div>
-            @else
-                {{-- أيقونة افتراضية في حالة عدم وجود صورة --}}
-                <div class="flex-shrink-0 w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-300">
-                    <span class="text-4xl text-gray-400">👤</span>
-                </div>
-            @endif
-
-            <div class="flex-1 text-center md:text-left {{ $resumeLanguage == 'ar' ? 'md:text-right' : '' }}">
-                <h1 class="header-title text-3xl sm:text-4xl font-bold uppercase tracking-widest mb-1">
-                    {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
-                </h1>
-                <p class="job-subtitle text-base sm:text-lg uppercase tracking-widest text-gray-600 mb-4">
-                    {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
-                </p>
-                <div class="contact-info text-[11px] sm:text-[12px] flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-1 text-gray-700">
-                    @if($profile->phone)
-                        <span dir="ltr">{{ $profile->phone }}</span>
-                    @endif
-                    @if($profile->email)
-                        <span>•</span> <span dir="ltr">{{ $profile->email }}</span>
-                    @endif
-                    @if($profile->address)
-                        <span>•</span> <span>{{ $profile->address }}</span>
-                    @endif
-                </div>
-            </div>
+   {{-- الترويسة العلوية --}}
+<header class="mb-8 border-b-2 border-black pb-4 text-center break-inside-avoid">
+    
+    {{-- إضافة وسم الصورة هنا --}}
+    @if($photoUrl)
+        <div class="mb-4 flex justify-center">
+            <img src="{{ $photoUrl }}" 
+                 alt="Profile Photo" 
+                 class="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-gray-200 shadow-sm">
         </div>
-    </header>
+    @endif
+
+    <h1 class="header-title text-3xl sm:text-4xl font-bold uppercase tracking-widest mb-1">
+        {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
+    </h1>
+    <p class="job-subtitle text-base sm:text-lg uppercase tracking-widest text-gray-600 mb-4">
+        {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
+    </p>
+    <div class="contact-info text-[11px] sm:text-[12px] flex flex-wrap justify-center gap-x-4 gap-y-1 text-gray-700">
+        @if($profile->phone)
+            <span dir="ltr">{{ $profile->phone }}</span>
+        @endif
+        @if($profile->email)
+            <span>•</span> <span dir="ltr">{{ $profile->email }}</span>
+        @endif
+        @if($profile->address)
+            <span>•</span> <span>{{ $profile->address }}</span>
+        @endif
+    </div>
+</header>
 
     {{-- باقي أقسام السيرة كما هي (لا تغيير) --}}
     @if($profile && $profile->summary)
