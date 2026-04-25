@@ -418,8 +418,8 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
 
     // التخزين المؤقت (اختياري)
     $cachePath = "pdfs/{$resume->uuid}.pdf";
-    if (Storage::exists($cachePath)) {
-        return Storage::download($cachePath);
+   /* if (Storage::exists($cachePath)) {
+        return Storage::download($cachePath);*/
     }
 
     try {
