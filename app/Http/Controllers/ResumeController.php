@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
+use App\Services\DoppioPdfService;
 
 class ResumeController extends Controller
 {
@@ -402,42 +403,43 @@ class ResumeController extends Controller
     /**
      * تحميل السيرة الذاتية كملف PDF باستخدام Puppeteer (مع تخزين مؤقت)
      */
-    public function downloadPdf($uuid)
-    {
-        $resume = Resume::where('uuid', $uuid)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+   
 
-        // التحقق من صلاحية التحميل عبر ResumePolicy (price > 0)
-        $this->authorize('download', $resume);
+public function downloadPdf($uuid, DoppioPdfService $pdfService)
+{
+    $resume = Resume::where('uuid', $uuid)
+        ->where('user_id', auth()->id())
+        ->firstOrFail();
 
-        // التخزين المؤقت
-        $cachePath = "pdfs/{$resume->uuid}.pdf";
-        if (Storage::exists($cachePath)) {
-            return Storage::download($cachePath, "cv_{$resume->uuid}.pdf");
-        }
+    $this->authorize('download', $resume);
 
-        // إنشاء رابط المعاينة بتوقيع (signed) لمدة 5 دقائق
-        $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
+    // إنشاء رابط معاينة مؤقت (صالح لمدة 5 دقائق)
+    $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
 
-        $pdfServiceUrl = env('PDF_SERVICE_URL', 'http://localhost:3001') . '/generate?url=' . urlencode($previewUrl);
-
-        try {
-            $response = Http::timeout(60)->get($pdfServiceUrl);
-
-            if ($response->failed()) {
-                throw new \Exception('PDF service error: ' . $response->status());
-            }
-
-            $pdfContent = $response->body();
-            Storage::put($cachePath, $pdfContent);
-
-            return response($pdfContent)
-                ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="cv.pdf"');
-        } catch (\Exception $e) {
-            Log::error('PDF generation failed: ' . $e->getMessage());
-            return back()->with('error', 'حدث خطأ في توليد الملف، حاول مرة أخرى.');
-        }
+    // التخزين المؤقت (اختياري)
+    $cachePath = "pdfs/{$resume->uuid}.pdf";
+    if (Storage::exists($cachePath)) {
+        return Storage::download($cachePath);
     }
+
+    try {
+        $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
+            'printBackground' => true,
+            'format' => 'A4',
+            'marginTop' => 20,
+            'marginBottom' => 20,
+            'marginLeft' => 15,
+            'marginRight' => 15,
+        ]);
+
+        Storage::put($cachePath, $pdfContent);
+
+        return response($pdfContent)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="cv.pdf"');
+    } catch (\Exception $e) {
+        Log::error('Doppio PDF error: ' . $e->getMessage());
+        return back()->with('error', 'فشل إنشاء ملف PDF، حاول مرة أخرى.');
+    }
+}
 }

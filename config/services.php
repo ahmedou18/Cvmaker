@@ -37,5 +37,8 @@ return [
     'cohere' => [
     'key' => env('COHERE_API_KEY'),
 ],
+'doppio' => [
+    'token' => env('DOPPIO_AUTH_TOKEN'),
+],
 
 ];
