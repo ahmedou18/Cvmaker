@@ -5,8 +5,17 @@
     $resumeLanguage = $resume->resume_language;
     $hideActions = $hideActions ?? false;
 
-    // تحديد رابط الصورة: مفضلاً الرابط المطلق (لـ PDF) ثم الرابط النسبي (للعرض العادي)
-    $photoUrl = $photoAbsoluteUrl ?? ($profile->photo_path ? asset('storage/' . $profile->photo_path) : null);
+    // تحديد رابط الصورة: 
+    // 1. إذا وُجد $photoAbsoluteUrl (من pdf-preview) استخدمه.
+    // 2. وإلا استخدم Storage::url إذا كان الملف موجوداً.
+    $photoUrl = null;
+    if (isset($photoAbsoluteUrl) && $photoAbsoluteUrl) {
+        $photoUrl = $photoAbsoluteUrl;
+    } elseif ($profile && $profile->photo_path) {
+        if (Storage::disk('public')->exists($profile->photo_path)) {
+            $photoUrl = Storage::disk('public')->url($profile->photo_path);
+        }
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
@@ -23,7 +32,6 @@
         .bullet-list { list-style-type: disc; padding-inline-start: 1.5rem; }
         .bullet-list li { margin-bottom: 0.25rem; }
 
-        /* تحسينات الطباعة */
         @media print {
             @page { margin: 0; size: A4 portrait; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -32,7 +40,6 @@
             .print-container { padding: 2rem !important; max-width: 100% !important; }
         }
 
-        /* تحسينات للهواتف */
         @media (max-width: 640px) {
             .print-container { padding: 1.5rem !important; }
             .header-title { font-size: 1.8rem !important; }
@@ -46,7 +53,7 @@
 </head>
 <body class="print-container p-6 sm:p-10 max-w-4xl mx-auto relative bg-white">
 
-    {{-- شريط الإجراءات العلوي (للطباعة والتحكم) - يظهر فقط في وضع العرض العادي --}}
+    {{-- شريط الإجراءات العلوي --}}
     @if(!$hideActions)
     <div class="no-print bg-gray-50 shadow-sm border-b mb-8 -mx-6 sm:-mx-10 px-6 sm:px-10 py-4">
         <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
@@ -75,12 +82,18 @@
     {{-- الترويسة العلوية مع الصورة --}}
     <header class="mb-8 border-b-2 border-black pb-4 break-inside-avoid">
         <div class="flex flex-col md:flex-row items-center gap-6">
-            {{-- عرض الصورة الشخصية --}}
+            {{-- عرض الصورة إذا كان الرابط موجوداً --}}
             @if($photoUrl)
                 <div class="flex-shrink-0">
                     <img src="{{ $photoUrl }}" 
                          alt="{{ $profile->full_name ?? 'Profile Photo' }}"
-                         class="w-32 h-32 object-cover rounded-full shadow-md border-2 border-gray-200">
+                         class="w-32 h-32 object-cover rounded-full shadow-md border-2 border-gray-200"
+                         onerror="this.onerror=null; this.style.display='none'; console.log('Image failed to load: {{ $photoUrl }}');">
+                </div>
+            @else
+                {{-- أيقونة افتراضية في حالة عدم وجود صورة --}}
+                <div class="flex-shrink-0 w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-300">
+                    <span class="text-4xl text-gray-400">👤</span>
                 </div>
             @endif
 
@@ -106,7 +119,7 @@
         </div>
     </header>
 
-    {{-- الملف الشخصي --}}
+    {{-- باقي أقسام السيرة كما هي (لا تغيير) --}}
     @if($profile && $profile->summary)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.summary', [], $resumeLanguage) }}</h2>
@@ -205,7 +218,6 @@
         @endforeach
     @endif
 
-    {{-- مودال الباقات - يظهر فقط في وضع العرض العادي --}}
     @if(!$hideActions)
     <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
     @endif
