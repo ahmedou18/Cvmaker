@@ -66,18 +66,11 @@
                     {{ __('messages.edit_data', [], $resumeLanguage) }}
                 </a>
                 @if($canDownload)
-                    <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition cursor-pointer">
-                        {{ __('messages.download_pdf', [], $resumeLanguage) }}
-                    </button>
-                @else
-                    <button onclick="openModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md transition cursor-pointer">
-                        {{ __('messages.upgrade_to_download', [], $resumeLanguage) ?? 'رقّي باقتك لتحميل السيرة' }}
-                    </button>
-                @endif
-            </div>
-        </div>
-    </div>
-    @endif
+    <a href="{{ route('resume.download', $resume->uuid) }}" 
+       class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">
+        {{ __('messages.download_pdf', [], $resumeLanguage) }}
+    </a>
+@endif
 
     {{-- الترويسة العلوية مع الصورة --}}
    {{-- الترويسة العلوية --}}
