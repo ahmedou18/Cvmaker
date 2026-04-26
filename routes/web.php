@@ -73,9 +73,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('signed'); // <-- مهم لمنع الوصول العشوائي
 
     // تحميل PDF عبر Puppeteer (يستبدل الراوت القديم)
-    Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])
-        ->name('resume.download')
-        ->middleware('auth');
+    Route::get('/resume/pdf-preview/{uuid}', [ResumeController::class, 'pdfPreview'])
+    ->name('resume.pdf-preview')
+    ->withoutMiddleware([\App\Http\Middleware\Authenticate::class]) // إزالة أي middleware للمصادقة
+    ->middleware('signed');
 });
 
 Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume'])->middleware('auth');
