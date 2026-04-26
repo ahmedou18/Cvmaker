@@ -404,7 +404,6 @@ class ResumeController extends Controller
      * تحميل السيرة الذاتية كملف PDF باستخدام Puppeteer (مع تخزين مؤقت)
      */
    
-
 public function downloadPdf($uuid, DoppioPdfService $pdfService)
 {
     $resume = Resume::where('uuid', $uuid)
@@ -416,11 +415,15 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
     // إنشاء رابط معاينة مؤقت (صالح لمدة 5 دقائق)
     $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
 
-    // التخزين المؤقت (اختياري)
-    //$cachePath = "pdfs/{$resume->uuid}.pdf";
-   /* if (Storage::exists($cachePath)) {
-        return Storage::download($cachePath);*/
-    //}
+    // مسار التخزين المؤقت (يُستخدم إذا أردت caching)
+    $cachePath = "pdfs/{$resume->uuid}.pdf";
+
+    // (اختياري) إذا كنت تريد استخدام التخزين المؤقت، قم بإلغاء التعليق
+    /*
+    if (Storage::exists($cachePath)) {
+        return Storage::download($cachePath);
+    }
+    */
 
     try {
         $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
@@ -432,6 +435,7 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
             'marginRight' => 15,
         ]);
 
+        // حفظ الـ PDF مؤقتاً (اختياري)
         Storage::put($cachePath, $pdfContent);
 
         return response($pdfContent)
