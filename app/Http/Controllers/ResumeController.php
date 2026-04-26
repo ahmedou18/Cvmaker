@@ -410,20 +410,10 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
         ->where('user_id', auth()->id())
         ->firstOrFail();
 
-    $this->authorize('download', $resume);
+    // لا حاجة لـ authorize لأننا قيدنا الاستعلام بالمستخدم نفسه
 
     // إنشاء رابط معاينة مؤقت (صالح لمدة 5 دقائق)
     $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
-
-    // مسار التخزين المؤقت (يُستخدم إذا أردت caching)
-    $cachePath = "pdfs/{$resume->uuid}.pdf";
-
-    // (اختياري) إذا كنت تريد استخدام التخزين المؤقت، قم بإلغاء التعليق
-    /*
-    if (Storage::exists($cachePath)) {
-        return Storage::download($cachePath);
-    }
-    */
 
     try {
         $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
@@ -434,9 +424,6 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
             'marginLeft' => 15,
             'marginRight' => 15,
         ]);
-
-        // حفظ الـ PDF مؤقتاً (اختياري)
-        Storage::put($cachePath, $pdfContent);
 
         return response($pdfContent)
             ->header('Content-Type', 'application/pdf')
