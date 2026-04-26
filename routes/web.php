@@ -11,6 +11,12 @@ use App\Http\Controllers\PlanController;
 use App\Models\Template;
 use App\Http\Controllers\NotificationController;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
     $plans = Plan::all();
     $templates = Template::all();
@@ -66,19 +72,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/cover-letters/{id}', [CoverLetterController::class, 'show'])->name('cover-letters.show');
     Route::get('/cover-letters/{id}/download', [CoverLetterController::class, 'downloadPdf'])->name('cover-letters.download');
 
-    // ========== مسارات Doppio PDF ==========
-    // صفحة المعاينة النظيفة (بدون أزرار) – تستخدم مع signed URL فقط، بدون مصادقة
-    Route::get('/resume/pdf-preview/{uuid}', [ResumeController::class, 'pdfPreview'])
-        ->name('resume.pdf-preview')
-        ->withoutMiddleware(['auth'])      // إزالة مصادقة Laravel العادية
-        ->middleware('signed');            // فقط التحقق من التوقيع
-
-    // تحميل PDF عبر Doppio (يستدعي المعاينة ويحولها)
+    // ========== Doppio PDF Routes ==========
+    // تحميل PDF عبر Doppio (يستدعي المعاينة ويحولها) – يتطلب مصادقة
     Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])
-        ->name('resume.download')
-        ->middleware('auth');
+        ->name('resume.download');
 });
 
+// ========== صفحة المعاينة النظيفة (بدون أزرار) – تستخدم مع signed URL فقط، بدون مصادقة ==========
+Route::get('/resume/pdf-preview/{uuid}', [ResumeController::class, 'pdfPreview'])
+    ->name('resume.pdf-preview')
+    ->withoutMiddleware(['auth'])      // إزالة مصادقة Laravel العادية
+    ->middleware('signed');            // فقط التحقق من التوقيع
+
+// باقي المسارات العامة
 Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume'])->middleware('auth');
 Route::post('/moosyl/webhook', [App\Http\Controllers\PaymentController::class, 'handleWebhook']);
 Route::get('/lang/{locale}', function ($locale) {

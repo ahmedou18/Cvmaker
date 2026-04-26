@@ -25,36 +25,36 @@ class DoppioPdfService
      * @throws \Exception
      */
     public function generatePdfFromUrl(string $url, array $options = []): string
-    {
-        // هذه هي البنية الصحيحة الوحيدة التي يقبلها Doppio API حالياً
-        $payload = [
-            'page' => [
-                'goto' => [
-                    'url' => $url   // فقط الرابط، لا waitUntil, timeout, viewport
-                ],
-                'pdf' => [
-                    'printBackground' => $options['printBackground'] ?? true,
-                    'format' => $options['format'] ?? 'A4',
-                    // لا margins, لا header/footer, لا أي شيء آخر
-                ]
+{
+    $payload = [
+        'page' => [
+            'goto' => ['url' => $url],
+            'pdf' => [
+                'printBackground' => $options['printBackground'] ?? true,
+                'format' => $options['format'] ?? 'A4',
             ]
-        ];
+        ]
+    ];
 
-        $response = Http::withToken($this->authToken)
-            ->timeout(60)
-            ->accept('application/pdf')
-            ->post($this->apiEndpoint, $payload);
+    $response = Http::withToken($this->authToken)
+        ->timeout(60)
+        ->post($this->apiEndpoint, $payload);  // لا نستخدم accept('application/pdf')
 
-        Log::info('Doppio response', [
-            'status' => $response->status(),
-            'content_type' => $response->header('Content-Type'),
-            'body_preview' => substr($response->body(), 0, 200),
-        ]);
+    // نفحص أولاً إذا كان الاستجابة تبدأ بـ %PDF (توقيع PDF)
+    $body = $response->body();
+    $isPdf = $response->successful() && (str_starts_with($body, '%PDF') || str_contains($response->header('Content-Type'), 'application/pdf'));
 
-        if ($response->successful() && str_contains($response->header('Content-Type'), 'application/pdf')) {
-            return $response->body();
-        }
-
-        throw new \Exception('Doppio API error: ' . substr($response->body(), 0, 300));
+    if ($isPdf) {
+        return $body;
     }
+
+    // في حال الفشل، نسجل ونلقي استثناء
+    Log::error('Doppio failed to generate PDF', [
+        'status' => $response->status(),
+        'content_type' => $response->header('Content-Type'),
+        'body_preview' => substr($body, 0, 200),
+    ]);
+
+    throw new \Exception('Doppio returned non-PDF content: ' . substr($body, 0, 300));
+}
 }

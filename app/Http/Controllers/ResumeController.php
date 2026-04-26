@@ -415,22 +415,12 @@ class ResumeController extends Controller
  */
 public function downloadPdf($uuid, DoppioPdfService $pdfService)
 {
-    $resume = Resume::where('uuid', $uuid)
-        ->where('user_id', auth()->id())
-        ->firstOrFail();
+    $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
 
-    // إنشاء رابط معاينة موقع (signed) صالح لمدة 10 دقائق (زيادة الوقت)
-    $previewUrl = URL::temporarySignedRoute(
-        'resume.pdf-preview',
+    $previewUrl = URL::temporarySignedRoute('resume.pdf-preview',
         now()->addMinutes(10),
         ['uuid' => $resume->uuid]
     );
-
-    // تأكد من أن الرابط مطلق ويستخدم HTTPS (في Laravel Cloud سيكون كذلك)
-    if (!filter_var($previewUrl, FILTER_VALIDATE_URL)) {
-        Log::error('Invalid preview URL', ['url' => $previewUrl]);
-        return back()->with('error', 'رابط المعاينة غير صالح.');
-    }
 
     try {
         $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
@@ -441,15 +431,9 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="cv.pdf"',
-            'Content-Length' => strlen($pdfContent),
         ]);
     } catch (\Exception $e) {
-        Log::error('Doppio PDF generation failed', [
-            'uuid' => $resume->uuid,
-            'error' => $e->getMessage(),
-            'preview_url' => $previewUrl,
-        ]);
-
+        Log::error('Doppio PDF failed', ['uuid' => $resume->uuid, 'error' => $e->getMessage()]);
         return back()->with('error', 'فشل إنشاء PDF: ' . $e->getMessage());
     }
 }
