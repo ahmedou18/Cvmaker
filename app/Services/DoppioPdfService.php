@@ -25,57 +25,41 @@ class DoppioPdfService
      * @throws \Exception
      */
     public function generatePdfFromUrl(string $url, array $options = []): string
-    {
-        $payload = [
-            'page' => [
-                'pdf' => array_merge([
-                    'printBackground' => true,
-                    'format' => 'A4',
-                ], $options),
-                'goto' => [
-                    'url' => $url,
-                    'options' => [
-                        'waitUntil' => ['networkidle0', 'load'],
-                        'timeout' => 30000, // مهلة 30 ثانية
-                    ],
-                ],
-                'viewport' => [
-                    'width' => 1280,
-                    'height' => 800,
-                    'deviceScaleFactor' => 1,
+{
+    // بناء payload وفقاً لمستندات Doppio الرسمية (بدون الحقول غير المدعومة)
+    $payload = [
+        'page' => [
+            'pdf' => [
+                'printBackground' => $options['printBackground'] ?? true,
+                'format' => $options['format'] ?? 'A4',
+                // marginTop, marginBottom, ... غير مدعومة – نزيلها
+            ],
+            'goto' => [
+                'url' => $url,
+                'options' => [
+                    'waitUntil' => ['networkidle0', 'load'],
+                    // 'timeout' غير مدعوم – نزيله
                 ],
             ],
-        ];
+            // 'viewport' غير مدعوم – نزيله
+        ],
+    ];
 
-        try {
-            $response = Http::withToken($this->authToken)
-                ->timeout(60)
-                ->accept('application/pdf')
-                ->post($this->apiEndpoint, $payload);
+    $response = Http::withToken($this->authToken)
+        ->timeout(60)
+        ->accept('application/pdf')
+        ->post($this->apiEndpoint, $payload);
 
-            // تسجيل معلومات الاستجابة للمساعدة في التصحيح
-            Log::info('Doppio response', [
-                'status' => $response->status(),
-                'content_type' => $response->header('Content-Type'),
-                'body_preview' => substr($response->body(), 0, 200),
-            ]);
+    Log::info('Doppio response', [
+        'status' => $response->status(),
+        'content_type' => $response->header('Content-Type'),
+        'body_preview' => substr($response->body(), 0, 200),
+    ]);
 
-            // نجاح فقط إذا كان المحتوى PDF حقيقياً
-            if ($response->successful() && str_contains($response->header('Content-Type'), 'application/pdf')) {
-                return $response->body();
-            }
-
-            // في حال فشل Doppio أو أعاد HTML، نلقي استثناءً بالتفاصيل
-            throw new \Exception(
-                sprintf(
-                    'Doppio API error [%d]: %s',
-                    $response->status(),
-                    substr($response->body(), 0, 300)
-                )
-            );
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('Doppio connection failed', ['url' => $url, 'error' => $e->getMessage()]);
-            throw new \Exception('تعذر الاتصال بخدمة Doppio، تحقق من اتصال الإنترنت أو إعدادات الـ API.');
-        }
+    if ($response->successful() && str_contains($response->header('Content-Type'), 'application/pdf')) {
+        return $response->body();
     }
+
+    throw new \Exception('Doppio API error: ' . substr($response->body(), 0, 300));
+}
 }
