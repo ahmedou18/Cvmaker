@@ -404,16 +404,23 @@ class ResumeController extends Controller
      * تحميل السيرة الذاتية كملف PDF باستخدام Puppeteer (مع تخزين مؤقت)
      */
    
+
+// داخل ResumeController...
+
 public function downloadPdf($uuid, DoppioPdfService $pdfService)
 {
     $resume = Resume::where('uuid', $uuid)
         ->where('user_id', auth()->id())
         ->firstOrFail();
 
-    // لا حاجة لـ authorize لأننا قيدنا الاستعلام بالمستخدم نفسه
-
-    // إنشاء رابط معاينة مؤقت (صالح لمدة 5 دقائق)
+    // إنشاء رابط معاينة موقع (signed) صالح لمدة 5 دقائق
     $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
+
+    // تأكد من أن الرابط كامل ومطلق (يبدأ بـ http:// أو https://)
+    if (!filter_var($previewUrl, FILTER_VALIDATE_URL)) {
+        Log::error('Invalid preview URL', ['url' => $previewUrl]);
+        return back()->with('error', 'رابط المعاينة غير صالح.');
+    }
 
     try {
         $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
@@ -425,12 +432,19 @@ public function downloadPdf($uuid, DoppioPdfService $pdfService)
             'marginRight' => 15,
         ]);
 
-        return response($pdfContent)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="cv.pdf"');
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="cv.pdf"',
+            'Content-Length' => strlen($pdfContent),
+        ]);
     } catch (\Exception $e) {
-        Log::error('Doppio PDF error: ' . $e->getMessage());
-        return back()->with('error', 'فشل إنشاء ملف PDF، حاول مرة أخرى.');
+        Log::error('Doppio PDF generation failed', [
+            'uuid' => $resume->uuid,
+            'error' => $e->getMessage(),
+            'preview_url' => $previewUrl,
+        ]);
+
+        return back()->with('error', 'فشل إنشاء ملف PDF: ' . $e->getMessage());
     }
 }
 }
