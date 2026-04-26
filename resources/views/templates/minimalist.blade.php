@@ -5,9 +5,6 @@
     $resumeLanguage = $resume->resume_language;
     $hideActions = $hideActions ?? false;
 
-    // تحديد رابط الصورة: 
-    // 1. إذا وُجد $photoAbsoluteUrl (من pdf-preview) استخدمه.
-    // 2. وإلا استخدم Storage::url إذا كان الملف موجوداً.
     $photoUrl = null;
     if (isset($photoAbsoluteUrl) && $photoAbsoluteUrl) {
         $photoUrl = $photoAbsoluteUrl;
@@ -66,45 +63,43 @@
                     {{ __('messages.edit_data', [], $resumeLanguage) }}
                 </a>
                 @if($canDownload)
-    <a href="{{ route('resume.download', $resume->uuid) }}" 
-       class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">
-        {{ __('messages.download_pdf', [], $resumeLanguage) }}
-    </a>
-@endif
+                    <a href="{{ route('resume.download', $resume->uuid) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">
+                        {{ __('messages.download_pdf', [], $resumeLanguage) }}
+                    </a>
+                @else
+                    <button onclick="openModal()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md transition cursor-pointer">
+                        {{ __('messages.upgrade_to_download', [], $resumeLanguage) ?? 'رقّي باقتك لتحميل السيرة' }}
+                    </button>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endif
 
-    {{-- الترويسة العلوية مع الصورة --}}
-   {{-- الترويسة العلوية --}}
-<header class="mb-8 border-b-2 border-black pb-4 text-center break-inside-avoid">
-    
-    {{-- إضافة وسم الصورة هنا --}}
-    @if($photoUrl)
+    {{-- الهيدر مع الصورة --}}
+    <header class="mb-8 border-b-2 border-black pb-4 text-center break-inside-avoid">
+        @if($photoUrl)
         <div class="mb-4 flex justify-center">
             <img src="{{ $photoUrl }}" 
                  alt="Profile Photo" 
                  class="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-gray-200 shadow-sm">
         </div>
-    @endif
+        @endif
 
-    <h1 class="header-title text-3xl sm:text-4xl font-bold uppercase tracking-widest mb-1">
-        {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
-    </h1>
-    <p class="job-subtitle text-base sm:text-lg uppercase tracking-widest text-gray-600 mb-4">
-        {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
-    </p>
-    <div class="contact-info text-[11px] sm:text-[12px] flex flex-wrap justify-center gap-x-4 gap-y-1 text-gray-700">
-        @if($profile->phone)
-            <span dir="ltr">{{ $profile->phone }}</span>
-        @endif
-        @if($profile->email)
-            <span>•</span> <span dir="ltr">{{ $profile->email }}</span>
-        @endif
-        @if($profile->address)
-            <span>•</span> <span>{{ $profile->address }}</span>
-        @endif
-    </div>
-</header>
+        <h1 class="header-title text-3xl sm:text-4xl font-bold uppercase tracking-widest mb-1">
+            {{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }}
+        </h1>
+        <p class="job-subtitle text-base sm:text-lg uppercase tracking-widest text-gray-600 mb-4">
+            {{ $profile->job_title ?? __('messages.job_title', [], $resumeLanguage) }}
+        </p>
+        <div class="contact-info text-[11px] sm:text-[12px] flex flex-wrap justify-center gap-x-4 gap-y-1 text-gray-700">
+            @if($profile->phone) <span dir="ltr">{{ $profile->phone }}</span> @endif
+            @if($profile->email) <span>•</span> <span dir="ltr">{{ $profile->email }}</span> @endif
+            @if($profile->address) <span>•</span> <span>{{ $profile->address }}</span> @endif
+        </div>
+    </header>
 
-    {{-- باقي أقسام السيرة كما هي (لا تغيير) --}}
+    {{-- بقية الأقسام --}}
     @if($profile && $profile->summary)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.summary', [], $resumeLanguage) }}</h2>
@@ -112,17 +107,13 @@
     </section>
     @endif
 
-    {{-- المهارات --}}
     @if($resume->skills->count() > 0)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.skills', [], $resumeLanguage) }}</h2>
-        <p class="text-[13px] leading-relaxed">
-            {{ $resume->skills->pluck('name')->implode(' • ') }}
-        </p>
+        <p class="text-[13px] leading-relaxed">{{ $resume->skills->pluck('name')->implode(' • ') }}</p>
     </section>
     @endif
 
-    {{-- التعليم --}}
     @if($resume->educations->count() > 0)
     <section class="mb-6">
         <h2 class="section-title text-xl font-bold mb-3">{{ __('messages.education', [], $resumeLanguage) }}</h2>
@@ -131,20 +122,15 @@
             <div class="break-inside-avoid">
                 <div class="flex flex-col sm:flex-row justify-between items-start">
                     <h3 class="font-bold text-[14px] uppercase">{{ $edu->degree }} - {{ $edu->institution }}</h3>
-                    @if($edu->graduation_year)
-                        <span class="text-[13px] font-bold min-w-[80px] text-end" dir="ltr">{{ $edu->graduation_year }}</span>
-                    @endif
+                    @if($edu->graduation_year) <span class="text-[13px] font-bold min-w-[80px] text-end" dir="ltr">{{ $edu->graduation_year }}</span> @endif
                 </div>
-                @if($edu->field_of_study)
-                    <p class="text-[13px] text-gray-700 italic">{{ $edu->field_of_study }}</p>
-                @endif
+                @if($edu->field_of_study) <p class="text-[13px] text-gray-700 italic">{{ $edu->field_of_study }}</p> @endif
             </div>
             @endforeach
         </div>
     </section>
     @endif
 
-    {{-- الخبرات المهنية --}}
     @if($resume->experiences->count() > 0)
     <section class="mb-6">
         <h2 class="section-title text-xl font-bold mb-3">{{ __('messages.experience', [], $resumeLanguage) }}</h2>
@@ -154,50 +140,38 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start mb-1">
                     <h3 class="font-bold text-[14px] uppercase">{{ $exp->position }}</h3>
                     @if($exp->start_date)
-                        <span class="text-[13px] font-bold min-w-[150px] text-end" dir="ltr">
-                            {{ \Carbon\Carbon::parse($exp->start_date)->format('M Y') }} – 
-                            @if($exp->end_date)
-                                {{ \Carbon\Carbon::parse($exp->end_date)->format('M Y') }}
-                            @elseif($exp->is_current)
-                                {{ __('messages.present', [], $resumeLanguage) }}
-                            @endif
-                        </span>
+                    <span class="text-[13px] font-bold min-w-[150px] text-end" dir="ltr">
+                        {{ \Carbon\Carbon::parse($exp->start_date)->format('M Y') }} – 
+                        @if($exp->end_date) {{ \Carbon\Carbon::parse($exp->end_date)->format('M Y') }}
+                        @elseif($exp->is_current) {{ __('messages.present', [], $resumeLanguage) }}
+                        @endif
+                    </span>
                     @endif
                 </div>
                 <h4 class="text-[13px] font-semibold text-gray-700 mb-2">{{ $exp->company }}</h4>
-                @if($exp->description)
-                    <div class="text-[13px] leading-relaxed whitespace-pre-line ml-0 sm:ml-4">{!! nl2br(e($exp->description)) !!}</div>
-                @endif
+                @if($exp->description) <div class="text-[13px] leading-relaxed whitespace-pre-line ml-0 sm:ml-4">{!! nl2br(e($exp->description)) !!}</div> @endif
             </div>
             @endforeach
         </div>
     </section>
     @endif
 
-    {{-- اللغات --}}
     @if($resume->languages->count() > 0)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.languages', [], $resumeLanguage) }}</h2>
         <ul class="bullet-list text-[13px]">
-            @foreach($resume->languages as $lang)
-                <li><strong>{{ $lang->name }}</strong> - {{ $lang->proficiency }}</li>
-            @endforeach
+            @foreach($resume->languages as $lang) <li><strong>{{ $lang->name }}</strong> - {{ $lang->proficiency }}</li> @endforeach
         </ul>
     </section>
     @endif
 
-    {{-- الأقسام الإضافية --}}
-    @php
-        $extraSections = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : $resume->extra_sections;
-    @endphp
+    @php $extraSections = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : $resume->extra_sections; @endphp
     @if(!empty($extraSections) && is_array($extraSections))
         @foreach($extraSections as $section)
             @if(!empty($section['title']) && !empty($section['content']))
             <section class="mb-6 break-inside-avoid">
                 <h2 class="section-title text-xl font-bold mb-2">{{ $section['title'] }}</h2>
-                <div class="text-[13px] leading-relaxed whitespace-pre-line ml-0 sm:ml-4">
-                    {!! nl2br(e($section['content'])) !!}
-                </div>
+                <div class="text-[13px] leading-relaxed whitespace-pre-line ml-0 sm:ml-4">{!! nl2br(e($section['content'])) !!}</div>
             </section>
             @endif
         @endforeach
@@ -216,7 +190,6 @@
                 document.body.classList.add('modal-active');
             }
         }
-
         function closeModal() {
             const modal = document.getElementById('plansModal');
             if (modal) {
@@ -225,11 +198,8 @@
                 document.body.classList.remove('modal-active');
             }
         }
-
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            }
+            if (event.key === 'Escape') closeModal();
         });
     </script>
 </body>
