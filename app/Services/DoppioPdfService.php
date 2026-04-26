@@ -17,81 +17,44 @@ class DoppioPdfService
     }
 
     /**
-     * توليد PDF من رابط معين باستخدام Doppio API
+     * تحويل صفحة ويب إلى PDF باستخدام Doppio API
      *
-     * @param string $url الرابط الكامل للصفحة (يُفضل أن يكون موقعاً بـ signed URL)
-     * @param array $options إعدادات إضافية للـ PDF
-     * @return string محتوى PDF الخام
+     * @param string $url الرابط العام للصفحة (يجب أن يكون متاحاً على الإنترنت)
+     * @param array $options خيارات إضافية (printBackground, format فقط)
+     * @return string محتوى PDF
      * @throws \Exception
      */
     public function generatePdfFromUrl(string $url, array $options = []): string
-{
-    // بناء payload وفقاً لمستندات Doppio الرسمية (بدون الحقول غير المدعومة)
-    $payload = [
-        'page' => [
-            'pdf' => [
-                'printBackground' => $options['printBackground'] ?? true,
-                'format' => $options['format'] ?? 'A4',
-                // marginTop, marginBottom, ... غير مدعومة – نزيلها
-            ],
-            'goto' => [
-                'url' => $url,
-                'options' => [
-                    'waitUntil' => ['networkidle0', 'load'],
-                    // 'timeout' غير مدعوم – نزيله
+    {
+        // هذه هي البنية الصحيحة الوحيدة التي يقبلها Doppio API حالياً
+        $payload = [
+            'page' => [
+                'goto' => [
+                    'url' => $url   // فقط الرابط، لا waitUntil, timeout, viewport
                 ],
-            ],
-            // 'viewport' غير مدعوم – نزيله
-        ],
-    ];
+                'pdf' => [
+                    'printBackground' => $options['printBackground'] ?? true,
+                    'format' => $options['format'] ?? 'A4',
+                    // لا margins, لا header/footer, لا أي شيء آخر
+                ]
+            ]
+        ];
 
-    $response = Http::withToken($this->authToken)
-        ->timeout(60)
-        ->accept('application/pdf')
-        ->post($this->apiEndpoint, $payload);
+        $response = Http::withToken($this->authToken)
+            ->timeout(60)
+            ->accept('application/pdf')
+            ->post($this->apiEndpoint, $payload);
 
-    Log::info('Doppio response', [
-        'status' => $response->status(),
-        'content_type' => $response->header('Content-Type'),
-        'body_preview' => substr($response->body(), 0, 200),
-    ]);
+        Log::info('Doppio response', [
+            'status' => $response->status(),
+            'content_type' => $response->header('Content-Type'),
+            'body_preview' => substr($response->body(), 0, 200),
+        ]);
 
-    if ($response->successful() && str_contains($response->header('Content-Type'), 'application/pdf')) {
-        return $response->body();
+        if ($response->successful() && str_contains($response->header('Content-Type'), 'application/pdf')) {
+            return $response->body();
+        }
+
+        throw new \Exception('Doppio API error: ' . substr($response->body(), 0, 300));
     }
-
-    throw new \Exception('Doppio API error: ' . substr($response->body(), 0, 300));
-}
-
-public function generatePdfFromHtml(string $html, array $options = []): string
-{
-    $payload = [
-        'page' => [
-            'html' => $html,   // مباشرة محتوى HTML
-            'pdf' => [
-                'printBackground' => $options['printBackground'] ?? true,
-                'format' => $options['format'] ?? 'A4',
-            ],
-            'goto' => [  // قد لا تحتاج لـ goto إذا استخدمت html
-                'waitUntil' => ['networkidle0', 'load'],
-            ],
-        ],
-    ];
-
-    $response = Http::withToken($this->authToken)
-        ->timeout(60)
-        ->accept('application/pdf')
-        ->post($this->apiEndpoint, $payload);
-
-    Log::info('Doppio HTML response', [
-        'status' => $response->status(),
-        'content_type' => $response->header('Content-Type'),
-    ]);
-
-    if ($response->successful() && str_contains($response->header('Content-Type'), 'application/pdf')) {
-        return $response->body();
-    }
-
-    throw new \Exception('Doppio HTML->PDF error: ' . substr($response->body(), 0, 300));
-}
 }

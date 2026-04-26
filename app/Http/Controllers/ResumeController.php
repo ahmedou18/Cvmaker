@@ -405,43 +405,51 @@ class ResumeController extends Controller
      */
    
 
-// داخل ResumeController...
+// في أعلى الملف تأكد من وجود الـ use التالية:
 
 
+// ... باقي دوال المتحكم كما هي ...
+
+/**
+ * تحميل السيرة الذاتية PDF عبر Doppio
+ */
 public function downloadPdf($uuid, DoppioPdfService $pdfService)
 {
     $resume = Resume::where('uuid', $uuid)
         ->where('user_id', auth()->id())
         ->firstOrFail();
 
-    // تجهيز رابط الصورة المطلق (ضروري لظهور الصورة في HTML)
-    $photoAbsoluteUrl = null;
-    if ($resume->personalDetail && $resume->personalDetail->photo_path) {
-        $photoAbsoluteUrl = url('storage/' . $resume->personalDetail->photo_path);
+    // إنشاء رابط معاينة موقع (signed) صالح لمدة 10 دقائق (زيادة الوقت)
+    $previewUrl = URL::temporarySignedRoute(
+        'resume.pdf-preview',
+        now()->addMinutes(10),
+        ['uuid' => $resume->uuid]
+    );
+
+    // تأكد من أن الرابط مطلق ويستخدم HTTPS (في Laravel Cloud سيكون كذلك)
+    if (!filter_var($previewUrl, FILTER_VALIDATE_URL)) {
+        Log::error('Invalid preview URL', ['url' => $previewUrl]);
+        return back()->with('error', 'رابط المعاينة غير صالح.');
     }
 
-    // توليد HTML من القالب مع hideActions = true
-    $html = view('templates.minimalist', [
-        'resume' => $resume,
-        'hideActions' => true,
-        'photoAbsoluteUrl' => $photoAbsoluteUrl
-    ])->render();
-
     try {
-        $pdfContent = $pdfService->generatePdfFromHtml($html, [
+        $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
             'printBackground' => true,
-            'format' => 'A4',
+            'format' => 'A4'
         ]);
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="cv.pdf"',
+            'Content-Length' => strlen($pdfContent),
         ]);
     } catch (\Exception $e) {
-        Log::error('Doppio HTML->PDF failed', [
+        Log::error('Doppio PDF generation failed', [
             'uuid' => $resume->uuid,
             'error' => $e->getMessage(),
+            'preview_url' => $previewUrl,
         ]);
+
         return back()->with('error', 'فشل إنشاء PDF: ' . $e->getMessage());
     }
 }
