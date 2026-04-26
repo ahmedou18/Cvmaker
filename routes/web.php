@@ -66,17 +66,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/cover-letters/{id}', [CoverLetterController::class, 'show'])->name('cover-letters.show');
     Route::get('/cover-letters/{id}/download', [CoverLetterController::class, 'downloadPdf'])->name('cover-letters.download');
 
-    // ========== مسارات PDF الجديدة (Puppeteer) ==========
-    // صفحة المعاينة النظيفة (بدون أزرار) – تستخدم مع signed URL
+    // ========== مسارات Doppio PDF ==========
+    // صفحة المعاينة النظيفة (بدون أزرار) – تستخدم مع signed URL فقط، بدون مصادقة
     Route::get('/resume/pdf-preview/{uuid}', [ResumeController::class, 'pdfPreview'])
         ->name('resume.pdf-preview')
-        ->middleware('signed'); // <-- مهم لمنع الوصول العشوائي
+        ->withoutMiddleware(['auth'])      // إزالة مصادقة Laravel العادية
+        ->middleware('signed');            // فقط التحقق من التوقيع
 
-    // تحميل PDF عبر Puppeteer (يستبدل الراوت القديم)
-    Route::get('/resume/pdf-preview/{uuid}', [ResumeController::class, 'pdfPreview'])
-    ->name('resume.pdf-preview')
-    ->withoutMiddleware([\App\Http\Middleware\Authenticate::class]) // إزالة أي middleware للمصادقة
-    ->middleware('signed');
+    // تحميل PDF عبر Doppio (يستدعي المعاينة ويحولها)
+    Route::get('/cv/{uuid}/download', [ResumeController::class, 'downloadPdf'])
+        ->name('resume.download')
+        ->middleware('auth');
 });
 
 Route::post('/ai/review-resume', [AiGenerationController::class, 'reviewResume'])->middleware('auth');
