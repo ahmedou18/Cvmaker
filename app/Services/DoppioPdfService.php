@@ -62,4 +62,36 @@ class DoppioPdfService
 
     throw new \Exception('Doppio API error: ' . substr($response->body(), 0, 300));
 }
+
+public function generatePdfFromHtml(string $html, array $options = []): string
+{
+    $payload = [
+        'page' => [
+            'html' => $html,   // مباشرة محتوى HTML
+            'pdf' => [
+                'printBackground' => $options['printBackground'] ?? true,
+                'format' => $options['format'] ?? 'A4',
+            ],
+            'goto' => [  // قد لا تحتاج لـ goto إذا استخدمت html
+                'waitUntil' => ['networkidle0', 'load'],
+            ],
+        ],
+    ];
+
+    $response = Http::withToken($this->authToken)
+        ->timeout(60)
+        ->accept('application/pdf')
+        ->post($this->apiEndpoint, $payload);
+
+    Log::info('Doppio HTML response', [
+        'status' => $response->status(),
+        'content_type' => $response->header('Content-Type'),
+    ]);
+
+    if ($response->successful() && str_contains($response->header('Content-Type'), 'application/pdf')) {
+        return $response->body();
+    }
+
+    throw new \Exception('Doppio HTML->PDF error: ' . substr($response->body(), 0, 300));
+}
 }

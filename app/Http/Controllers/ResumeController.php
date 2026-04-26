@@ -407,44 +407,42 @@ class ResumeController extends Controller
 
 // داخل ResumeController...
 
+
 public function downloadPdf($uuid, DoppioPdfService $pdfService)
 {
     $resume = Resume::where('uuid', $uuid)
         ->where('user_id', auth()->id())
         ->firstOrFail();
 
-    // إنشاء رابط معاينة موقع (signed) صالح لمدة 5 دقائق
-    $previewUrl = URL::signedRoute('resume.pdf-preview', ['uuid' => $resume->uuid], now()->addMinutes(5));
-
-    // تأكد من أن الرابط كامل ومطلق (يبدأ بـ http:// أو https://)
-    if (!filter_var($previewUrl, FILTER_VALIDATE_URL)) {
-        Log::error('Invalid preview URL', ['url' => $previewUrl]);
-        return back()->with('error', 'رابط المعاينة غير صالح.');
+    // تجهيز رابط الصورة المطلق (ضروري لظهور الصورة في HTML)
+    $photoAbsoluteUrl = null;
+    if ($resume->personalDetail && $resume->personalDetail->photo_path) {
+        $photoAbsoluteUrl = url('storage/' . $resume->personalDetail->photo_path);
     }
 
+    // توليد HTML من القالب مع hideActions = true
+    $html = view('templates.minimalist', [
+        'resume' => $resume,
+        'hideActions' => true,
+        'photoAbsoluteUrl' => $photoAbsoluteUrl
+    ])->render();
+
     try {
-        $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
+        $pdfContent = $pdfService->generatePdfFromHtml($html, [
             'printBackground' => true,
             'format' => 'A4',
-            'marginTop' => 20,
-            'marginBottom' => 20,
-            'marginLeft' => 15,
-            'marginRight' => 15,
         ]);
 
         return response($pdfContent, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="cv.pdf"',
-            'Content-Length' => strlen($pdfContent),
         ]);
     } catch (\Exception $e) {
-        Log::error('Doppio PDF generation failed', [
+        Log::error('Doppio HTML->PDF failed', [
             'uuid' => $resume->uuid,
             'error' => $e->getMessage(),
-            'preview_url' => $previewUrl,
         ]);
-
-        return back()->with('error', 'فشل إنشاء ملف PDF: ' . $e->getMessage());
+        return back()->with('error', 'فشل إنشاء PDF: ' . $e->getMessage());
     }
 }
 }
