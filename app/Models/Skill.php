@@ -7,10 +7,12 @@ use App\Models\Resume;
 class Skill extends Model
 {
     protected $fillable = [
-        'resume_id', 
-        'name', 
-        'percentage', 
-        'level'
+        'resume_id', 'name', 'percentage', 'level', 'sort_order'
+    ];
+
+    protected $casts = [
+        'percentage' => 'integer',
+        'sort_order' => 'integer',
     ];
 
     public function resume()
