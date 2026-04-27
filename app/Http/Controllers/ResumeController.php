@@ -10,12 +10,13 @@ use App\Models\Language;
 use App\Models\Education;
 use App\Models\Experience;
 use App\Models\PersonalDetail;
+use App\Models\Hobby;
+use App\Models\Reference;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 use App\Services\DoppioPdfService;
 
@@ -89,7 +90,11 @@ class ResumeController extends Controller
             'phone'       => 'nullable|string|max:20',
             'address'     => 'nullable|string|max:255',
             'summary'     => 'nullable|string',
-            'skills'      => 'nullable|string',
+            'skills'      => 'nullable|string', // النص القديم (للتوافق)
+            'skills_array' => 'nullable|array',
+            'skills_array.*.name' => 'required_with:skills_array|string|max:255',
+            'skills_array.*.percentage' => 'nullable|integer|min:0|max:100',
+            'skills_array.*.level' => 'nullable|string|max:50',
             'photo'       => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
             'cropped_photo_base64' => 'nullable|string|regex:/^data:image\/[^;]+;base64,/',
             'experiences' => 'nullable|array',
@@ -100,8 +105,24 @@ class ResumeController extends Controller
             'experiences.*.is_current' => 'nullable|boolean',
             'experiences.*.description' => 'nullable|string',
             'educations'   => 'nullable|array',
+            'educations.*.institution' => 'required_with:educations|string|max:255',
+            'educations.*.degree' => 'required_with:educations|string|max:255',
             'languages'    => 'nullable|array',
             'languages.*.name' => 'required|string|max:255',
+            'languages.*.proficiency' => 'nullable|string|max:50',
+            'languages.*.level' => 'nullable|integer|min:1|max:5',
+            'languages.*.percentage' => 'nullable|integer|min:0|max:100',
+            'hobbies'      => 'nullable|array',
+            'hobbies.*.name' => 'required_with:hobbies|string|max:255',
+            'hobbies.*.icon' => 'nullable|string|max:50',
+            'hobbies.*.description' => 'nullable|string',
+            'references'   => 'nullable|array',
+            'references.*.full_name' => 'required_with:references|string|max:255',
+            'references.*.job_title' => 'nullable|string|max:255',
+            'references.*.company' => 'nullable|string|max:255',
+            'references.*.email' => 'nullable|email|max:255',
+            'references.*.phone' => 'nullable|string|max:20',
+            'references.*.notes' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -115,7 +136,7 @@ class ResumeController extends Controller
                 'title'       => $request->job_title ? 'سيرة ' . $request->job_title : 'سيرة ذاتية',
                 'resume_language' => session('resume_language', 'ar'),
                 'is_published'=> false,
-                'extra_sections' => $request->has('extra_sections') ? json_decode($request->extra_sections, true) : null,
+                'extra_sections' => $request->has('extra_sections') ? (is_string($request->extra_sections) ? json_decode($request->extra_sections, true) : $request->extra_sections) : null,
             ]);
 
             session()->forget('selected_template_id');
@@ -179,24 +200,73 @@ class ResumeController extends Controller
                 }
             }
 
-            // المهارات
-            if ($request->filled('skills')) {
+            // ========== المهارات ==========
+            if ($request->has('skills_array') && is_array($request->skills_array)) {
+                foreach ($request->skills_array as $index => $skillData) {
+                    if (!empty($skillData['name'])) {
+                        $resume->skills()->create([
+                            'name'       => $skillData['name'],
+                            'percentage' => $skillData['percentage'] ?? 80,
+                            'level'      => $skillData['level'] ?? null,
+                            'sort_order' => $index,
+                        ]);
+                    }
+                }
+            } elseif ($request->filled('skills')) {
                 $skillsArray = explode(',', $request->skills);
-                foreach ($skillsArray as $skillName) {
+                foreach ($skillsArray as $index => $skillName) {
                     $skillName = trim($skillName);
                     if ($skillName !== '') {
-                        $resume->skills()->create(['name' => $skillName]);
+                        $resume->skills()->create([
+                            'name'       => $skillName,
+                            'percentage' => 100,
+                            'sort_order' => $index,
+                        ]);
                     }
                 }
             }
 
-            // اللغات
-            if ($request->has('languages')) {
-                foreach ($request->languages as $lang) {
+            // ========== اللغات ==========
+            if ($request->has('languages') && is_array($request->languages)) {
+                foreach ($request->languages as $index => $lang) {
                     if (!empty($lang['name'])) {
                         $resume->languages()->create([
                             'name'        => $lang['name'],
                             'proficiency' => $lang['proficiency'] ?? null,
+                            'level'       => $lang['level'] ?? null,
+                            'percentage'  => $lang['percentage'] ?? null,
+                            'sort_order'  => $index,
+                        ]);
+                    }
+                }
+            }
+
+            // ========== الهوايات ==========
+            if ($request->has('hobbies') && is_array($request->hobbies)) {
+                foreach ($request->hobbies as $index => $hobby) {
+                    if (!empty($hobby['name'])) {
+                        $resume->hobbies()->create([
+                            'name'        => $hobby['name'],
+                            'icon'        => $hobby['icon'] ?? null,
+                            'description' => $hobby['description'] ?? null,
+                            'sort_order'  => $index,
+                        ]);
+                    }
+                }
+            }
+
+            // ========== المراجع ==========
+            if ($request->has('references') && is_array($request->references)) {
+                foreach ($request->references as $index => $ref) {
+                    if (!empty($ref['full_name'])) {
+                        $resume->references()->create([
+                            'full_name'  => $ref['full_name'],
+                            'job_title'  => $ref['job_title'] ?? null,
+                            'company'    => $ref['company'] ?? null,
+                            'email'      => $ref['email'] ?? null,
+                            'phone'      => $ref['phone'] ?? null,
+                            'notes'      => $ref['notes'] ?? null,
+                            'sort_order' => $index,
                         ]);
                     }
                 }
@@ -225,7 +295,7 @@ class ResumeController extends Controller
     {
         $resume = Resume::where('uuid', $uuid)
             ->where('user_id', auth()->id())
-            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages', 'template'])
+            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages', 'hobbies', 'references', 'template'])
             ->firstOrFail();
 
         $plans = Plan::all();
@@ -241,10 +311,46 @@ class ResumeController extends Controller
     {
         $resume = Resume::where('uuid', $uuid)
             ->where('user_id', auth()->id())
-            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages'])
+            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages', 'hobbies', 'references'])
             ->firstOrFail();
 
-        return view('resumes.edit', compact('resume'));
+        // تحويل المهارات إلى مصفوفة مناسبة لـ Alpine.js
+        $skillsArray = $resume->skills->map(fn($s) => [
+            'id' => $s->id,
+            'name' => $s->name,
+            'percentage' => $s->percentage,
+            'level' => $s->level,
+        ])->toArray();
+
+        // تحويل اللغات
+        $languages = $resume->languages->map(fn($l) => [
+            'id' => $l->id,
+            'name' => $l->name,
+            'proficiency' => $l->proficiency,
+            'level' => $l->level,
+            'percentage' => $l->percentage,
+        ])->toArray();
+
+        // تحويل الهوايات
+        $hobbies = $resume->hobbies->map(fn($h) => [
+            'id' => $h->id,
+            'name' => $h->name,
+            'icon' => $h->icon,
+            'description' => $h->description,
+        ])->toArray();
+
+        // تحويل المراجع
+        $references = $resume->references->map(fn($r) => [
+            'id' => $r->id,
+            'full_name' => $r->full_name,
+            'job_title' => $r->job_title,
+            'company' => $r->company,
+            'email' => $r->email,
+            'phone' => $r->phone,
+            'notes' => $r->notes,
+        ])->toArray();
+
+        return view('resumes.edit', compact('resume', 'skillsArray', 'languages', 'hobbies', 'references'));
     }
 
     /**
@@ -262,7 +368,10 @@ class ResumeController extends Controller
             'phone'       => 'nullable|string|max:20',
             'address'     => 'nullable|string|max:255',
             'summary'     => 'nullable|string',
-            'skills'      => 'nullable|string',
+            'skills'      => 'nullable|string', // للنص القديم
+            'skills_array' => 'nullable|array',
+            'skills_array.*.name' => 'required_with:skills_array|string|max:255',
+            'skills_array.*.percentage' => 'nullable|integer|min:0|max:100',
             'photo'       => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
             'cropped_photo_base64' => 'nullable|string|regex:/^data:image\/[^;]+;base64,/',
             'experiences' => 'nullable|array',
@@ -273,8 +382,24 @@ class ResumeController extends Controller
             'experiences.*.is_current' => 'nullable|boolean',
             'experiences.*.description'=> 'nullable|string',
             'educations'   => 'nullable|array',
+            'educations.*.institution' => 'required_with:educations|string|max:255',
+            'educations.*.degree' => 'required_with:educations|string|max:255',
             'languages'    => 'nullable|array',
             'languages.*.name' => 'required|string|max:255',
+            'languages.*.proficiency' => 'nullable|string|max:50',
+            'languages.*.level' => 'nullable|integer|min:1|max:5',
+            'languages.*.percentage' => 'nullable|integer|min:0|max:100',
+            'hobbies'      => 'nullable|array',
+            'hobbies.*.name' => 'required_with:hobbies|string|max:255',
+            'hobbies.*.icon' => 'nullable|string|max:50',
+            'hobbies.*.description' => 'nullable|string',
+            'references'   => 'nullable|array',
+            'references.*.full_name' => 'required_with:references|string|max:255',
+            'references.*.job_title' => 'nullable|string|max:255',
+            'references.*.company' => 'nullable|string|max:255',
+            'references.*.email' => 'nullable|email|max:255',
+            'references.*.phone' => 'nullable|string|max:20',
+            'references.*.notes' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -350,21 +475,78 @@ class ResumeController extends Controller
                 }
             }
 
+            // ========== تحديث المهارات ==========
             $resume->skills()->delete();
-            if ($request->filled('skills')) {
+            if ($request->has('skills_array') && is_array($request->skills_array)) {
+                foreach ($request->skills_array as $index => $skillData) {
+                    if (!empty($skillData['name'])) {
+                        $resume->skills()->create([
+                            'name'       => $skillData['name'],
+                            'percentage' => $skillData['percentage'] ?? 80,
+                            'level'      => $skillData['level'] ?? null,
+                            'sort_order' => $index,
+                        ]);
+                    }
+                }
+            } elseif ($request->filled('skills')) {
                 $skillsArray = explode(',', $request->skills);
-                foreach ($skillsArray as $skillName) {
-                    if (trim($skillName) !== '') {
-                        $resume->skills()->create(['name' => trim($skillName)]);
+                foreach ($skillsArray as $index => $skillName) {
+                    $skillName = trim($skillName);
+                    if ($skillName !== '') {
+                        $resume->skills()->create([
+                            'name'       => $skillName,
+                            'percentage' => 100,
+                            'sort_order' => $index,
+                        ]);
                     }
                 }
             }
 
+            // ========== تحديث اللغات ==========
             $resume->languages()->delete();
-            if ($request->has('languages')) {
-                foreach ($request->languages as $lang) {
+            if ($request->has('languages') && is_array($request->languages)) {
+                foreach ($request->languages as $index => $lang) {
                     if (!empty($lang['name'])) {
-                        $resume->languages()->create($lang);
+                        $resume->languages()->create([
+                            'name'        => $lang['name'],
+                            'proficiency' => $lang['proficiency'] ?? null,
+                            'level'       => $lang['level'] ?? null,
+                            'percentage'  => $lang['percentage'] ?? null,
+                            'sort_order'  => $index,
+                        ]);
+                    }
+                }
+            }
+
+            // ========== تحديث الهوايات ==========
+            $resume->hobbies()->delete();
+            if ($request->has('hobbies') && is_array($request->hobbies)) {
+                foreach ($request->hobbies as $index => $hobby) {
+                    if (!empty($hobby['name'])) {
+                        $resume->hobbies()->create([
+                            'name'        => $hobby['name'],
+                            'icon'        => $hobby['icon'] ?? null,
+                            'description' => $hobby['description'] ?? null,
+                            'sort_order'  => $index,
+                        ]);
+                    }
+                }
+            }
+
+            // ========== تحديث المراجع ==========
+            $resume->references()->delete();
+            if ($request->has('references') && is_array($request->references)) {
+                foreach ($request->references as $index => $ref) {
+                    if (!empty($ref['full_name'])) {
+                        $resume->references()->create([
+                            'full_name'  => $ref['full_name'],
+                            'job_title'  => $ref['job_title'] ?? null,
+                            'company'    => $ref['company'] ?? null,
+                            'email'      => $ref['email'] ?? null,
+                            'phone'      => $ref['phone'] ?? null,
+                            'notes'      => $ref['notes'] ?? null,
+                            'sort_order' => $index,
+                        ]);
                     }
                 }
             }
@@ -392,49 +574,38 @@ class ResumeController extends Controller
      */
     public function pdfPreview($uuid)
     {
-        // لا نضيف شرط user_id لأن الرابط موقع (signed) ومؤقت
         $resume = Resume::where('uuid', $uuid)
-            ->with(['user.plan', 'personalDetail', 'experiences', 'educations', 'skills', 'languages', 'template'])
+            ->with(['user.plan', 'personalDetail', 'experiences', 'educations', 'skills', 'languages', 'hobbies', 'references', 'template'])
             ->firstOrFail();
 
         return view('resumes.pdf-preview', compact('resume'));
     }
 
     /**
-     * تحميل السيرة الذاتية كملف PDF باستخدام Puppeteer (مع تخزين مؤقت)
+     * تحميل السيرة الذاتية كملف PDF عبر Doppio
      */
-   
+    public function downloadPdf($uuid, DoppioPdfService $pdfService)
+    {
+        $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
 
-// في أعلى الملف تأكد من وجود الـ use التالية:
+        $previewUrl = URL::temporarySignedRoute('resume.pdf-preview',
+            now()->addMinutes(10),
+            ['uuid' => $resume->uuid]
+        );
 
+        try {
+            $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
+                'printBackground' => true,
+                'format' => 'A4'
+            ]);
 
-// ... باقي دوال المتحكم كما هي ...
-
-/**
- * تحميل السيرة الذاتية PDF عبر Doppio
- */
-public function downloadPdf($uuid, DoppioPdfService $pdfService)
-{
-    $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
-
-    $previewUrl = URL::temporarySignedRoute('resume.pdf-preview',
-        now()->addMinutes(10),
-        ['uuid' => $resume->uuid]
-    );
-
-    try {
-        $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
-            'printBackground' => true,
-            'format' => 'A4'
-        ]);
-
-        return response($pdfContent, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="cv.pdf"',
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Doppio PDF failed', ['uuid' => $resume->uuid, 'error' => $e->getMessage()]);
-        return back()->with('error', 'فشل إنشاء PDF: ' . $e->getMessage());
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="cv.pdf"',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Doppio PDF failed', ['uuid' => $resume->uuid, 'error' => $e->getMessage()]);
+            return back()->with('error', 'فشل إنشاء PDF: ' . $e->getMessage());
+        }
     }
-}
 }
