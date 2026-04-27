@@ -16,7 +16,7 @@
         return {
             // === الحالة الأساسية ===
             step: 1,
-            maxStep: 8, // 6 خطوات أساسية + هوايات (7) + مراجع (8) - تم إعادة الترقيم
+            maxStep: 8, // 8 خطوات: شخصية، تعليم، خبرات، مهارات+ملخص، لغات، هوايات، مراجع، اللمسات الأخيرة
             aiCredits: {{ auth()->user()->ai_credits_balance ?? 0 }},
             showPlansModal: false,
             currentLang: "{{ $currentLang }}",
@@ -26,9 +26,9 @@
                 window.translations.stepExperience || "الخبرات المهنية",
                 window.translations.stepSkillsSummary || "المهارات والملخص",
                 window.translations.stepLanguages || "اللغات",
-                "الهوايات",            // الخطوة 6
-                "المراجع",             // الخطوة 7
-                window.translations.stepFinal || "اللمسات الأخيرة" // الخطوة 8
+                "الهوايات",
+                "المراجع",
+                window.translations.stepFinal || "اللمسات الأخيرة"
             ],
             
             // === البيانات ===
@@ -38,7 +38,7 @@
             phone: initialData.phone || '',
             address: initialData.address || '',
             summary: initialData.summary || '',
-            skills: initialData.skills || '', // النص القديم للتوافق
+            skills: initialData.skills || '', // النص القديم (للتوافق)
             skillsArray: initialData.skillsArray || [{ id: Date.now(), name: '', percentage: 80 }],
             educations: initialData.educations?.length ? initialData.educations : [{ id: Date.now(), institution: '', degree: '', field_of_study: '', graduation_year: '' }],
             experiences: initialData.experiences?.length ? initialData.experiences : [{ id: Date.now(), company: '', position: '', start_date: '', end_date: '', is_current: false, description: '' }],
@@ -67,7 +67,7 @@
                 return this.skillsArray.map(s => s.name).filter(n => n).join(', ');
             },
 
-            // --- دوال إضافة العناصر ---
+            // --- دوال إضافة وحذف العناصر ---
             addLanguage() {
                 if (this.languages.length && !this.languages[this.languages.length-1].name.trim()) {
                     alert(window.translations.alertEnterLanguageFirst || 'يرجى كتابة اسم اللغة أولاً');
@@ -124,7 +124,7 @@
                 });
             },
 
-            // --- دوال الذكاء الاصطناعي (مع تحديث المهارات كمصفوفة) ---
+            // --- دوال الذكاء الاصطناعي ---
             async callAiApi(type, context) {
                 if (this.aiCredits <= 0) { this.showPlansModal = true; return null; }
                 try {
@@ -188,18 +188,16 @@
                 }
                 
                 const fullContext = contextParts.join('\n');
-                // مؤقت: نص للتحميل
                 this.skills = window.translations.aiAnalyzingSkills || '⏳ جاري تحليل بياناتك واقتراح المهارات المناسبة...';
                 const result = await this.callAiApi('skills', fullContext);
                 if (result) {
-                    // النتيجة تأتي كنص مفصول بفواصل: "PHP, Laravel, MySQL"
                     const skillsNames = result.split(',').map(s => s.trim()).filter(s => s);
                     this.skillsArray = skillsNames.map((name, idx) => ({
                         id: Date.now() + idx,
                         name: name,
                         percentage: 80
                     }));
-                    this.skills = result; // للتخزين القديم
+                    this.skills = result;
                 }
             },
 
@@ -229,7 +227,6 @@
                 if (this.skills && this.skills.trim()) {
                     contextParts.push(`المهارات: ${this.skills.substring(0, 200)}`);
                 } else if (this.skillsArray.length) {
-                    // استخدام المصفوفة الجديدة إذا لم يكن النص القديم موجوداً
                     contextParts.push(`المهارات: ${this.skillsArray.map(s => s.name).join(', ').substring(0, 200)}`);
                 }
                 
@@ -258,7 +255,6 @@
                 if (this.aiCredits <= 0) { this.showPlansModal = true; return; }
                 this.isReviewing = true;
                 try {
-                    // إرسال المهارات كنص مفصول بفواصل (لـ AI) من skillsArray
                     const skillsText = this.skillsArray.map(s => s.name).join(', ');
                     const payload = {
                         lang: this.currentLang,
@@ -282,7 +278,6 @@
                         if (imp.job_title) this.job_title = imp.job_title;
                         if (imp.summary) this.summary = imp.summary;
                         if (imp.skills) {
-                            // تحديث skillsArray من النص الجديد
                             const newSkillsNames = imp.skills.split(',').map(s => s.trim()).filter(s => s);
                             this.skillsArray = newSkillsNames.map((name, idx) => ({
                                 id: Date.now() + idx,
@@ -335,7 +330,6 @@
                         if (data.data.experiences) this.experiences = data.data.experiences.map(ex => ({...ex, id: Math.random()}));
                         if (data.data.educations) this.educations = data.data.educations.map(ed => ({...ed, id: Math.random()}));
                         if (data.data.skills && data.data.skills.length) {
-                            // تحويل المهارات المستخرجة إلى skillsArray
                             this.skillsArray = data.data.skills.map((name, idx) => ({
                                 id: Date.now() + idx,
                                 name: name,
