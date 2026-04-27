@@ -1,6 +1,6 @@
 @props(['currentLang' => 'ar'])
 
-<div x-show="step === 6" x-transition>
+<div x-show="step === maxStep" x-transition>
     <div class="sharp-card text-center">
         <div class="py-10">
             <div class="text-6xl mb-6">🚀</div>
