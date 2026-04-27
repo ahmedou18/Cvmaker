@@ -4,12 +4,12 @@
     <div class="sharp-card">
         <h2 class="text-2xl font-black mb-8 border-b pb-4">{{ __('messages.references', [], $currentLang) ?? 'المراجع' }}</h2>
         <template x-for="(ref, idx) in referencesArray" :key="ref.id">
-            <div class="mb-8 p-4 border border-gray-200 bg-gray-50 relative">
+            <div class="mb-8 p-5 border border-gray-200 bg-gray-50 relative">
                 <button type="button" @click="referencesArray.splice(idx,1)" class="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">✕</button>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     <div>
-                        <label class="sharp-label">الاسم الكامل</label>
-                        <input type="text" :name="'references['+idx+'][full_name]'" x-model="ref.full_name" class="sharp-input">
+                        <label class="sharp-label">الاسم الكامل *</label>
+                        <input type="text" :name="'references['+idx+'][full_name]'" x-model="ref.full_name" class="sharp-input" required>
                     </div>
                     <div>
                         <label class="sharp-label">المسمى الوظيفي</label>
