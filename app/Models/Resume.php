@@ -10,6 +10,8 @@ use App\Models\Experience;
 use App\Models\Education;
 use App\Models\Skill;
 use App\Models\Language;
+use App\Models\Reference;
+use App\Models\Hobby;
 
 class Resume extends Model
 {
@@ -82,6 +84,16 @@ class Resume extends Model
     public function languages()
     {
         return $this->hasMany(Language::class);
+    }
+
+public function hobbies(): HasMany
+    {
+        return $this->hasMany(Hobby::class)->orderBy('sort_order');
+    }
+
+public function references(): HasMany
+    {
+        return $this->hasMany(Reference::class)->orderBy('sort_order');
     }
 
     // داخل موديل Resume
