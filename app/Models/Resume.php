@@ -96,7 +96,7 @@ class Resume extends Model
 
     public function hobbies(): HasMany
     {
-        return $this->hasMany(Hobby::class)->orderBy('sort_order');
+        return $this->hasMany(\App\Models\Hobby::class)->orderBy('sort_order');
     }
 
     public function references(): HasMany
