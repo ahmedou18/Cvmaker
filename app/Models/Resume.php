@@ -3,15 +3,61 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;     // أضف هذا السطر
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
-
-// ... باقي الـ use statements (User, Template, PersonalDetail, Experience, Education, Skill, Language, Reference, Hobby)
 
 class Resume extends Model
 {
-    // ... الحقول والـ casts ...
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'user_id',
+        'template_id',
+        'uuid',
+        'title',
+        'is_published',
+        'settings',
+        'extra_sections',
+        'resume_language',
+        'name_changes_left',
+        'is_name_locked',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'settings' => 'array',
+        'is_published' => 'boolean',
+        'extra_sections' => 'array',
+        'is_name_locked' => 'boolean',
+        'name_changes_left' => 'integer',
+    ];
+
+    /**
+     * Boot the model to automatically generate UUID when creating.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function ($resume) {
+            if (empty($resume->uuid)) {
+                $resume->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
 
     public function user(): BelongsTo
     {
@@ -58,11 +104,20 @@ class Resume extends Model
         return $this->hasMany(Reference::class)->orderBy('sort_order');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Decrement the remaining name changes and lock if reaches zero.
+     */
     public function decrementNameChanges(): void
     {
         if ($this->name_changes_left > 0) {
             $this->decrement('name_changes_left');
-            if ($this->name_changes_left == 0) {
+            if ($this->name_changes_left === 0) {
                 $this->update(['is_name_locked' => true]);
             }
         }
