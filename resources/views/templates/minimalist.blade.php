@@ -99,7 +99,7 @@
         </div>
     </header>
 
-    {{-- بقية الأقسام --}}
+    {{-- الملخص الشخصي --}}
     @if($profile && $profile->summary)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.summary', [], $resumeLanguage) }}</h2>
@@ -107,13 +107,31 @@
     </section>
     @endif
 
+    {{-- المهارات (مع دعم النسبة المئوية) --}}
     @if($resume->skills->count() > 0)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.skills', [], $resumeLanguage) }}</h2>
-        <p class="text-[13px] leading-relaxed">{{ $resume->skills->pluck('name')->implode(' • ') }}</p>
+        <div class="space-y-3">
+            @foreach($resume->skills as $skill)
+                @if($skill->percentage)
+                    <div>
+                        <div class="flex justify-between text-sm">
+                            <span class="font-medium">{{ $skill->name }}</span>
+                            <span class="text-gray-600">{{ $skill->percentage }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $skill->percentage }}%"></div>
+                        </div>
+                    </div>
+                @else
+                    <span class="inline-block bg-gray-100 px-3 py-1 rounded-full mr-2 mb-2 text-sm">{{ $skill->name }}</span>
+                @endif
+            @endforeach
+        </div>
     </section>
     @endif
 
+    {{-- التعليم --}}
     @if($resume->educations->count() > 0)
     <section class="mb-6">
         <h2 class="section-title text-xl font-bold mb-3">{{ __('messages.education', [], $resumeLanguage) }}</h2>
@@ -131,6 +149,7 @@
     </section>
     @endif
 
+    {{-- الخبرات المهنية --}}
     @if($resume->experiences->count() > 0)
     <section class="mb-6">
         <h2 class="section-title text-xl font-bold mb-3">{{ __('messages.experience', [], $resumeLanguage) }}</h2>
@@ -156,15 +175,82 @@
     </section>
     @endif
 
+    {{-- اللغات (مع دعم المستوى الرقمي 1-5) --}}
     @if($resume->languages->count() > 0)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.languages', [], $resumeLanguage) }}</h2>
-        <ul class="bullet-list text-[13px]">
-            @foreach($resume->languages as $lang) <li><strong>{{ $lang->name }}</strong> - {{ $lang->proficiency }}</li> @endforeach
-        </ul>
+        <div class="space-y-3">
+            @foreach($resume->languages as $lang)
+                <div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">{{ $lang->name }}</span>
+                        @if($lang->level)
+                            <div class="flex gap-1">
+                                @for($i=1; $i<=5; $i++)
+                                    <span class="text-sm {{ $i <= $lang->level ? 'text-yellow-500' : 'text-gray-300' }}">★</span>
+                                @endfor
+                            </div>
+                        @elseif($lang->proficiency)
+                            <span class="text-sm text-gray-600">{{ $lang->proficiency }}</span>
+                        @endif
+                    </div>
+                    @if($lang->level && $lang->proficiency)
+                        <p class="text-xs text-gray-500 mt-1">{{ $lang->proficiency }}</p>
+                    @endif
+                </div>
+            @endforeach
+        </div>
     </section>
     @endif
 
+    {{-- الهوايات --}}
+    @if($resume->hobbies && $resume->hobbies->count() > 0)
+    <section class="mb-6 break-inside-avoid">
+        <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.hobbies', [], $resumeLanguage) ?? 'الهوايات' }}</h2>
+        <div class="flex flex-wrap gap-2">
+            @foreach($resume->hobbies as $hobby)
+                <span class="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                    @if($hobby->icon) <span>{{ $hobby->icon }}</span> @endif
+                    <span>{{ $hobby->name }}</span>
+                    @if($hobby->description) <span class="text-gray-500 text-xs">({{ $hobby->description }})</span> @endif
+                </span>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
+    {{-- المراجع --}}
+    @if($resume->references && $resume->references->count() > 0)
+    <section class="mb-6 break-inside-avoid">
+        <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.references', [], $resumeLanguage) ?? 'المراجع' }}</h2>
+        <div class="space-y-3">
+            @foreach($resume->references as $ref)
+                <div class="border-r-2 border-gray-200 pr-4">
+                    <p class="font-bold text-sm">{{ $ref->full_name }}</p>
+                    @if($ref->job_title || $ref->company)
+                        <p class="text-sm text-gray-600">
+                            {{ $ref->job_title }} 
+                            @if($ref->job_title && $ref->company) - @endif
+                            {{ $ref->company }}
+                        </p>
+                    @endif
+                    @if($ref->email || $ref->phone)
+                        <p class="text-xs text-gray-500 mt-1">
+                            @if($ref->email) {{ $ref->email }} @endif
+                            @if($ref->email && $ref->phone) | @endif
+                            @if($ref->phone) {{ $ref->phone }} @endif
+                        </p>
+                    @endif
+                    @if($ref->notes)
+                        <p class="text-xs text-gray-700 italic mt-1">{{ $ref->notes }}</p>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
+    {{-- الأقسام الإضافية --}}
     @php $extraSections = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : $resume->extra_sections; @endphp
     @if(!empty($extraSections) && is_array($extraSections))
         @foreach($extraSections as $section)
@@ -177,6 +263,7 @@
         @endforeach
     @endif
 
+    {{-- مودال الخطط --}}
     @if(!$hideActions)
     <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
     @endif
