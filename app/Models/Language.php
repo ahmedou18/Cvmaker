@@ -7,9 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Language extends Model
 {
-    protected $fillable = ['resume_id', 'name', 'proficiency'];
+    protected $fillable = [
+        'resume_id', 'name', 'proficiency', 'level', 'percentage', 'sort_order'
+    ];
 
-    // اللغة تنتمي لسيرة ذاتية واحدة
+    protected $casts = [
+        'level' => 'integer',
+        'percentage' => 'integer',
+        'sort_order' => 'integer',
+    ];
+
     public function resume()
     {
         return $this->belongsTo(Resume::class);
