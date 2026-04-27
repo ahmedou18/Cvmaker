@@ -14,7 +14,7 @@
                 <div class="flex-1">
                     <input type="text" :name="'hobbies['+idx+'][description]'" x-model="hobby.description" class="sharp-input w-full" placeholder="وصف قصير (اختياري)">
                 </div>
-                <button type="button" @click="hobbiesArray.splice(idx,1)" class="text-red-600 px-3 py-2">✕</button>
+                <button type="button" @click="hobbiesArray.splice(idx,1)" class="text-red-600 px-3 py-2 text-xl">✕</button>
             </div>
         </template>
         <button type="button" @click="addHobby()" class="sharp-btn-secondary mt-2">+ {{ __('messages.add_hobby', [], $currentLang) ?? 'أضف هواية' }}</button>
