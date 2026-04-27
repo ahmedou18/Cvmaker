@@ -10,14 +10,8 @@ use Smalot\PdfParser\Parser;
 
 class AiResumeController extends Controller
 {
-    /**
-     * النموذج المستخدم لاستخراج البيانات (يفضل استخدام نموذج قوي).
-     */
-    private const DEFAULT_MODEL = 'command-r-plus';
+    private const DEFAULT_MODEL = 'command-a-03-2025';
 
-    /**
-     * استخراج البيانات من ملف PDF باستخدام Cohere.
-     */
     public function parseFile(Request $request)
     {
         $request->validate([
@@ -34,16 +28,10 @@ class AiResumeController extends Controller
                 return response()->json(['error' => 'تعذر استخراج النص. تأكد أن الملف ليس عبارة عن صور (Scanned PDF).'], 422);
             }
 
-            // 1. إصلاح النص العربي المعكوس
             $text = $this->fixArabicText($rawText);
-
-            // 2. تحديد اللغة (الطلب -> الجلسة -> لغة التطبيق)
             $currentLang = $request->input('lang') ?? session('resume_language') ?? app()->getLocale();
-
-            // 3. بناء الـ Prompt المحسن وفقاً للغة
             $prompt = $this->buildParsingPrompt($text, $currentLang);
 
-            // 4. الاتصال بـ Cohere مع تنسيق JSON مضمون
             $response = Http::withToken(config('services.cohere.key'))
                 ->timeout(120)
                 ->post('https://api.cohere.ai/v1/chat', [
@@ -64,8 +52,6 @@ class AiResumeController extends Controller
 
             $aiOutput = $response->json('text');
             $aiOutput = preg_replace('/^```json\s*|\s*```$/i', '', trim($aiOutput));
-            
-            // استخراج JSON من النص
             preg_match('/\{.*\}/s', $aiOutput, $matches);
             if (empty($matches)) {
                 Log::error('No valid JSON found in AI response', ['output' => substr($aiOutput, 0, 500)]);
@@ -79,16 +65,12 @@ class AiResumeController extends Controller
                 return response()->json(['error' => 'فشل تحليل بيانات JSON: ' . json_last_error_msg()], 500);
             }
 
-            // ✅ التحقق من صلاحية الرصيد وخصمه (بنفس المنطق القديم)
             $user = auth()->user();
             if (!$user) {
                 return response()->json(['error' => 'يجب تسجيل الدخول أولاً.'], 401);
             }
-
             if ($user->ai_credits_balance <= 0) {
-                return response()->json([
-                    'error' => 'رصيد الذكاء الاصطناعي غير كافٍ لاستخراج البيانات. يرجى الاشتراك في باقة.'
-                ], 403);
+                return response()->json(['error' => 'رصيد الذكاء الاصطناعي غير كافٍ لاستخراج البيانات. يرجى الاشتراك في باقة.'], 403);
             }
 
             DB::transaction(function () use ($user) {
@@ -103,10 +85,9 @@ class AiResumeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'تم استخراج البيانات بنجاح',
-                'data' => $aiData,
+                'data'    => $aiData,
                 'remaining_credits' => $remainingCredits
             ]);
-
         } catch (\Exception $e) {
             Log::error('PDF parsing exception', [
                 'message' => $e->getMessage(),
@@ -117,23 +98,17 @@ class AiResumeController extends Controller
         }
     }
 
-    /**
-     * إصلاح النص العربي المعكوس الناتج عن استخراج PDF (محسّن مع الاحتفاظ بجميع الدوال المساعدة).
-     */
     private function fixArabicText(string $text): string
     {
         $lines = explode("\n", $text);
         $fixedLines = [];
-
         foreach ($lines as $line) {
             if (trim($line) === '') {
                 $fixedLines[] = '';
                 continue;
             }
-
             $words = preg_split('/(\s+)/u', $line, -1, PREG_SPLIT_DELIM_CAPTURE);
             $fixedWords = [];
-
             foreach ($words as $word) {
                 if ($this->containsArabic($word)) {
                     $fixedWords[] = $this->reverseWord($word);
@@ -141,17 +116,13 @@ class AiResumeController extends Controller
                     $fixedWords[] = $word;
                 }
             }
-
             $fixedLine = implode('', array_reverse($fixedWords));
             $fixedLines[] = $fixedLine;
         }
-
         $fixedText = implode("\n", $fixedLines);
-
         if ($this->isStillReversed($fixedText)) {
             $fixedText = $this->reverseWholeText($text);
         }
-
         return $fixedText;
     }
 
@@ -159,7 +130,6 @@ class AiResumeController extends Controller
     {
         $lines = array_filter(explode("\n", $text));
         if (empty($lines)) return false;
-
         $firstLine = trim(reset($lines));
         return !preg_match('/^[\x{0600}-\x{06FF}]/u', $firstLine);
     }
@@ -179,16 +149,9 @@ class AiResumeController extends Controller
         return implode('', array_reverse(preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY)));
     }
 
-    /**
-     * بناء الـ Prompt لاستخراج البيانات بصيغة JSON مع تعليمات صارمة للترجمة.
-     */
     private function buildParsingPrompt(string $text, string $lang): string
     {
-        $languages = [
-            'ar' => 'Arabic (العربية)',
-            'en' => 'English (الإنجليزية)',
-            'fr' => 'French (الفرنسية)'
-        ];
+        $languages = ['ar' => 'Arabic (العربية)', 'en' => 'English (الإنجليزية)', 'fr' => 'French (الفرنسية)'];
         $targetLang = $languages[$lang] ?? 'Arabic (العربية)';
 
         return "
@@ -200,7 +163,8 @@ class AiResumeController extends Controller
         2. قم بترجمة جميع القيم إلى {$targetLang} حتى لو كان النص الأصلي بلغة أخرى.
         3. إذا كان حقل غير موجود، اتركه فارغاً (مصفوفة فارغة أو سلسلة فارغة).
         4. تواريخ البداية والنهاية بالصيغة YYYY-MM.
-        5. لا تضع أياً من النص داخل علامات ```json أو أي تنسيق Markdown.
+        5. حدد تقديراً واقعياً لـ `percentage` لكل مهارة (0-100) ونسبة إتقان، و `level` لكل لغة (1-5).
+        6. استخرج الهوايات (`hobbies`) و المراجع (`references`) إن وُجدت في النص.
 
         [JSON STRUCTURE]
         {
@@ -230,11 +194,17 @@ class AiResumeController extends Controller
                     \"graduation_year\": \"\"
                 }
             ],
-            \"skills\": [\"Skill 1\", \"Skill 2\"],
-            \"languages\": [
+            \"skills\": [{\"name\": \"Skill 1\", \"percentage\": 75}, {\"name\": \"Skill 2\", \"percentage\": 60}],
+            \"languages\": [{\"name\": \"Language\", \"proficiency\": \"Advanced\", \"level\": 4}],
+            \"hobbies\": [{\"name\": \"Reading\", \"icon\": \"📚\", \"description\": \"Fiction and self-development\"}],
+            \"references\": [
                 {
-                    \"name\": \"Language Name in {$targetLang}\",
-                    \"proficiency\": \"Proficiency Level in {$targetLang}\"
+                    \"full_name\": \"John Doe\",
+                    \"job_title\": \"Manager\",
+                    \"company\": \"ABC Corp\",
+                    \"email\": \"john@example.com\",
+                    \"phone\": \"+1234567890\",
+                    \"notes\": \"Worked together for 2 years\"
                 }
             ],
             \"extra_sections\": []
