@@ -5,13 +5,13 @@
     $resumeLanguage = $resume->resume_language;
     $hideActions = $hideActions ?? false;
 
+    // === إصلاح رابط الصورة ===
     $photoUrl = null;
     if (isset($photoAbsoluteUrl) && $photoAbsoluteUrl) {
         $photoUrl = $photoAbsoluteUrl;
     } elseif ($profile && $profile->photo_path) {
-        if (Storage::disk('public')->exists($profile->photo_path)) {
-            $photoUrl = Storage::disk('public')->url($profile->photo_path);
-        }
+        // استخدام asset() مع مسار التخزين العام (بعد ربط storage:link)
+        $photoUrl = asset('storage/' . $profile->photo_path);
     }
 
     $extra = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : ($resume->extra_sections ?? []);
@@ -80,7 +80,13 @@
             {{-- Profile Photo --}}
             @if($photoUrl)
             <div class="flex justify-center mb-6">
-                <img src="{{ $photoUrl }}" class="w-40 h-40 rounded-lg object-cover border-4 border-white/20 shadow-lg">
+                <img src="{{ $photoUrl }}" class="w-40 h-40 rounded-lg object-cover border-4 border-white/20 shadow-lg" alt="Profile Photo">
+            </div>
+            @else
+            <div class="flex justify-center mb-6">
+                <div class="w-40 h-40 rounded-lg bg-white/10 flex items-center justify-center text-white/40 text-4xl border-2 border-dashed border-white/30">
+                    👤
+                </div>
             </div>
             @endif
 
