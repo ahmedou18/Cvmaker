@@ -3,6 +3,7 @@
     @include('resumes.partials.styles')
 
     @php
+        $currentLang = session('resume_language', 'ar');
         $initialData = [
             'full_name' => old('full_name', ''),
             'job_title' => old('job_title', ''),
@@ -10,10 +11,13 @@
             'phone' => old('phone', ''),
             'address' => old('address', ''),
             'summary' => old('summary', ''),
-            'skills' => '',
+            'skills' => old('skills', ''),
+            'skillsArray' => [['id' => time(), 'name' => '', 'percentage' => 80]],
             'educations' => [['id' => time(), 'institution' => '', 'degree' => '', 'field_of_study' => '', 'graduation_year' => '']],
             'experiences' => [['id' => time(), 'company' => '', 'position' => '', 'start_date' => '', 'end_date' => '', 'is_current' => false, 'description' => '']],
-            'languages' => [['id' => time(), 'name' => '', 'proficiency' => __('messages.intermediate', [], $currentLang)]],
+            'languages' => [['id' => time(), 'name' => '', 'proficiency' => __('messages.intermediate', [], $currentLang), 'level' => 3]],
+            'hobbies' => [],
+            'references' => [],
             'extra_sections' => [],
             'existingPhoto' => '',
         ];
@@ -35,6 +39,8 @@
                         @include('resumes.partials.step-experience', ['currentLang' => $currentLang])
                         @include('resumes.partials.step-skills-summary', ['currentLang' => $currentLang])
                         @include('resumes.partials.step-languages', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-hobbies', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-references', ['currentLang' => $currentLang])
                         @include('resumes.partials.step-final', ['currentLang' => $currentLang])
 
                         @include('resumes.partials.navigation-buttons', ['submitText' => __('messages.save_publish', [], $currentLang), 'currentLang' => $currentLang])
