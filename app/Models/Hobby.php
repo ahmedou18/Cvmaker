@@ -1,0 +1,18 @@
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+class Hobby extends Model
+{
+    protected $fillable = [
+        'resume_id', 'name', 'icon', 'description', 'sort_order'
+    ];
+
+    protected $casts = [
+        'sort_order' => 'integer',
+    ];
+
+    public function resume()
+    {
+        return $this->belongsTo(Resume::class);
+    }
+}
