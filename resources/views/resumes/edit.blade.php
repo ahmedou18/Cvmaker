@@ -6,6 +6,35 @@
         $personal = $resume->personalDetail;
         $currentLang = $resume->resume_language ?? app()->getLocale();
 
+        // تحويل المهارات إلى مصفوفة كائنات مع نسبة مئوية (إذا كانت موجودة)
+        $skillsArray = $resume->skills->map(fn($s) => [
+            'id' => $s->id,
+            'name' => $s->name,
+            'percentage' => $s->percentage ?? 80,
+        ])->toArray();
+        if (empty($skillsArray)) {
+            $skillsArray = [['id' => time(), 'name' => '', 'percentage' => 80]];
+        }
+
+        // تحويل الهوايات
+        $hobbies = $resume->hobbies->map(fn($h) => [
+            'id' => $h->id,
+            'name' => $h->name,
+            'icon' => $h->icon,
+            'description' => $h->description,
+        ])->toArray();
+
+        // تحويل المراجع
+        $references = $resume->references->map(fn($r) => [
+            'id' => $r->id,
+            'full_name' => $r->full_name,
+            'job_title' => $r->job_title,
+            'company' => $r->company,
+            'email' => $r->email,
+            'phone' => $r->phone,
+            'notes' => $r->notes,
+        ])->toArray();
+
         $initialData = [
             'full_name' => $personal->full_name ?? '',
             'job_title' => $personal->job_title ?? '',
@@ -13,7 +42,8 @@
             'phone' => $personal->phone ?? '',
             'address' => $personal->address ?? '',
             'summary' => $personal->summary ?? '',
-            'skills' => $resume->skills->pluck('name')->implode('، '),
+            'skills' => $resume->skills->pluck('name')->implode('، '), // النص القديم للتوافق
+            'skillsArray' => $skillsArray,
             'educations' => $resume->educations->map(fn($e) => [
                 'id' => $e->id,
                 'institution' => $e->institution ?? '',
@@ -33,16 +63,20 @@
             'languages' => $resume->languages->map(fn($l) => [
                 'id' => $l->id,
                 'name' => $l->name ?? '',
-                'proficiency' => $l->proficiency ?? __('messages.intermediate', [], $currentLang)
+                'proficiency' => $l->proficiency ?? __('messages.intermediate', [], $currentLang),
+                'level' => $l->level ?? 3
             ])->toArray(),
+            'hobbies' => $hobbies,
+            'references' => $references,
             'extra_sections' => $resume->extra_sections ?? [],
-            'existingPhoto' => $personal->photo_path ? asset($personal->photo_path) : '',
+            'existingPhoto' => $personal->photo_path ? asset('storage/' . $personal->photo_path) : '',
         ];
 
-        // ضمان وجود عنصر واحد على الأقل
+        // ضمان وجود عنصر واحد على الأقل (لتجنب الخرائط الفارغة)
         if (empty($initialData['educations'])) $initialData['educations'] = [['id' => time(), 'institution' => '', 'degree' => '', 'field_of_study' => '', 'graduation_year' => '']];
         if (empty($initialData['experiences'])) $initialData['experiences'] = [['id' => time(), 'company' => '', 'position' => '', 'start_date' => '', 'end_date' => '', 'is_current' => false, 'description' => '']];
-        if (empty($initialData['languages'])) $initialData['languages'] = [['id' => time(), 'name' => '', 'proficiency' => __('messages.intermediate', [], $currentLang)]];
+        if (empty($initialData['languages'])) $initialData['languages'] = [['id' => time(), 'name' => '', 'proficiency' => __('messages.intermediate', [], $currentLang), 'level' => 3]];
+        if (empty($initialData['skillsArray'])) $initialData['skillsArray'] = [['id' => time(), 'name' => '', 'percentage' => 80]];
     @endphp
 
     <div class="page-content py-10" dir="rtl" x-data="resumeForm({{ json_encode($initialData) }})" x-cloak>
@@ -69,6 +103,8 @@
                         @include('resumes.partials.step-experience', ['currentLang' => $currentLang])
                         @include('resumes.partials.step-skills-summary', ['currentLang' => $currentLang])
                         @include('resumes.partials.step-languages', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-hobbies', ['currentLang' => $currentLang])
+                        @include('resumes.partials.step-references', ['currentLang' => $currentLang])
                         @include('resumes.partials.step-final', ['currentLang' => $currentLang])
 
                         @include('resumes.partials.navigation-buttons', [
