@@ -19,10 +19,21 @@
     <meta charset="UTF-8">
     <title>{{ $resume->personalDetail->full_name ?? 'السيرة الذاتية' }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    {{-- نفس الخط الاحترافي لضمان التوافق في PDF --}}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { background: white; margin: 0; padding: 20px; }
-        @media print { body { padding: 0; } }
+        body { 
+            background: white; 
+            margin: 0; 
+            padding: 20px;
+            font-family: 'Tajawal', 'Noto Sans Arabic', 'Cairo', sans-serif;
+            line-height: 1.5;
+        }
+        @media print { 
+            body { padding: 0; } 
+        }
     </style>
 </head>
 <body>
