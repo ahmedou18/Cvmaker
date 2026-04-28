@@ -10,9 +10,12 @@ use Smalot\PdfParser\Parser;
 
 class AiResumeController extends Controller
 {
-    // ✅ استخدم النموذج الذي اخترته
+    // ✅ النموذج المستخدم (يمكنك تغييره حسب المتاح في حسابك)
     private const MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
 
+    /**
+     * استخراج البيانات من ملف PDF باستخدام OpenRouter API
+     */
     public function parseFile(Request $request)
     {
         $request->validate([
@@ -78,7 +81,7 @@ class AiResumeController extends Controller
                 return response()->json(['error' => 'البيانات المستخرجة غير صالحة.'], 500);
             }
 
-            // خصم الرصيد
+            // خصم رصيد المستخدم
             $user = auth()->user();
             if (!$user) {
                 return response()->json(['error' => 'يجب تسجيل الدخول.'], 401);
@@ -111,6 +114,9 @@ class AiResumeController extends Controller
         }
     }
 
+    /**
+     * بناء الـ Prompt لاستخراج البيانات (يشمل extra_sections)
+     */
     private function buildParsingPrompt(string $text, string $lang): string
     {
         $languageMap = ['ar' => 'Arabic (العربية)', 'en' => 'English', 'fr' => 'French'];
@@ -180,13 +186,16 @@ class AiResumeController extends Controller
 - بالنسبة للغات: المستوى (level) من 1 (مبتدئ) إلى 5 (لغة أم). استنتجه من النص.
 - للهوايات: يمكن ترك رمز (icon) فارغاً إن لم يتوفر.
 - للخبرات: اجعل is_current = true إذا لم يوجد تاريخ انتهاء.
-- الأقسام الإضافية: تشمل الشهادات، المشاريع، أو أي معلومات أخرى لا تناسب الأقسام السابقة.
+- الأقسام الإضافية: تشمل الشهادات، المشاريع، الجوائز، التطوع، أو أي معلومات أخرى لا تناسب الأقسام السابقة. لكل قسم، احتفظ بعنوانه الأصلي ومحتواه.
 
 نص السيرة الذاتية:
 {$text}
 PROMPT;
     }
 
+    /**
+     * تنظيف الاستجابة من كتل Markdown والحصول على JSON خالص
+     */
     private function cleanJsonResponse(string $content): string
     {
         $content = trim($content);
