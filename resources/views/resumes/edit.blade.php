@@ -2,6 +2,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     @include('resumes.partials.styles')
 
+@if($errors->any())
+<div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
+    <ul>
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
     @php
         $personal = $resume->personalDetail;
         $currentLang = $resume->resume_language ?? app()->getLocale();
