@@ -28,7 +28,6 @@
     <title>{{ $profile->full_name ?? 'السيرة الذاتية' }} - Modern CV</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- تحسين الخطوط العربية والأجنبية -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Arabic:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -37,22 +36,19 @@
             --theme-secondary: #e6e1f0;
         }
 
-        /* قواعد الخطوط الأساسية */
         body {
             font-family: {{ $resumeLanguage == 'ar' ? "'Tajawal', 'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif" }};
             background-color: #f3f4f6;
-            letter-spacing: 0;          /* لا تباعد للحروف العربية */
-            line-height: 1.7;           /* تباعد مريح للقراءة */
-            font-weight: 500;           /* وزن النص الأساسي */
-            color: #1f2937;             /* لون نص غامق ولكن ناعم */
+            letter-spacing: 0;
+            line-height: 1.7;
+            font-weight: 500;
+            color: #1f2937;
         }
 
-        /* العناوين الرئيسية */
         h1, h2, h3, h4, .font-bold, .step-link {
             font-weight: 700;
         }
 
-        /* الاسم الشخصي */
         .resume-name {
             font-size: 1.8rem;
             line-height: 1.3;
@@ -64,7 +60,6 @@
             }
         }
 
-        /* عناوين الأقسام (الملخص، المهارات، الخبرات...) */
         .section-title {
             font-size: 1.2rem;
             font-weight: 700;
@@ -75,19 +70,7 @@
             margin-bottom: 1rem;
             border-bottom: 2px solid var(--theme-primary);
         }
-        /* إصدار بديل بإطار جانبي (للمحتوى الرئيسي) */
-        .section-title-alt {
-            background-color: var(--theme-secondary);
-            padding: 0.35rem 1rem;
-            border-right: 4px solid var(--theme-primary);
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--theme-primary);
-            margin-bottom: 1rem;
-            display: inline-block;
-        }
 
-        /* تحسين النص في الشريط الجانبي (الخلفية البنفسجية) */
         .sidebar-bg {
             background-color: var(--theme-primary);
         }
@@ -96,7 +79,6 @@
             line-height: 1.6;
         }
 
-        /* تحسين أزرار الطباعة والعودة */
         .btn-print {
             transition: all 0.2s ease;
         }
@@ -124,7 +106,6 @@
             }
         }
 
-        /* المهارات والأشرطة */
         .skill-bar-bg { background-color: var(--theme-secondary); }
         .skill-bar-fill { background-color: var(--theme-primary); }
         .text-primary { color: var(--theme-primary); }
@@ -136,13 +117,13 @@
     {{-- Top Action Bar --}}
     @if(!$hideActions)
     <div class="no-print max-w-5xl mx-auto bg-white p-4 mb-4 shadow rounded-lg flex justify-between items-center">
-        <a href="{{ route('dashboard') }}" class="text-primary hover:underline">← العودة للوحة</a>
+        <a href="{{ route('dashboard') }}" class="text-primary hover:underline">← {{ __('messages.back_to_dashboard', [], $resumeLanguage) }}</a>
         <div class="flex gap-3">
-            <a href="{{ route('resume.edit', $resume->uuid) }}" class="bg-gray-100 px-5 py-2 rounded-md text-sm font-bold">تعديل</a>
+            <a href="{{ route('resume.edit', $resume->uuid) }}" class="bg-gray-100 px-5 py-2 rounded-md text-sm font-bold">{{ __('messages.edit_data', [], $resumeLanguage) }}</a>
             @if($canDownload)
-                <a href="{{ route('resume.download', $resume->uuid) }}" class="bg-primary text-white px-5 py-2 rounded-md text-sm font-bold btn-print">تحميل PDF</a>
+                <a href="{{ route('resume.download', $resume->uuid) }}" class="bg-primary text-white px-5 py-2 rounded-md text-sm font-bold btn-print">{{ __('messages.download_pdf', [], $resumeLanguage) }}</a>
             @else
-                <button onclick="openModal()" class="bg-gray-400 text-white px-5 py-2 rounded-md text-sm font-bold">رقّي باقتك لتحميل PDF</button>
+                <button onclick="openModal()" class="bg-gray-400 text-white px-5 py-2 rounded-md text-sm font-bold">{{ __('messages.upgrade_to_download', [], $resumeLanguage) }}</button>
             @endif
         </div>
     </div>
@@ -198,7 +179,7 @@
             {{-- Languages --}}
             @if($resume->languages->count())
             <div class="mb-6">
-                <h2 class="text-lg font-bold border-b border-white/30 pb-1 mb-3">اللغات</h2>
+                <h2 class="text-lg font-bold border-b border-white/30 pb-1 mb-3">{{ __('messages.languages', [], $resumeLanguage) }}</h2>
                 <div class="space-y-3">
                     @foreach($resume->languages as $lang)
                     <div>
@@ -239,7 +220,7 @@
             {{-- Summary --}}
             @if($profile->summary)
             <section>
-                <h2 class="section-title mb-3">الملخص المهني</h2>
+                <h2 class="section-title mb-3">{{ __('messages.summary', [], $resumeLanguage) }}</h2>
                 <p class="text-gray-700 leading-relaxed">{!! nl2br(e($profile->summary)) !!}</p>
             </section>
             @endif
@@ -247,7 +228,7 @@
             {{-- Skills (with percentage bar) --}}
             @if($resume->skills->count())
             <section>
-                <h2 class="section-title mb-4">المهارات التقنية</h2>
+                <h2 class="section-title mb-4">{{ __('messages.skills', [], $resumeLanguage) }}</h2>
                 <div class="space-y-3">
                     @foreach($resume->skills as $skill)
                     <div>
@@ -267,7 +248,7 @@
             {{-- Experience --}}
             @if($resume->experiences->count())
             <section>
-                <h2 class="section-title mb-4">الخبرات المهنية</h2>
+                <h2 class="section-title mb-4">{{ __('messages.experience', [], $resumeLanguage) }}</h2>
                 <div class="space-y-6">
                     @foreach($resume->experiences as $exp)
                     <div class="relative pr-4 border-r-2 border-gray-200">
@@ -276,7 +257,7 @@
                             <h3 class="text-lg font-bold">{{ $exp->position }}</h3>
                             <span class="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
                                 {{ $exp->start_date ? \Carbon\Carbon::parse($exp->start_date)->format('Y/m') : '' }}
-                                – {{ $exp->is_current ? 'الآن' : ($exp->end_date ? \Carbon\Carbon::parse($exp->end_date)->format('Y/m') : '') }}
+                                – {{ $exp->is_current ? __('messages.present', [], $resumeLanguage) : ($exp->end_date ? \Carbon\Carbon::parse($exp->end_date)->format('Y/m') : '') }}
                             </span>
                         </div>
                         <p class="text-gray-600 font-semibold text-sm">{{ $exp->company }}</p>
@@ -292,7 +273,7 @@
             {{-- Education --}}
             @if($resume->educations->count())
             <section>
-                <h2 class="section-title mb-4">التعليم</h2>
+                <h2 class="section-title mb-4">{{ __('messages.education', [], $resumeLanguage) }}</h2>
                 @foreach($resume->educations as $edu)
                 <div class="mb-4">
                     <div class="flex flex-wrap justify-between items-baseline">
@@ -308,7 +289,7 @@
             {{-- Hobbies --}}
             @if($resume->hobbies->count())
             <section>
-                <h2 class="section-title mb-3">الهوايات</h2>
+                <h2 class="section-title mb-3">{{ __('messages.hobbies', [], $resumeLanguage) ?? 'الهوايات' }}</h2>
                 <div class="flex flex-wrap gap-2">
                     @foreach($resume->hobbies as $hobby)
                         <span class="bg-gray-100 px-3 py-1 rounded-full flex items-center gap-1 text-sm">
@@ -324,7 +305,7 @@
             {{-- References --}}
             @if($resume->references->count())
             <section>
-                <h2 class="section-title mb-3">المراجع</h2>
+                <h2 class="section-title mb-3">{{ __('messages.references', [], $resumeLanguage) ?? 'المراجع' }}</h2>
                 <div class="space-y-4">
                     @foreach($resume->references as $ref)
                     <div class="border-r-2 border-gray-200 pr-4">
