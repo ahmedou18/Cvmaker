@@ -572,7 +572,7 @@ class ResumeController extends Controller
                 ? 'تم حفظ التعديلات بنجاح. (ملاحظة: لقد استنفدت محاولات تغيير الاسم، تم قفل هوية هذه السيرة لحمايتها).'
                 : 'تم تحديث سيرتك الذاتية بنجاح!';
 
-            return redirect()->route('resume.show', $resume->uuid)->with('success', $message);
+            return redirect()->route('resume.show', $resume->uuid)->with('success', 'تم التحديث');
 
         } catch (\Exception $e) {
             DB::rollBack();
