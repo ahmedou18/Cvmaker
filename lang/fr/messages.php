@@ -12,6 +12,19 @@ return [
 'autonomous' => 'Autonome',
 'edit_resume' => 'Modifier le CV',
 
+'hobbies' => 'Loisirs',
+'references' => 'Références',
+'extra_sections' => 'Sections supplémentaires',
+'profile_photo' => 'Photo de profil',
+'interests' => 'Centres d’intérêt',
+
+'add_hobby' => '+ Ajouter un loisir',
+'add_reference' => '+ Ajouter une référence',
+'section_title' => 'Titre de la section',
+'section_content' => 'Contenu de la section',
+'add_section' => '+ Ajouter une section',
+'generated_by' => 'Généré par',
+
 // Utilisé dans l'affichage des forfaits
 'cv' => 'CV',
 'day' => 'Jour',
