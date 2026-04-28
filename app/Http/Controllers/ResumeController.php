@@ -365,7 +365,36 @@ class ResumeController extends Controller
      */
     public function update(Request $request, $uuid)
     {
-\Log::info('Update request received', $request->all());
+        // ========== تصفية العناصر الفارغة قبل التحقق ==========
+        // المهارات
+        if ($request->has('skills_array')) {
+            $filtered = array_filter($request->skills_array, fn($s) => !empty($s['name']));
+            $request->merge(['skills_array' => array_values($filtered)]);
+        }
+        // الخبرات
+        if ($request->has('experiences')) {
+            $filtered = array_filter($request->experiences, fn($e) => !empty($e['company']) || !empty($e['position']));
+            $request->merge(['experiences' => array_values($filtered)]);
+        }
+        // اللغات
+        if ($request->has('languages')) {
+            $filtered = array_filter($request->languages, fn($l) => !empty($l['name']));
+            $request->merge(['languages' => array_values($filtered)]);
+        }
+        // الهوايات
+        if ($request->has('hobbies')) {
+            $filtered = array_filter($request->hobbies, fn($h) => !empty($h['name']));
+            $request->merge(['hobbies' => array_values($filtered)]);
+        }
+        // المراجع
+        if ($request->has('references')) {
+            $filtered = array_filter($request->references, fn($r) => !empty($r['full_name']));
+            $request->merge(['references' => array_values($filtered)]);
+        }
+        // =====================================================
+
+        \Log::info('Update request received', $request->all());
+
         $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
         $personalDetail = $resume->personalDetail;
 
@@ -376,7 +405,7 @@ class ResumeController extends Controller
             'phone'       => 'nullable|string|max:20',
             'address'     => 'nullable|string|max:255',
             'summary'     => 'nullable|string',
-            'skills'      => 'nullable|string', // للنص القديم
+            'skills'      => 'nullable|string',
             'skills_array' => 'nullable|array',
             'skills_array.*.name' => 'required_with:skills_array|string|max:255',
             'skills_array.*.percentage' => 'nullable|integer|min:0|max:100',
@@ -573,6 +602,7 @@ class ResumeController extends Controller
                 ? 'تم حفظ التعديلات بنجاح. (ملاحظة: لقد استنفدت محاولات تغيير الاسم، تم قفل هوية هذه السيرة لحمايتها).'
                 : 'تم تحديث سيرتك الذاتية بنجاح!';
 
+            // استخدام رسالة مختصرة للفلاش لتجنب مشكلة "too big header"
             return redirect()->route('resume.show', $resume->uuid)->with('success', 'تم التحديث');
 
         } catch (\Exception $e) {
@@ -584,7 +614,6 @@ class ResumeController extends Controller
             return back()->with('error', 'حدث خطأ أثناء تحديث السيرة: ' . $e->getMessage())->withInput();
         }
     }
-
     /**
      * صفحة معاينة السيرة (خالية من الأزرار، مناسبة لـ Puppeteer)
      */
