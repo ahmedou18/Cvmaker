@@ -10,8 +10,14 @@ use Smalot\PdfParser\Parser;
 
 class AiResumeController extends Controller
 {
-    private const DEFAULT_MODEL = 'command-a-03-2025';
+    /**
+     * النموذج المستخدم من OpenRouter (مجاني وقوي للاستخراج)
+     */
+    private const MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
 
+    /**
+     * استخراج بيانات السيرة الذاتية من ملف PDF باستخدام OpenRouter
+     */
     public function parseFile(Request $request)
     {
         $request->validate([
@@ -20,57 +26,70 @@ class AiResumeController extends Controller
         ]);
 
         try {
+            // 1. استخراج النص من PDF
             $parser = new Parser();
             $pdf = $parser->parseFile($request->file('cv_file')->getPathname());
             $rawText = $pdf->getText();
 
             if (empty(trim($rawText))) {
-                return response()->json(['error' => 'تعذر استخراج النص. تأكد أن الملف ليس عبارة عن صور (Scanned PDF).'], 422);
+                return response()->json(['error' => 'تعذر استخراج النص من ملف PDF. تأكد أنه ليس ممسوحاً ضوئياً.'], 422);
             }
 
-            $text = $this->fixArabicText($rawText);
+            // 2. اللغة المستهدفة
             $currentLang = $request->input('lang') ?? session('resume_language') ?? app()->getLocale();
-            $prompt = $this->buildParsingPrompt($text, $currentLang);
 
-            $response = Http::withToken(config('services.cohere.key'))
-                ->timeout(120)
-                ->post('https://api.cohere.ai/v1/chat', [
-                    'model' => 'command-a-03-2025',
-                    'message'         => $prompt,
-                    'temperature'     => 0.1,
-                    'response_format' => ['type' => 'json_object'],
-                ]);
+            // 3. بناء البرومبت الكامل (مع الحقول الجديدة)
+            $prompt = $this->buildParsingPrompt($rawText, $currentLang);
+
+            // 4. الاتصال بـ OpenRouter API
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . config('services.openrouter.key'),
+                'Content-Type'  => 'application/json',
+            ])->timeout(120)->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => self::MODEL,
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => "أنت محرك استخراج بيانات دقيق جداً. وظيفتك تحويل نص السيرة الذاتية إلى JSON وفق البنية المطلوبة. ممنوع تماماً إضافة أي معلومات غير موجودة في النص الأصلي. إذا لم تجد المعلومة، اترك الحقل فارغاً أو استخدم [] للمصفوفات. لا تشرح الكود، أخرج فقط JSON خالص."
+                    ],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+                'temperature' => 0.1,
+                'max_tokens'  => 3000,
+            ]);
 
             if ($response->failed()) {
-                Log::error('Cohere parsing API error', [
+                Log::error('OpenRouter parsing API error', [
                     'status' => $response->status(),
                     'body'   => $response->body(),
                     'user_id' => auth()->id(),
                 ]);
-                return response()->json(['error' => 'حدث خطأ أثناء الاتصال بخدمة الذكاء الاصطناعي.'], 500);
+                return response()->json(['error' => 'حدث خطأ أثناء الاتصال بذكاء اصطناعي.'], 500);
             }
 
-            $aiOutput = $response->json('text');
-            $aiOutput = preg_replace('/^```json\s*|\s*```$/i', '', trim($aiOutput));
-            preg_match('/\{.*\}/s', $aiOutput, $matches);
-            if (empty($matches)) {
-                Log::error('No valid JSON found in AI response', ['output' => substr($aiOutput, 0, 500)]);
-                return response()->json(['error' => 'لم يتم العثور على JSON صالح في استجابة الذكاء الاصطناعي.'], 500);
-            }
+            $result = $response->json();
+            $aiContent = $result['choices'][0]['message']['content'] ?? '';
 
-            $jsonString = $matches[0];
-            $aiData = json_decode($jsonString, true);
+            // تنظيف الاستجابة للحصول على JSON خالص
+            $cleanJson = $this->cleanJsonResponse($aiContent);
+            $aiData = json_decode($cleanJson, true);
+
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON decode error in parseFile', ['error' => json_last_error_msg(), 'json' => $jsonString]);
-                return response()->json(['error' => 'فشل تحليل بيانات JSON: ' . json_last_error_msg()], 500);
+                Log::error('JSON decode error in parseFile', [
+                    'error' => json_last_error_msg(),
+                    'raw'   => substr($cleanJson, 0, 500),
+                    'user_id' => auth()->id(),
+                ]);
+                return response()->json(['error' => 'فشل تحليل البيانات المستخرجة. حاول مرة أخرى.'], 500);
             }
 
+            // 5. خصم رصيد المستخدم (نفس المنطق القديم)
             $user = auth()->user();
             if (!$user) {
-                return response()->json(['error' => 'يجب تسجيل الدخول أولاً.'], 401);
+                return response()->json(['error' => 'يجب تسجيل الدخول لاستخدام هذه الميزة.'], 401);
             }
             if ($user->ai_credits_balance <= 0) {
-                return response()->json(['error' => 'رصيد الذكاء الاصطناعي غير كافٍ لاستخراج البيانات. يرجى الاشتراك في باقة.'], 403);
+                return response()->json(['error' => 'رصيد الذكاء الاصطناعي غير كافٍ.'], 403);
             }
 
             DB::transaction(function () use ($user) {
@@ -86,8 +105,9 @@ class AiResumeController extends Controller
                 'success' => true,
                 'message' => 'تم استخراج البيانات بنجاح',
                 'data'    => $aiData,
-                'remaining_credits' => $remainingCredits
+                'remaining_credits' => $remainingCredits,
             ]);
+
         } catch (\Exception $e) {
             Log::error('PDF parsing exception', [
                 'message' => $e->getMessage(),
@@ -98,120 +118,101 @@ class AiResumeController extends Controller
         }
     }
 
-    private function fixArabicText(string $text): string
-    {
-        $lines = explode("\n", $text);
-        $fixedLines = [];
-        foreach ($lines as $line) {
-            if (trim($line) === '') {
-                $fixedLines[] = '';
-                continue;
-            }
-            $words = preg_split('/(\s+)/u', $line, -1, PREG_SPLIT_DELIM_CAPTURE);
-            $fixedWords = [];
-            foreach ($words as $word) {
-                if ($this->containsArabic($word)) {
-                    $fixedWords[] = $this->reverseWord($word);
-                } else {
-                    $fixedWords[] = $word;
-                }
-            }
-            $fixedLine = implode('', array_reverse($fixedWords));
-            $fixedLines[] = $fixedLine;
-        }
-        $fixedText = implode("\n", $fixedLines);
-        if ($this->isStillReversed($fixedText)) {
-            $fixedText = $this->reverseWholeText($text);
-        }
-        return $fixedText;
-    }
-
-    private function isStillReversed(string $text): bool
-    {
-        $lines = array_filter(explode("\n", $text));
-        if (empty($lines)) return false;
-        $firstLine = trim(reset($lines));
-        return !preg_match('/^[\x{0600}-\x{06FF}]/u', $firstLine);
-    }
-
-    private function reverseWholeText(string $text): string
-    {
-        return implode('', array_reverse(preg_split('//u', $text, -1, PREG_SPLIT_NO_EMPTY)));
-    }
-
-    private function containsArabic(string $text): bool
-    {
-        return preg_match('/[\x{0600}-\x{06FF}]/u', $text);
-    }
-
-    private function reverseWord(string $word): string
-    {
-        return implode('', array_reverse(preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY)));
-    }
-
+    /**
+     * بناء الـ Prompt لاستخراج البيانات كاملة
+     */
     private function buildParsingPrompt(string $text, string $lang): string
     {
-        $languages = ['ar' => 'Arabic (العربية)', 'en' => 'English (الإنجليزية)', 'fr' => 'French (الفرنسية)'];
-        $targetLang = $languages[$lang] ?? 'Arabic (العربية)';
+        $languageMap = ['ar' => 'Arabic', 'en' => 'English', 'fr' => 'French'];
+        $targetLang = $languageMap[$lang] ?? 'English';
 
-        return "
-        [STRICT INSTRUCTION]
-        استخرج البيانات من السيرة الذاتية التالية وأعدها بصيغة JSON فقط باللغة {$targetLang} ودون أي نصوص توضيحية أخرى.
+        return <<<PROMPT
+[STRICT INSTRUCTION]
+قم باستخراج جميع البيانات التالية من نص السيرة الذاتية الموجود بين <CV_TEXT> و </CV_TEXT>. أخرج النتيجة كـ JSON صالح باللغة {$targetLang} فقط.
 
-        [RULES]
-        1. يجب أن يكون ناتجك JSON صالحاً تماماً.
-        2. قم بترجمة جميع القيم إلى {$targetLang} حتى لو كان النص الأصلي بلغة أخرى.
-        3. إذا كان حقل غير موجود، اتركه فارغاً (مصفوفة فارغة أو سلسلة فارغة).
-        4. تواريخ البداية والنهاية بالصيغة YYYY-MM.
-        5. حدد تقديراً واقعياً لـ `percentage` لكل مهارة (0-100) ونسبة إتقان، و `level` لكل لغة (1-5).
-        6. استخرج الهوايات (`hobbies`) و المراجع (`references`) إن وُجدت في النص.
+[STRUCTURE REQUIRED]
+{
+  "personal_details": {
+    "full_name": "الاسم الكامل",
+    "job_title": "المسمى الوظيفي الحالي أو المستهدف",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "address": "العنوان (مدينة ودولة)",
+    "summary": "نبذة مهنية مختصرة (جملتين إلى ثلاث)"
+  },
+  "experiences": [
+    {
+      "company": "اسم الشركة",
+      "position": "المسمى الوظيفي",
+      "start_date": "YYYY-MM",
+      "end_date": "YYYY-MM أو تركها فارغة إذا كانت current",
+      "is_current": true/false,
+      "description": "وصف المهام والإنجازات (يُفضل تحسينه لغوياً بدون إضافة معلومات غير موجودة)"
+    }
+  ],
+  "educations": [
+    {
+      "institution": "اسم الجامعة/المعهد",
+      "degree": "الشهادة (بكالوريوس، ماجستير، ...)",
+      "field_of_study": "التخصص",
+      "graduation_year": "YYYY"
+    }
+  ],
+  "skills": [
+    {"name": "اسم المهارة", "percentage": 80}
+  ],
+  "languages": [
+    {"name": "اسم اللغة", "proficiency": "مستوى إتقان نصي (مبتدئ، متوسط، متقدم، لغة أم)", "level": 3}
+  ],
+  "hobbies": [
+    {"name": "اسم الهواية", "icon": "إيموجي مناسب (اختياري)", "description": "وصف قصير (اختياري)"}
+  ],
+  "references": [
+    {
+      "full_name": "اسم المرجع",
+      "job_title": "المسمى الوظيفي للمرجع",
+      "company": "جهة عمله",
+      "email": "بريده الإلكتروني",
+      "phone": "رقم هاتفه",
+      "notes": "أي ملاحظات إضافية (علاقته بك مثلاً)"
+    }
+  ],
+  "extra_sections": [
+    {"title": "عنوان القسم الإضافي", "content": "محتوى القسم"}
+  ]
+}
 
-        [JSON STRUCTURE]
-        {
-            \"personal_details\": {
-                \"full_name\": \"\",
-                \"job_title\": \"\",
-                \"email\": \"\",
-                \"phone\": \"\",
-                \"address\": \"\",
-                \"summary\": \"\"
-            },
-            \"experiences\": [
-                {
-                    \"company\": \"\",
-                    \"position\": \"\",
-                    \"start_date\": \"\",
-                    \"end_date\": \"\",
-                    \"is_current\": false,
-                    \"description\": \"\"
-                }
-            ],
-            \"educations\": [
-                {
-                    \"institution\": \"\",
-                    \"degree\": \"\",
-                    \"field_of_study\": \"\",
-                    \"graduation_year\": \"\"
-                }
-            ],
-            \"skills\": [{\"name\": \"Skill 1\", \"percentage\": 75}, {\"name\": \"Skill 2\", \"percentage\": 60}],
-            \"languages\": [{\"name\": \"Language\", \"proficiency\": \"Advanced\", \"level\": 4}],
-            \"hobbies\": [{\"name\": \"Reading\", \"icon\": \"📚\", \"description\": \"Fiction and self-development\"}],
-            \"references\": [
-                {
-                    \"full_name\": \"John Doe\",
-                    \"job_title\": \"Manager\",
-                    \"company\": \"ABC Corp\",
-                    \"email\": \"john@example.com\",
-                    \"phone\": \"+1234567890\",
-                    \"notes\": \"Worked together for 2 years\"
-                }
-            ],
-            \"extra_sections\": []
+[RULES]
+1. **لا تخلق معلومات غير موجودة** – إذا لم تجد شيئاً، اترك السلسلة فارغة "" أو المصفوفة فارغة [].
+2. **الترجمة**: أخرج جميع القيم النصية باللغة {$targetLang} (إذا كان النص الأصلي بلغة أخرى، تُرجمه إلى {$targetLang}).
+3. **التواريخ**: فقط سنة وشهر بصيغة YYYY-MM. إذا وجدت سنة فقط فاجعل YYYY-01.
+4. **نسبة المهارة**: قدِّر النسبة المنطقية بناءً على خبرة الشخص (إذا لم توجد نسبة فاجعل 70).
+5. **مستوى اللغة**: level من 1 إلى 5. استنتجه من الكلمات (مبتدئ=1، متوسط=3، متقدم=4، لغة أم=5).
+6. **الهوايات**: يمكن ترك icon فارغاً إن لم يوجد إيموجي واضح.
+7. **الأقسام الإضافية**: أي معلومات لا تناسب الأقسام السابقة (مثل الشهادات، المشاريع) ضعها في هذا المصفوفة.
+
+<CV_TEXT>
+{$text}
+</CV_TEXT>
+
+أخرج فقط JSON صحيح بدون أي نص إضافي أو تفسير.
+PROMPT;
+    }
+
+    /**
+     * تنظيف الاستجابة من علامات Markdown والحصول على JSON خالص
+     */
+    private function cleanJsonResponse(string $content): string
+    {
+        // إزالة أي كتل ```json ... ```
+        $content = preg_replace('/^```json\s*|\s*```$/i', '', trim($content));
+        // إذا بدأ النص بأحرف غير JSON (مثل شرح)، نحاول التقاط أول { وآخر }
+        if (!str_starts_with($content, '{')) {
+            preg_match('/\{.*\}/s', $content, $matches);
+            if (!empty($matches)) {
+                $content = $matches[0];
+            }
         }
-
-        [CV TEXT]
-        {$text}
-        ";
+        return $content;
     }
 }
