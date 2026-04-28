@@ -5,16 +5,19 @@
     $resumeLanguage = $resume->resume_language;
     $hideActions = $hideActions ?? false;
 
-    // === إصلاح رابط الصورة ===
+    // رابط الصورة مع fallback
     $photoUrl = null;
     if (isset($photoAbsoluteUrl) && $photoAbsoluteUrl) {
         $photoUrl = $photoAbsoluteUrl;
     } elseif ($profile && $profile->photo_path) {
-        // استخدام asset() مع مسار التخزين العام (بعد ربط storage:link)
         $photoUrl = asset('storage/' . $profile->photo_path);
     }
 
-    $extra = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : ($resume->extra_sections ?? []);
+    // معالجة extra_sections بأمان
+    $extra = [];
+    if (!empty($resume->extra_sections)) {
+        $extra = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : $resume->extra_sections;
+    }
 @endphp
 
 <!DOCTYPE html>
@@ -80,7 +83,7 @@
             {{-- Profile Photo --}}
             @if($photoUrl)
             <div class="flex justify-center mb-6">
-                <img src="{{ $photoUrl }}" class="w-40 h-40 rounded-lg object-cover border-4 border-white/20 shadow-lg" alt="Profile Photo">
+                <img src="{{ $photoUrl }}" class="w-40 h-40 rounded-lg object-cover border-4 border-white/20 shadow-lg" alt="Profile Photo" onerror="this.style.display='none'">
             </div>
             @else
             <div class="flex justify-center mb-6">
@@ -148,7 +151,7 @@
                     @if(!empty($section['title']))
                     <div class="mb-6">
                         <h2 class="text-lg font-bold border-b border-white/30 pb-1 mb-2">{{ $section['title'] }}</h2>
-                        <div class="text-sm leading-relaxed">{{ $section['content'] ?? '' }}</div>
+                        <div class="text-sm leading-relaxed">{!! nl2br(e($section['content'] ?? '')) !!}</div>
                     </div>
                     @endif
                 @endforeach
@@ -165,7 +168,7 @@
                 <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
                     <h2 class="text-xl font-bold text-primary">الملخص المهني</h2>
                 </div>
-                <p class="text-gray-700 leading-relaxed">{{ $profile->summary }}</p>
+                <p class="text-gray-700 leading-relaxed">{!! nl2br(e($profile->summary)) !!}</p>
             </section>
             @endif
 
@@ -210,7 +213,7 @@
                         </div>
                         <p class="text-gray-600 font-semibold text-sm">{{ $exp->company }}</p>
                         @if($exp->description)
-                            <p class="text-gray-700 text-sm mt-1 leading-relaxed">{{ $exp->description }}</p>
+                            <p class="text-gray-700 text-sm mt-1 leading-relaxed">{!! nl2br(e($exp->description)) !!}</p>
                         @endif
                     </div>
                     @endforeach
@@ -237,7 +240,7 @@
             @endif
 
             {{-- Hobbies --}}
-            @if($resume->hobbies && $resume->hobbies->count())
+            @if($resume->hobbies->count())
             <section>
                 <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
                     <h2 class="text-xl font-bold text-primary">الهوايات</h2>
@@ -255,7 +258,7 @@
             @endif
 
             {{-- References --}}
-            @if($resume->references && $resume->references->count())
+            @if($resume->references->count())
             <section>
                 <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
                     <h2 class="text-xl font-bold text-primary">المراجع</h2>
