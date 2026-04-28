@@ -35,7 +35,7 @@ class AiGenerationController extends Controller
                 'max_tokens' => 400,
             ],
             'skills' => [
-                'prompt' => "استخرج من السياق قائمة المهارات التقنية والقياسية، وقدِّر لكل مهارة نسبة مئوية (percentage) من 0 إلى 100 بناءً على مستوى الخبرة الموضح. أخرج الناتج كمصفوفة JSON مثل: [{\"name\": \"Laravel\", \"percentage\": 85}, ...] باللغة {$langName}. \n<context>\n{context}\n</context>",
+                'prompt' => "استخرج من السياق قائمة المهارات التقنية والقياسية، وقدِّر لكل مهارة نسبة مئوية (percentage) من 0 إلى 100 بناءً على مستوى الخبرة الموضح. أخرج الناتج كمصفوفة JSON فقط، مثل: [{\"name\": \"Laravel\", \"percentage\": 85}, ...] باللغة {$langName}. لا تخرج أي نص آخر.\n<context>\n{context}\n</context>",
                 'temperature' => 0.4,
                 'max_tokens' => 500,
             ],
@@ -105,7 +105,6 @@ class AiGenerationController extends Controller
             $generatedText = $result['choices'][0]['message']['content'] ?? '';
             $cleanedText = $this->cleanGeneratedText($generatedText, $type);
 
-            // خصم الرصيد
             DB::transaction(function () use ($user) {
                 $user = $user->fresh();
                 if ($user->ai_credits_balance > 0) {
@@ -159,7 +158,7 @@ class AiGenerationController extends Controller
         $targetLang = $languageMap[$lang] ?? 'English';
 
         $safeData = $request->except(['_token', 'lang']);
-        $systemPrompt = "أنت خبير مراجعة سير ذاتية. قم بتحسين البيانات التالية (تحسين لغوي، تنسيق، إضافة تقديرات للمهارات واللغات) مع الحفاظ على الحقائق الأساسية غير المتغيرة. أخرج النتيجة بنفس البنية JSON.";
+        $systemPrompt = "أنت خبير مراجعة سير ذاتية. قم بتحسين البيانات التالية (تحسين لغوي، تنسيق، إضافة تقديرات للمهارات واللغات) مع الحفاظ على الحقائق الأساسية غير المتغيرة. أخرج النتيجة بنفس البنية JSON. تأكد من تضمين 'extra_sections' إذا كانت موجودة في الإدخال، مع تحسين المحتوى النصي دون تغيير العناوين الأساسية.";
         $userMessage = "هذه بيانات السيرة:\n" . json_encode($safeData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\nأخرج JSON محسناً باللغة {$targetLang}.";
 
         try {
@@ -222,14 +221,20 @@ class AiGenerationController extends Controller
     {
         $text = trim($text);
         if ($type === 'skills') {
-            // محاولة استخراج JSON
-            if (preg_match('/\[.*\]/s', $text, $matches)) {
+            // محاولة استخراج JSON من النص
+            if (preg_match('/\[\s*\{.*\}\s*\]/s', $text, $matches)) {
                 $decoded = json_decode($matches[0], true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    // تأكد من أن كل عنصر يحتوي على 'name' و 'percentage'
+                    foreach ($decoded as &$item) {
+                        if (!isset($item['percentage'])) {
+                            $item['percentage'] = 80;
+                        }
+                    }
                     return json_encode($decoded, JSON_UNESCAPED_UNICODE);
                 }
             }
-            // Fallback: تحويل النص العادي إلى JSON
+            // Fallback: تحويل النص العادي (مفصول بفواصل) إلى JSON
             $skills = explode(',', $text);
             $skills = array_map('trim', $skills);
             $skillsArray = [];
