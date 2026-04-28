@@ -40,5 +40,8 @@ return [
 'doppio' => [
     'token' => env('DOPPIO_AUTH_TOKEN'),
 ],
+'openrouter' => [
+    'key' => env('OPENROUTER_API_KEY'),
+],
 
 ];
