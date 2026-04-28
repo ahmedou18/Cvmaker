@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class AiGenerationController extends Controller
 {
-    private const MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
+    // ✅ نفس النموذج المستخدم في AiResumeController
+    private const MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
 
     private const SECURITY_GUARDRAIL = "
     [STRICT SECURITY GUARDRAIL] 
@@ -67,7 +68,7 @@ class AiGenerationController extends Controller
         ]);
 
         $user = auth()->user();
-        if ($user->ai_credits_balance <= 0) {
+        if (!$user || $user->ai_credits_balance <= 0) {
             return response()->json(['error' => 'رصيد الذكاء الاصطناعي غير كافٍ.'], 403);
         }
 
@@ -92,7 +93,12 @@ class AiGenerationController extends Controller
             ]);
 
             if ($response->failed()) {
-                throw new \Exception('OpenRouter API error: ' . $response->body());
+                Log::error('OpenRouter generation API error', [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                    'user_id' => $user->id,
+                ]);
+                return response()->json(['error' => 'حدث خطأ أثناء الاتصال بخدمة الذكاء الاصطناعي.'], 500);
             }
 
             $result = $response->json();
@@ -114,7 +120,7 @@ class AiGenerationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('OpenRouter generation failed', [
+            Log::error('OpenRouter generation exception', [
                 'type'    => $type,
                 'message' => $e->getMessage(),
                 'user_id' => $user->id,
@@ -144,7 +150,7 @@ class AiGenerationController extends Controller
         ]);
 
         $user = auth()->user();
-        if ($user->ai_credits_balance <= 0) {
+        if (!$user || $user->ai_credits_balance <= 0) {
             return response()->json(['error' => 'رصيد الذكاء الاصطناعي غير كافٍ.'], 403);
         }
 
@@ -171,7 +177,12 @@ class AiGenerationController extends Controller
             ]);
 
             if ($response->failed()) {
-                throw new \Exception('OpenRouter review error: ' . $response->body());
+                Log::error('OpenRouter review API error', [
+                    'status' => $response->status(),
+                    'body'   => $response->body(),
+                    'user_id' => $user->id,
+                ]);
+                return response()->json(['error' => 'حدث خطأ أثناء تحسين السيرة.'], 500);
             }
 
             $result = $response->json();
@@ -180,7 +191,11 @@ class AiGenerationController extends Controller
             $improvedData = json_decode($aiOutput, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error('JSON decode error in reviewResume', ['error' => json_last_error_msg(), 'output' => substr($aiOutput, 0, 500)]);
+                Log::error('JSON decode error in reviewResume', [
+                    'error' => json_last_error_msg(),
+                    'output' => substr($aiOutput, 0, 500),
+                    'user_id' => $user->id,
+                ]);
                 return response()->json(['error' => 'فشل تفسير تحسينات الذكاء الاصطناعي.'], 500);
             }
 
@@ -195,7 +210,10 @@ class AiGenerationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('OpenRouter review failed', ['message' => $e->getMessage(), 'user_id' => $user->id]);
+            Log::error('OpenRouter review exception', [
+                'message' => $e->getMessage(),
+                'user_id' => $user->id,
+            ]);
             return response()->json(['error' => 'فشل تحسين السيرة. حاول مرة أخرى.'], 500);
         }
     }
@@ -207,11 +225,11 @@ class AiGenerationController extends Controller
             // محاولة استخراج JSON
             if (preg_match('/\[.*\]/s', $text, $matches)) {
                 $decoded = json_decode($matches[0], true);
-                if (json_last_error() === JSON_ERROR_NONE) {
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                     return json_encode($decoded, JSON_UNESCAPED_UNICODE);
                 }
             }
-            // fallback: تحويل النص العادي إلى JSON
+            // Fallback: تحويل النص العادي إلى JSON
             $skills = explode(',', $text);
             $skills = array_map('trim', $skills);
             $skillsArray = [];
