@@ -5,15 +5,18 @@
     $resumeLanguage = $resume->resume_language;
     $hideActions = $hideActions ?? false;
 
+    // رابط الصورة مع fallback (أولوية للمسار المطلق من Doppio)
     $photoUrl = null;
     if (isset($photoAbsoluteUrl) && $photoAbsoluteUrl) {
         $photoUrl = $photoAbsoluteUrl;
     } elseif ($profile && $profile->photo_path) {
-        if (Storage::disk('public')->exists($profile->photo_path)) {
-            $photoUrl = Storage::disk('public')->url($profile->photo_path);
-        }
+        $photoUrl = asset('storage/' . $profile->photo_path);
     }
+
+    // الأقسام الإضافية
+    $extraSections = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : ($resume->extra_sections ?? []);
 @endphp
+
 <!DOCTYPE html>
 <html lang="{{ $resumeLanguage }}" dir="{{ in_array($resumeLanguage, ['ar']) ? 'rtl' : 'ltr' }}">
 <head>
@@ -21,22 +24,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{{ $profile->full_name ?? __('messages.full_name', [], $resumeLanguage) }} - Minimalist CV</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- خطوط عربية احترافية -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Century Gothic', 'Cairo', sans-serif; background-color: white; color: #000; }
+        body {
+            font-family: 'Tajawal', 'Noto Sans Arabic', 'Cairo', sans-serif;
+            background-color: white;
+            color: #1f2937;
+            line-height: 1.6;
+            letter-spacing: 0;
+        }
         .modal-active { overflow: hidden; }
         .whitespace-pre-line { white-space: pre-line; }
         .bullet-list { list-style-type: disc; padding-inline-start: 1.5rem; }
         .bullet-list li { margin-bottom: 0.25rem; }
 
+        /* تحسينات الطباعة */
         @media print {
             @page { margin: 0; size: A4 portrait; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print, .no-print * { display: none !important; }
             body { background-color: white !important; margin: 0 !important; padding: 0 !important; }
             .print-container { padding: 2rem !important; max-width: 100% !important; }
         }
 
+        /* تحسينات للهواتف */
         @media (max-width: 640px) {
             .print-container { padding: 1.5rem !important; }
             .header-title { font-size: 1.8rem !important; }
@@ -82,7 +94,8 @@
         <div class="mb-4 flex justify-center">
             <img src="{{ $photoUrl }}" 
                  alt="Profile Photo" 
-                 class="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-gray-200 shadow-sm">
+                 class="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                 onerror="this.style.display='none'">
         </div>
         @endif
 
@@ -107,7 +120,7 @@
     </section>
     @endif
 
-    {{-- المهارات (مع دعم النسبة المئوية) --}}
+    {{-- المهارات (شريط تقدم للمهارات التي لها نسبة) --}}
     @if($resume->skills->count() > 0)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.skills', [], $resumeLanguage) }}</h2>
@@ -175,7 +188,7 @@
     </section>
     @endif
 
-    {{-- اللغات (مع دعم المستوى الرقمي 1-5) --}}
+    {{-- اللغات (بنظام النجوم للمستوى) --}}
     @if($resume->languages->count() > 0)
     <section class="mb-6 break-inside-avoid">
         <h2 class="section-title text-xl font-bold mb-2">{{ __('messages.languages', [], $resumeLanguage) }}</h2>
@@ -250,8 +263,7 @@
     </section>
     @endif
 
-    {{-- الأقسام الإضافية --}}
-    @php $extraSections = is_string($resume->extra_sections) ? json_decode($resume->extra_sections, true) : $resume->extra_sections; @endphp
+    {{-- الأقسام الإضافية (extra_sections) --}}
     @if(!empty($extraSections) && is_array($extraSections))
         @foreach($extraSections as $section)
             @if(!empty($section['title']) && !empty($section['content']))
@@ -263,7 +275,7 @@
         @endforeach
     @endif
 
-    {{-- مودال الخطط --}}
+    {{-- مودال الخطط (للترقية) --}}
     @if(!$hideActions)
     <x-plans-modal id="plansModal" class="hidden" closeAction="closeModal()" :resume-uuid="$resume->uuid" :currentLang="$resumeLanguage" />
     @endif
