@@ -77,6 +77,7 @@ class ResumeController extends Controller
      */
     public function store(Request $request)
     {
+\Log::info('Store request data', $request->all());
         if (!auth()->user()->can('create', Resume::class)) {
             $limit = auth()->user()->plan?->cv_limit ?? 0;
             return redirect()->route('dashboard')
