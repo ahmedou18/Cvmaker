@@ -9,6 +9,19 @@ return [
 'rugby' => 'Rugby',
 'qualities' => 'Qualities',
 
+'summary' => 'Professional Summary',
+'skills' => 'Technical Skills',
+'experience' => 'Work Experience',
+'education' => 'Education',
+'languages' => 'Languages',
+'hobbies' => 'Hobbies',
+'references' => 'References',
+'present' => 'Present',
+'back_to_dashboard' => 'Back to Dashboard',
+'edit_data' => 'Edit',
+'download_pdf' => 'Download PDF',
+'upgrade_to_download' => 'Upgrade your plan to download PDF',
+
 // ========== Missing keys in English ==========
 'hobbies' => 'Hobbies',
 'references' => 'References',
