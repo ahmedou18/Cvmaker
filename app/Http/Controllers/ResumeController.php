@@ -22,7 +22,55 @@ use App\Services\DoppioPdfService;
 
 class ResumeController extends Controller
 {
-    // ... جميع الدوال الأخرى (showTemplates, startWithTemplate, create, show, edit, pdfPreview, downloadPdf) تبقى كما هي ...
+    /**
+     * عرض القوالب المتاحة لاختيار القالب واللغة.
+     */
+    public function showTemplates()
+    {
+        $templates = Template::all();
+        return view('resumes.choose-template', compact('templates'));
+    }
+
+    /**
+     * بدء عملية إنشاء سيرة جديدة (حفظ القالب واللغة في الجلسة).
+     */
+    public function startWithTemplate(Request $request)
+    {
+        $request->validate([
+            'template_id' => 'required|exists:templates,id',
+            'resume_language' => 'required|in:ar,en,fr'
+        ]);
+
+        session([
+            'selected_template_id' => $request->template_id,
+            'resume_language' => $request->resume_language
+        ]);
+
+        return redirect()->route('resume.create')
+                         ->with('success', __('messages.template_language_selected', [], session('resume_language')));
+    }
+
+    /**
+     * عرض نموذج إنشاء سيرة ذاتية جديدة.
+     */
+    public function create()
+    {
+        if (!session()->has('selected_template_id')) {
+            return redirect()->route('templates.choose')
+                ->with('warning', __('messages.please_select_template_first'));
+        }
+
+        if (!auth()->user()->can('create', Resume::class)) {
+            $limit = auth()->user()->plan?->cv_limit ?? 0;
+            return redirect()->route('dashboard')
+                ->with('error', __('messages.max_resume_limit_reached', ['limit' => $limit]));
+        }
+
+        $plans = Plan::where('is_active', true)->get();
+        $currentLang = session('resume_language', app()->getLocale());
+
+        return view('resumes.create', compact('plans', 'currentLang'));
+    }
 
     /**
      * حفظ سيرة ذاتية جديدة (جميع البيانات).
@@ -153,7 +201,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== المهارات ==========
+            // المهارات
             if ($request->has('skills_array') && is_array($request->skills_array)) {
                 foreach ($request->skills_array as $index => $skillData) {
                     if (!empty($skillData['name'])) {
@@ -179,7 +227,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== اللغات ==========
+            // اللغات
             if ($request->has('languages') && is_array($request->languages)) {
                 foreach ($request->languages as $index => $lang) {
                     if (!empty($lang['name'])) {
@@ -194,7 +242,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== الهوايات ==========
+            // الهوايات
             if ($request->has('hobbies') && is_array($request->hobbies)) {
                 foreach ($request->hobbies as $index => $hobby) {
                     if (!empty($hobby['name'])) {
@@ -208,7 +256,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== المراجع ==========
+            // المراجع
             if ($request->has('references') && is_array($request->references)) {
                 foreach ($request->references as $index => $ref) {
                     if (!empty($ref['full_name'])) {
@@ -227,10 +275,7 @@ class ResumeController extends Controller
 
             DB::commit();
 
-            // إزالة أي بيانات قديمة من الجلسة لتخفيف الـ header
             session()->forget('_old_input');
-
-            // رسالة نجاح قصيرة جداً (بدون إيموجي طويل)
             return redirect()->route('resume.show', $resume->uuid)
                              ->with('success', 'تم الحفظ');
 
@@ -246,39 +291,97 @@ class ResumeController extends Controller
     }
 
     /**
+     * عرض السيرة الذاتية (قالب العرض).
+     */
+    public function show($uuid)
+    {
+        $resume = Resume::where('uuid', $uuid)
+            ->where('user_id', auth()->id())
+            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages', 'hobbies', 'references', 'template'])
+            ->firstOrFail();
+
+        $plans = Plan::all();
+        $viewPath = $resume->template->view_path ?? 'templates.classic';
+
+        return view($viewPath, compact('resume', 'plans'));
+    }
+
+    /**
+     * عرض نموذج تعديل السيرة الذاتية.
+     */
+    public function edit($uuid)
+    {
+        $resume = Resume::where('uuid', $uuid)
+            ->where('user_id', auth()->id())
+            ->with(['personalDetail', 'experiences', 'educations', 'skills', 'languages', 'hobbies', 'references'])
+            ->firstOrFail();
+
+        $skillsArray = $resume->skills->map(fn($s) => [
+            'id' => $s->id,
+            'name' => $s->name,
+            'percentage' => $s->percentage,
+            'level' => $s->level,
+        ])->toArray();
+
+        $languages = $resume->languages->map(fn($l) => [
+            'id' => $l->id,
+            'name' => $l->name,
+            'proficiency' => $l->proficiency,
+            'level' => $l->level,
+            'percentage' => $l->percentage,
+        ])->toArray();
+
+        $hobbies = $resume->hobbies->map(fn($h) => [
+            'id' => $h->id,
+            'name' => $h->name,
+            'icon' => $h->icon,
+            'description' => $h->description,
+        ])->toArray();
+
+        $references = $resume->references->map(fn($r) => [
+            'id' => $r->id,
+            'full_name' => $r->full_name,
+            'job_title' => $r->job_title,
+            'company' => $r->company,
+            'email' => $r->email,
+            'phone' => $r->phone,
+            'notes' => $r->notes,
+        ])->toArray();
+
+        $extraSections = $resume->extra_sections ?? [];
+        if (is_string($extraSections)) {
+            $extraSections = json_decode($extraSections, true) ?? [];
+        }
+
+        return view('resumes.edit', compact('resume', 'skillsArray', 'languages', 'hobbies', 'references', 'extraSections'));
+    }
+
+    /**
      * تحديث السيرة الذاتية (مع حماية الاسم والعلاقات).
      */
     public function update(Request $request, $uuid)
     {
-        // ========== تصفية العناصر الفارغة قبل التحقق ==========
-        // المهارات
+        // تصفية العناصر الفارغة
         if ($request->has('skills_array')) {
             $filtered = array_filter($request->skills_array, fn($s) => !empty($s['name']));
             $request->merge(['skills_array' => array_values($filtered)]);
         }
-        // الخبرات
         if ($request->has('experiences')) {
             $filtered = array_filter($request->experiences, fn($e) => !empty($e['company']) || !empty($e['position']));
             $request->merge(['experiences' => array_values($filtered)]);
         }
-        // اللغات
         if ($request->has('languages')) {
             $filtered = array_filter($request->languages, fn($l) => !empty($l['name']));
             $request->merge(['languages' => array_values($filtered)]);
         }
-        // الهوايات
         if ($request->has('hobbies')) {
             $filtered = array_filter($request->hobbies, fn($h) => !empty($h['name']));
             $request->merge(['hobbies' => array_values($filtered)]);
         }
-        // المراجع
         if ($request->has('references')) {
             $filtered = array_filter($request->references, fn($r) => !empty($r['full_name']));
             $request->merge(['references' => array_values($filtered)]);
         }
-        // =====================================================
-
-        \Log::info('Update request received', $request->all());
 
         $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
         $personalDetail = $resume->personalDetail;
@@ -328,7 +431,7 @@ class ResumeController extends Controller
         DB::beginTransaction();
 
         try {
-            // 1. حماية الهوية
+            // حماية الاسم
             $newName = trim($request->full_name);
             $oldName = trim($personalDetail->full_name ?? '');
             if (mb_strtolower($newName) !== mb_strtolower($oldName)) {
@@ -345,7 +448,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // 2. تحديث البيانات الشخصية (مع الصورة)
+            // تحديث البيانات الشخصية
             $personalData = [
                 'full_name' => ($resume->is_name_locked && mb_strtolower($newName) !== mb_strtolower($oldName)) ? $oldName : $newName,
                 'job_title' => $request->job_title,
@@ -376,7 +479,6 @@ class ResumeController extends Controller
 
             $personalDetail->update($personalData);
 
-            // تحديث extra_sections
             if ($request->has('extra_sections')) {
                 $resume->update([
                     'extra_sections' => is_string($request->extra_sections) 
@@ -385,7 +487,7 @@ class ResumeController extends Controller
                 ]);
             }
 
-            // حذف العلاقات القديمة وإعادة إنشائها
+            // إعادة إنشاء العلاقات
             $resume->educations()->delete();
             if ($request->has('educations')) {
                 foreach ($request->educations as $edu) {
@@ -405,7 +507,6 @@ class ResumeController extends Controller
                 }
             }
 
-            // المهارات
             $resume->skills()->delete();
             if ($request->has('skills_array') && is_array($request->skills_array)) {
                 foreach ($request->skills_array as $index => $skillData) {
@@ -432,7 +533,6 @@ class ResumeController extends Controller
                 }
             }
 
-            // اللغات
             $resume->languages()->delete();
             if ($request->has('languages') && is_array($request->languages)) {
                 foreach ($request->languages as $index => $lang) {
@@ -448,7 +548,6 @@ class ResumeController extends Controller
                 }
             }
 
-            // الهوايات
             $resume->hobbies()->delete();
             if ($request->has('hobbies') && is_array($request->hobbies)) {
                 foreach ($request->hobbies as $index => $hobby) {
@@ -463,7 +562,6 @@ class ResumeController extends Controller
                 }
             }
 
-            // المراجع
             $resume->references()->delete();
             if ($request->has('references') && is_array($request->references)) {
                 foreach ($request->references as $index => $ref) {
@@ -483,10 +581,7 @@ class ResumeController extends Controller
 
             DB::commit();
 
-            // إزالة أي بيانات قديمة من الجلسة لتخفيف الـ header
             session()->forget('_old_input');
-
-            // رسالة نجاح قصيرة جداً
             return redirect()->route('resume.show', $resume->uuid)
                              ->with('success', 'تم التحديث');
 
@@ -497,6 +592,46 @@ class ResumeController extends Controller
                 'error'   => $e->getMessage(),
             ]);
             return back()->with('error', 'حدث خطأ أثناء تحديث السيرة: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * صفحة معاينة السيرة (خالية من الأزرار، مناسبة لـ Puppeteer)
+     */
+    public function pdfPreview($uuid)
+    {
+        $resume = Resume::where('uuid', $uuid)
+            ->with(['user.plan', 'personalDetail', 'experiences', 'educations', 'skills', 'languages', 'hobbies', 'references', 'template'])
+            ->firstOrFail();
+
+        return view('resumes.pdf-preview', compact('resume'));
+    }
+
+    /**
+     * تحميل السيرة الذاتية كملف PDF عبر Doppio
+     */
+    public function downloadPdf($uuid, DoppioPdfService $pdfService)
+    {
+        $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
+
+        $previewUrl = URL::temporarySignedRoute('resume.pdf-preview',
+            now()->addMinutes(10),
+            ['uuid' => $resume->uuid]
+        );
+
+        try {
+            $pdfContent = $pdfService->generatePdfFromUrl($previewUrl, [
+                'printBackground' => true,
+                'format' => 'A4'
+            ]);
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="cv.pdf"',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Doppio PDF failed', ['uuid' => $resume->uuid, 'error' => $e->getMessage()]);
+            return back()->with('error', 'فشل إنشاء PDF: ' . $e->getMessage());
         }
     }
 }
