@@ -28,8 +28,10 @@
     <title>{{ $profile->full_name ?? 'السيرة الذاتية' }} - Modern CV</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+    
+    {{-- أفضل الخطوط العربية الاحترافية للسير الذاتية --}}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --theme-primary: #4c2882;
@@ -37,13 +39,30 @@
         }
 
         body {
-            font-family: {{ $resumeLanguage == 'ar' ? "'Cairo', sans-serif" : "'Inter', sans-serif" }};
+            font-family: {{ $resumeLanguage == 'ar' ? "'Tajawal', 'Noto Sans Arabic', 'Cairo', sans-serif" : "'Inter', sans-serif" }};
             background-color: #f3f4f6;
+            letter-spacing: -0.2px;
+            line-height: 1.5;
+        }
+
+        h1, h2, h3, .font-bold, .step-link {
+            font-weight: 700;
+        }
+
+        .sidebar-bg p, .sidebar-bg li, .sidebar-bg span, .sidebar-bg div:not(.flex) {
+            letter-spacing: 0;
         }
 
         @media print {
             @page { margin: 0; size: A4; }
-            body { background-color: white; margin: 0; padding: 0; }
+            body {
+                background-color: white;
+                margin: 0;
+                padding: 0;
+                font-family: 'Tajawal', 'Noto Sans Arabic', 'Cairo', sans-serif;
+                font-weight: 500;
+                line-height: 1.45;
+            }
             .no-print { display: none !important; }
             .print-container { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
             .sidebar-bg { background-color: #4c2882 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
