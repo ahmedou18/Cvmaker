@@ -6,7 +6,7 @@
         $personal = $resume->personalDetail;
         $currentLang = $resume->resume_language ?? app()->getLocale();
 
-        // تحويل المهارات إلى مصفوفة كائنات مع نسبة مئوية (إذا كانت موجودة)
+        // تحويل المهارات إلى مصفوفة كائنات مع نسبة مئوية
         $skillsArray = $resume->skills->map(fn($s) => [
             'id' => $s->id,
             'name' => $s->name,
@@ -35,6 +35,16 @@
             'notes' => $r->notes,
         ])->toArray();
 
+        // تحويل extra_sections (موجودة بالفعل كمصفوفة أو JSON)
+        $extraSections = [];
+        if (!empty($resume->extra_sections)) {
+            if (is_string($resume->extra_sections)) {
+                $extraSections = json_decode($resume->extra_sections, true) ?? [];
+            } else {
+                $extraSections = $resume->extra_sections;
+            }
+        }
+
         $initialData = [
             'full_name' => $personal->full_name ?? '',
             'job_title' => $personal->job_title ?? '',
@@ -42,7 +52,7 @@
             'phone' => $personal->phone ?? '',
             'address' => $personal->address ?? '',
             'summary' => $personal->summary ?? '',
-            'skills' => $resume->skills->pluck('name')->implode('، '), // النص القديم للتوافق
+            'skills' => $resume->skills->pluck('name')->implode('، '),
             'skillsArray' => $skillsArray,
             'educations' => $resume->educations->map(fn($e) => [
                 'id' => $e->id,
@@ -68,11 +78,11 @@
             ])->toArray(),
             'hobbies' => $hobbies,
             'references' => $references,
-            'extra_sections' => $resume->extra_sections ?? [],
+            'extra_sections' => $extraSections,
             'existingPhoto' => $personal->photo_path ? asset('storage/' . $personal->photo_path) : '',
         ];
 
-        // ضمان وجود عنصر واحد على الأقل (لتجنب الخرائط الفارغة)
+        // ضمان وجود عنصر واحد على الأقل لكل مجموعة لتجنب الخرائط الفارغة
         if (empty($initialData['educations'])) $initialData['educations'] = [['id' => time(), 'institution' => '', 'degree' => '', 'field_of_study' => '', 'graduation_year' => '']];
         if (empty($initialData['experiences'])) $initialData['experiences'] = [['id' => time(), 'company' => '', 'position' => '', 'start_date' => '', 'end_date' => '', 'is_current' => false, 'description' => '']];
         if (empty($initialData['languages'])) $initialData['languages'] = [['id' => time(), 'name' => '', 'proficiency' => __('messages.intermediate', [], $currentLang), 'level' => 3]];
