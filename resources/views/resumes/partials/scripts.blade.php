@@ -67,7 +67,7 @@
                 return this.skillsArray.map(s => s.name).filter(n => n).join(', ');
             },
 
-            // --- دوال إضافة وحذف العناصر ---
+            // --- دوال إضافة وحذف العناصر الأساسية (موجودة) ---
             addLanguage() {
                 if (this.languages.length && !this.languages[this.languages.length-1].name.trim()) {
                     alert(window.translations.alertEnterLanguageFirst || 'يرجى كتابة اسم اللغة أولاً');
@@ -124,7 +124,25 @@
                 });
             },
 
-            // --- دوال الذكاء الاصطناعي ---
+            // --- دوال إدارة extra_sections (جديدة) ---
+            addExtraSection() {
+                this.extra_sections.push({ title: '', content: '' });
+            },
+            removeExtraSection(index) {
+                this.extra_sections.splice(index, 1);
+            },
+            moveExtraSectionUp(index) {
+                if (index > 0) {
+                    [this.extra_sections[index-1], this.extra_sections[index]] = [this.extra_sections[index], this.extra_sections[index-1]];
+                }
+            },
+            moveExtraSectionDown(index) {
+                if (index < this.extra_sections.length - 1) {
+                    [this.extra_sections[index+1], this.extra_sections[index]] = [this.extra_sections[index], this.extra_sections[index+1]];
+                }
+            },
+
+            // --- دوال الذكاء الاصطناعي (لا تغيير) ---
             async callAiApi(type, context) {
                 if (this.aiCredits <= 0) { this.showPlansModal = true; return null; }
                 try {
@@ -336,6 +354,9 @@
                                 percentage: 80
                             }));
                             this.skills = this.skillsArray.map(s => s.name).join(', ');
+                        }
+                        if (data.data.extra_sections && data.data.extra_sections.length) {
+                            this.extra_sections = data.data.extra_sections;
                         }
                         if (data.remaining_credits !== undefined) this.aiCredits = data.remaining_credits;
                         alert(window.translations.alertDataExtracted || 'تم استخراج البيانات بنجاح!');
