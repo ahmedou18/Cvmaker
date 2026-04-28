@@ -123,6 +123,7 @@ class ResumeController extends Controller
             'references.*.email' => 'nullable|email|max:255',
             'references.*.phone' => 'nullable|string|max:20',
             'references.*.notes' => 'nullable|string',
+            'extra_sections' => 'nullable|array', // لا تحتاج validation داخلية
         ]);
 
         DB::beginTransaction();
@@ -350,7 +351,13 @@ class ResumeController extends Controller
             'notes' => $r->notes,
         ])->toArray();
 
-        return view('resumes.edit', compact('resume', 'skillsArray', 'languages', 'hobbies', 'references'));
+        // تحويل extra_sections إلى مصفوفة (قد تكون JSON string من قاعدة البيانات)
+        $extraSections = $resume->extra_sections ?? [];
+        if (is_string($extraSections)) {
+            $extraSections = json_decode($extraSections, true) ?? [];
+        }
+
+        return view('resumes.edit', compact('resume', 'skillsArray', 'languages', 'hobbies', 'references', 'extraSections'));
     }
 
     /**
@@ -400,15 +407,15 @@ class ResumeController extends Controller
             'references.*.email' => 'nullable|email|max:255',
             'references.*.phone' => 'nullable|string|max:20',
             'references.*.notes' => 'nullable|string',
+            'extra_sections' => 'nullable|array',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // 1. حماية الهوية (عداد 3 محاولات لتغيير الاسم)
+            // 1. حماية الهوية
             $newName = trim($request->full_name);
             $oldName = trim($personalDetail->full_name ?? '');
-
             if (mb_strtolower($newName) !== mb_strtolower($oldName)) {
                 if ($resume->is_name_locked) {
                     return back()->with('error', 'عذراً، تم الوصول للحد الأقصى لتغيير الاسم في هذه السيرة. للحماية، يرجى التواصل مع الدعم الفني.')->withInput();
@@ -433,7 +440,6 @@ class ResumeController extends Controller
                 'summary'   => $request->summary,
             ];
 
-            // معالجة الصورة (حذف القديمة عند رفع جديدة)
             if ($request->filled('cropped_photo_base64')) {
                 if ($personalDetail->photo_path && Storage::disk('public')->exists($personalDetail->photo_path)) {
                     Storage::disk('public')->delete($personalDetail->photo_path);
@@ -455,7 +461,16 @@ class ResumeController extends Controller
 
             $personalDetail->update($personalData);
 
-            // 3. تحديث العلاقات (حذف + إعادة إنشاء)
+            // تحديث extra_sections
+            if ($request->has('extra_sections')) {
+                $resume->update([
+                    'extra_sections' => is_string($request->extra_sections) 
+                        ? json_decode($request->extra_sections, true) 
+                        : $request->extra_sections
+                ]);
+            }
+
+            // حذف العلاقات القديمة وإعادة إنشائها
             $resume->educations()->delete();
             if ($request->has('educations')) {
                 foreach ($request->educations as $edu) {
@@ -475,7 +490,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== تحديث المهارات ==========
+            // المهارات
             $resume->skills()->delete();
             if ($request->has('skills_array') && is_array($request->skills_array)) {
                 foreach ($request->skills_array as $index => $skillData) {
@@ -502,7 +517,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== تحديث اللغات ==========
+            // اللغات
             $resume->languages()->delete();
             if ($request->has('languages') && is_array($request->languages)) {
                 foreach ($request->languages as $index => $lang) {
@@ -518,7 +533,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== تحديث الهوايات ==========
+            // الهوايات
             $resume->hobbies()->delete();
             if ($request->has('hobbies') && is_array($request->hobbies)) {
                 foreach ($request->hobbies as $index => $hobby) {
@@ -533,7 +548,7 @@ class ResumeController extends Controller
                 }
             }
 
-            // ========== تحديث المراجع ==========
+            // المراجع
             $resume->references()->delete();
             if ($request->has('references') && is_array($request->references)) {
                 foreach ($request->references as $index => $ref) {
