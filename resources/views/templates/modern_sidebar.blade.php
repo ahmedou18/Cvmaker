@@ -28,9 +28,8 @@
     <title>{{ $profile->full_name ?? 'السيرة الذاتية' }} - Modern CV</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    {{-- أفضل الخطوط العربية الاحترافية للسير الذاتية --}}
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- تحسين الخطوط العربية والأجنبية -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Arabic:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -38,19 +37,71 @@
             --theme-secondary: #e6e1f0;
         }
 
+        /* قواعد الخطوط الأساسية */
         body {
-            font-family: {{ $resumeLanguage == 'ar' ? "'Tajawal', 'Noto Sans Arabic', 'Cairo', sans-serif" : "'Inter', sans-serif" }};
+            font-family: {{ $resumeLanguage == 'ar' ? "'Tajawal', 'Noto Sans Arabic', sans-serif" : "'Inter', sans-serif" }};
             background-color: #f3f4f6;
-            letter-spacing: -0.2px;
-            line-height: 1.5;
+            letter-spacing: 0;          /* لا تباعد للحروف العربية */
+            line-height: 1.7;           /* تباعد مريح للقراءة */
+            font-weight: 500;           /* وزن النص الأساسي */
+            color: #1f2937;             /* لون نص غامق ولكن ناعم */
         }
 
-        h1, h2, h3, .font-bold, .step-link {
+        /* العناوين الرئيسية */
+        h1, h2, h3, h4, .font-bold, .step-link {
             font-weight: 700;
         }
 
-        .sidebar-bg p, .sidebar-bg li, .sidebar-bg span, .sidebar-bg div:not(.flex) {
+        /* الاسم الشخصي */
+        .resume-name {
+            font-size: 1.8rem;
+            line-height: 1.3;
             letter-spacing: 0;
+        }
+        @media (min-width: 768px) {
+            .resume-name {
+                font-size: 2.4rem;
+            }
+        }
+
+        /* عناوين الأقسام (الملخص، المهارات، الخبرات...) */
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--theme-primary);
+            position: relative;
+            display: inline-block;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--theme-primary);
+        }
+        /* إصدار بديل بإطار جانبي (للمحتوى الرئيسي) */
+        .section-title-alt {
+            background-color: var(--theme-secondary);
+            padding: 0.35rem 1rem;
+            border-right: 4px solid var(--theme-primary);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--theme-primary);
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        /* تحسين النص في الشريط الجانبي (الخلفية البنفسجية) */
+        .sidebar-bg {
+            background-color: var(--theme-primary);
+        }
+        .sidebar-bg p, .sidebar-bg li, .sidebar-bg span, .sidebar-bg div:not(.flex) {
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        /* تحسين أزرار الطباعة والعودة */
+        .btn-print {
+            transition: all 0.2s ease;
+        }
+        .btn-print:hover {
+            opacity: 0.85;
         }
 
         @media print {
@@ -59,19 +110,23 @@
                 background-color: white;
                 margin: 0;
                 padding: 0;
-                font-family: 'Tajawal', 'Noto Sans Arabic', 'Cairo', sans-serif;
+                font-family: 'Tajawal', 'Noto Sans Arabic', sans-serif;
                 font-weight: 500;
-                line-height: 1.45;
+                line-height: 1.5;
+                color: black;
             }
             .no-print { display: none !important; }
             .print-container { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
             .sidebar-bg { background-color: #4c2882 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .skill-bar-fill, .bg-primary { background-color: #4c2882 !important; }
+            a, button {
+                text-decoration: none;
+            }
         }
 
+        /* المهارات والأشرطة */
         .skill-bar-bg { background-color: var(--theme-secondary); }
         .skill-bar-fill { background-color: var(--theme-primary); }
-        .sidebar-bg { background-color: var(--theme-primary); }
         .text-primary { color: var(--theme-primary); }
         .border-primary { border-color: var(--theme-primary); }
     </style>
@@ -85,7 +140,7 @@
         <div class="flex gap-3">
             <a href="{{ route('resume.edit', $resume->uuid) }}" class="bg-gray-100 px-5 py-2 rounded-md text-sm font-bold">تعديل</a>
             @if($canDownload)
-                <a href="{{ route('resume.download', $resume->uuid) }}" class="bg-primary text-white px-5 py-2 rounded-md text-sm font-bold">تحميل PDF</a>
+                <a href="{{ route('resume.download', $resume->uuid) }}" class="bg-primary text-white px-5 py-2 rounded-md text-sm font-bold btn-print">تحميل PDF</a>
             @else
                 <button onclick="openModal()" class="bg-gray-400 text-white px-5 py-2 rounded-md text-sm font-bold">رقّي باقتك لتحميل PDF</button>
             @endif
@@ -114,7 +169,7 @@
 
             {{-- Name & Title --}}
             <div class="mb-6 text-center md:text-start">
-                <h1 class="text-3xl font-extrabold">{{ $profile->full_name }}</h1>
+                <div class="resume-name font-extrabold">{{ $profile->full_name }}</div>
                 <p class="text-purple-200 text-lg font-light mt-1">{{ $profile->job_title }}</p>
             </div>
 
@@ -184,9 +239,7 @@
             {{-- Summary --}}
             @if($profile->summary)
             <section>
-                <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
-                    <h2 class="text-xl font-bold text-primary">الملخص المهني</h2>
-                </div>
+                <h2 class="section-title mb-3">الملخص المهني</h2>
                 <p class="text-gray-700 leading-relaxed">{!! nl2br(e($profile->summary)) !!}</p>
             </section>
             @endif
@@ -194,17 +247,15 @@
             {{-- Skills (with percentage bar) --}}
             @if($resume->skills->count())
             <section>
-                <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
-                    <h2 class="text-xl font-bold text-primary">المهارات التقنية</h2>
-                </div>
+                <h2 class="section-title mb-4">المهارات التقنية</h2>
                 <div class="space-y-3">
                     @foreach($resume->skills as $skill)
                     <div>
-                        <div class="flex justify-between text-sm">
-                            <span class="font-medium">{{ $skill->name }}</span>
+                        <div class="flex justify-between text-sm font-medium">
+                            <span>{{ $skill->name }}</span>
                             <span>{{ $skill->percentage ?? 80 }}%</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
                             <div class="bg-primary h-2 rounded-full" style="width: {{ $skill->percentage ?? 80 }}%"></div>
                         </div>
                     </div>
@@ -216,9 +267,7 @@
             {{-- Experience --}}
             @if($resume->experiences->count())
             <section>
-                <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
-                    <h2 class="text-xl font-bold text-primary">الخبرات المهنية</h2>
-                </div>
+                <h2 class="section-title mb-4">الخبرات المهنية</h2>
                 <div class="space-y-6">
                     @foreach($resume->experiences as $exp)
                     <div class="relative pr-4 border-r-2 border-gray-200">
@@ -243,9 +292,7 @@
             {{-- Education --}}
             @if($resume->educations->count())
             <section>
-                <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
-                    <h2 class="text-xl font-bold text-primary">التعليم</h2>
-                </div>
+                <h2 class="section-title mb-4">التعليم</h2>
                 @foreach($resume->educations as $edu)
                 <div class="mb-4">
                     <div class="flex flex-wrap justify-between items-baseline">
@@ -261,9 +308,7 @@
             {{-- Hobbies --}}
             @if($resume->hobbies->count())
             <section>
-                <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
-                    <h2 class="text-xl font-bold text-primary">الهوايات</h2>
-                </div>
+                <h2 class="section-title mb-3">الهوايات</h2>
                 <div class="flex flex-wrap gap-2">
                     @foreach($resume->hobbies as $hobby)
                         <span class="bg-gray-100 px-3 py-1 rounded-full flex items-center gap-1 text-sm">
@@ -279,9 +324,7 @@
             {{-- References --}}
             @if($resume->references->count())
             <section>
-                <div class="bg-secondary px-3 py-1.5 mb-4 border-r-4 border-primary" style="background-color: var(--theme-secondary);">
-                    <h2 class="text-xl font-bold text-primary">المراجع</h2>
-                </div>
+                <h2 class="section-title mb-3">المراجع</h2>
                 <div class="space-y-4">
                     @foreach($resume->references as $ref)
                     <div class="border-r-2 border-gray-200 pr-4">
