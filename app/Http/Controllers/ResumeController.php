@@ -365,6 +365,7 @@ class ResumeController extends Controller
      */
     public function update(Request $request, $uuid)
     {
+\Log::info('Update request received', $request->all());
         $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
         $personalDetail = $resume->personalDetail;
 
