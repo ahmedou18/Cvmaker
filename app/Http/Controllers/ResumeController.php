@@ -308,6 +308,7 @@ public function store(Request $request)
 
         // ✅ خصم رصيد الإنشاءات (resume_creations_remaining) بعد نجاح كل العمليات
         $user = auth()->user();
+$user = User::where('id', auth()->id())->lockForUpdate()->first();
         
         // تسجيل القيمة قبل الخصم
         \Log::info('Before decrement', ['remaining' => $user->resume_creations_remaining]);
