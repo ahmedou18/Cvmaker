@@ -9,10 +9,10 @@
         
         {{-- زر الإغلاق - نستخدم onclick مباشرة للتوافق مع دالة closeModal() من القالب --}}
         <button type="button" 
-                onclick="closeModal()" 
-                class="absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        onclick="{{ $closeAction }}"
+        class="absolute top-4 left-4 z-10 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-all duration-200">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+</button>
 
         <div class="overflow-y-auto p-6 md:p-10">
             <div class="text-center mb-10">
@@ -129,14 +129,28 @@
     </div>
 </div>
 
-{{-- سكريبت خفيف للاستماع لـ Escape ولمنع الأخطاء --}}
+
+
+
+
+
+
+
+
+
+
+{{-- نهاية الملف، سكريبت الاستماع لـ Escape --}}
 <script>
     (function() {
-        // مستمع عالمي لإغلاق المودال عند الضغط على Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                if (typeof window.closeModal === 'function') {
-                    window.closeModal();
+                // تنفيذ الدالة الممررة كاسم
+                let fn = window['{{ $closeAction }}'];
+                if (typeof fn === 'function') {
+                    fn();
+                } else {
+                    // fallback: محاولة تنفيذ الكود
+                    try { (new Function('{{ $closeAction }}'))(); } catch(e) {}
                 }
             }
         });
