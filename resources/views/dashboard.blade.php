@@ -17,10 +17,27 @@
         $resumesUsed = $user->resumes()->count();
         $usage = $cvLimit > 0 ? min(($resumesUsed / $cvLimit) * 100, 100) : 0;
         $hasPlan = $cvLimit > 0;
+        $canCreate = $user->can('create', App\Models\Resume::class);
     @endphp
 
     <div class="py-10 bg-slate-50 min-h-screen" dir="rtl">
         <div class="max-w-6xl mx-auto px-6 space-y-8">
+
+            {{-- تنبيه تحذيري إذا كان الرصيد منتهياً أو الباقة منتهية --}}
+            @if(!$canCreate)
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                    <svg class="w-6 h-6 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+                    <div>
+                        <h4 class="font-bold text-amber-800 text-sm">{{ __('messages.no_creation_ability') }}</h4>
+                        <p class="text-amber-700 text-sm mt-1">
+                            {{ $user->plan_expires_at && $user->plan_expires_at->isPast() ? __('messages.plan_expired') : __('messages.no_remaining_creations') }}
+                        </p>
+                        <button onclick="openPlansModal()" class="mt-2 inline-block bg-amber-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-amber-700 transition">
+                            {{ __('messages.upgrade_plan') }}
+                        </button>
+                    </div>
+                </div>
+            @endif
 
             {{-- Welcome Card --}}
             <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
@@ -44,7 +61,7 @@
                 </div>
                 <div class="bg-white p-5 rounded-2xl border border-slate-100">
                     <p class="text-sm text-slate-500">{{ __('messages.remaining_creations') }}</p>
-                    <h3 class="text-2xl font-bold text-indigo-600">{{ $user->resume_creations_remaining }}</h3>
+                    <h3 class="text-2xl font-bold {{ $user->resume_creations_remaining > 0 ? 'text-indigo-600' : 'text-red-500' }}">{{ $user->resume_creations_remaining }}</h3>
                 </div>
             </div>
 
@@ -58,17 +75,25 @@
 
             {{-- Quick Actions --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <a href="{{ route('templates.choose') }}" class="bg-white p-5 rounded-2xl border border-slate-100 hover:shadow transition">
-                    <h4 class="font-bold text-slate-800 mb-1">➕ {{ __('messages.create_new_resume') }}</h4>
-                    <p class="text-sm text-slate-500">{{ __('messages.start_from_scratch') }}</p>
-                </a>
+                @if($canCreate)
+                    <a href="{{ route('templates.choose') }}" class="bg-white p-5 rounded-2xl border border-slate-100 hover:shadow transition">
+                        <h4 class="font-bold text-slate-800 mb-1">➕ {{ __('messages.create_new_resume') }}</h4>
+                        <p class="text-sm text-slate-500">{{ __('messages.start_from_scratch') }}</p>
+                    </a>
+                @else
+                    <button onclick="openPlansModal()" class="bg-white p-5 rounded-2xl border border-slate-100 text-left hover:shadow transition w-full">
+                        <h4 class="font-bold text-slate-800 mb-1">🔒 {{ __('messages.create_new_resume') }}</h4>
+                        <p class="text-sm text-slate-500">{{ __('messages.need_subscription_to_create') }}</p>
+                    </button>
+                @endif
+
                 @if($hasCoverLetterAccess)
                     <a href="{{ route('cover-letters.create') }}" class="bg-white p-5 rounded-2xl border border-slate-100 hover:shadow transition">
                         <h4 class="font-bold text-slate-800 mb-1">✉️ {{ __('messages.cover_letter') }}</h4>
                         <p class="text-sm text-slate-500">{{ __('messages.create_cover_letter') }}</p>
                     </a>
                 @else
-                    <button onclick="openPlansModal()" class="bg-white p-5 rounded-2xl border border-slate-100 text-right opacity-80">
+                    <button onclick="openPlansModal()" class="bg-white p-5 rounded-2xl border border-slate-100 text-right opacity-80 w-full">
                         <h4 class="font-bold text-slate-800 mb-1">🔒 {{ __('messages.cover_letter') }}</h4>
                         <p class="text-sm text-slate-500">{{ __('messages.upgrade_to_access') }}</p>
                     </button>
@@ -104,13 +129,28 @@
         </div>
     </div>
 
+    {{-- المودال --}}
     <div id="plansModal" style="display: none;">
         <x-plans-modal closeAction="closePlansModal()" :resumeUuid="null" :currentLang="app()->getLocale()" />
     </div>
 
     <script>
-        function openPlansModal() { const modal = document.getElementById('plansModal'); if (modal) { modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; } }
-        function closePlansModal() { const modal = document.getElementById('plansModal'); if (modal) { modal.style.display = 'none'; document.body.style.overflow = ''; } }
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePlansModal(); });
+        function openPlansModal() {
+            const modal = document.getElementById('plansModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        function closePlansModal() {
+            const modal = document.getElementById('plansModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePlansModal();
+        });
     </script>
 </x-app-layout>
