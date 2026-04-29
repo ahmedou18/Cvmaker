@@ -7,16 +7,18 @@ use App\Models\User;
 
 class ResumePolicy
 {
-    public function create(User $user): bool
-    {
-        // إذا كانت الخطة منتهية الصلاحية، لا يمكن الإنشاء
-        if ($user->plan_expires_at && $user->plan_expires_at->isPast()) {
-            return false;
-        }
+    use Illuminate\Support\Facades\Log;
 
-        // يجب أن يكون رصيد الإنشاءات أكبر من 0
-        return $user->resume_creations_remaining > 0;
-    }
+public function create(User $user): bool
+{
+    Log::info('Policy create called', [
+        'user_id' => $user->id,
+        'remaining' => $user->resume_creations_remaining,
+        'expired' => $user->plan_expires_at && $user->plan_expires_at->isPast(),
+    ]);
+    if ($user->plan_expires_at && $user->plan_expires_at->isPast()) return false;
+    return $user->resume_creations_remaining > 0;
+}
 
     public function download(User $user, Resume $resume): bool
     {
