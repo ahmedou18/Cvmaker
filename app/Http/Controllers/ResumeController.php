@@ -81,6 +81,9 @@ class ResumeController extends Controller
 /**
  * حفظ سيرة ذاتية جديدة (جميع البيانات).
  */
+/**
+ * حفظ سيرة ذاتية جديدة (جميع البيانات).
+ */
 public function store(Request $request)
 {
     // التحقق من صلاحية الإنشاء (باستخدام ResumePolicy الجديد الذي يعتمد على الرصيد)
@@ -305,10 +308,17 @@ public function store(Request $request)
 
         // ✅ خصم رصيد الإنشاءات (resume_creations_remaining) بعد نجاح كل العمليات
         $user = auth()->user();
+        
+        // تسجيل القيمة قبل الخصم
+        \Log::info('Before decrement', ['remaining' => $user->resume_creations_remaining]);
+        
         if ($user->resume_creations_remaining <= 0) {
             throw new \Exception('رصيد الإنشاءات منتهٍ، لا يمكن إكمال العملية.');
         }
         $user->decrement('resume_creations_remaining');
+        
+        // تسجيل القيمة بعد الخصم مباشرة
+        \Log::info('After decrement', ['remaining' => $user->fresh()->resume_creations_remaining]);
 
         DB::commit();
 
