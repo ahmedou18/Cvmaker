@@ -78,12 +78,15 @@ class ResumeController extends Controller
     /**
  * حفظ سيرة ذاتية جديدة (جميع البيانات).
  */
+/**
+ * حفظ سيرة ذاتية جديدة (جميع البيانات).
+ */
 public function store(Request $request)
 {
+    // التحقق من صلاحية الإنشاء (باستخدام ResumePolicy الجديد الذي يعتمد على الرصيد)
     if (!auth()->user()->can('create', Resume::class)) {
-        $limit = auth()->user()->plan?->cv_limit ?? 0;
         return redirect()->route('dashboard')
-            ->with('error', "لقد وصلت الحد الأقصى من السير الذاتية المسموح بها في باقتك الحالية ({$limit} سيرة ذاتية). يرجى ترقية باقتك لإنشاء سيرة ذاتية جديدة.");
+            ->with('error', 'لا يمكنك إنشاء سيرة ذاتية جديدة. رصيدك غير كافٍ أو اشتراكك منتهٍ.');
     }
 
     // تحويل extra_sections من JSON string إلى مصفوفة قبل التحقق
@@ -127,20 +130,20 @@ public function store(Request $request)
         'educations.*.field_of_study' => 'nullable|string|max:255',
         'educations.*.graduation_year' => 'nullable|string|max:10',
         
-        // اللغات (بدون إجبار على name)
+        // اللغات
         'languages'    => 'nullable|array',
         'languages.*.name' => 'nullable|string|max:255',
         'languages.*.proficiency' => 'nullable|string|max:50',
         'languages.*.level' => 'nullable|integer|min:1|max:5',
         'languages.*.percentage' => 'nullable|integer|min:0|max:100',
         
-        // الهوايات (بدون إجبار)
+        // الهوايات
         'hobbies'      => 'nullable|array',
         'hobbies.*.name' => 'nullable|string|max:255',
         'hobbies.*.icon' => 'nullable|string|max:50',
         'hobbies.*.description' => 'nullable|string',
         
-        // المراجع (بدون إجبار)
+        // المراجع
         'references'   => 'nullable|array',
         'references.*.full_name' => 'nullable|string|max:255',
         'references.*.job_title' => 'nullable|string|max:255',
@@ -228,7 +231,7 @@ public function store(Request $request)
             }
         }
 
-        // ========== المهارات ==========
+        // المهارات (بصيغة جديدة أو قديمة)
         if ($request->has('skills_array') && is_array($request->skills_array)) {
             foreach ($request->skills_array as $index => $skillData) {
                 if (!empty($skillData['name'])) {
@@ -254,7 +257,7 @@ public function store(Request $request)
             }
         }
 
-        // ========== اللغات ==========
+        // اللغات
         if ($request->has('languages') && is_array($request->languages)) {
             foreach ($request->languages as $index => $lang) {
                 if (!empty($lang['name'])) {
@@ -269,7 +272,7 @@ public function store(Request $request)
             }
         }
 
-        // ========== الهوايات ==========
+        // الهوايات
         if ($request->has('hobbies') && is_array($request->hobbies)) {
             foreach ($request->hobbies as $index => $hobby) {
                 if (!empty($hobby['name'])) {
@@ -283,7 +286,7 @@ public function store(Request $request)
             }
         }
 
-        // ========== المراجع ==========
+        // المراجع
         if ($request->has('references') && is_array($request->references)) {
             foreach ($request->references as $index => $ref) {
                 if (!empty($ref['full_name'])) {
@@ -300,13 +303,19 @@ public function store(Request $request)
             }
         }
 
+        // ✅ خصم رصيد الإنشاءات (resume_creations_remaining) بعد نجاح كل العمليات
+        $user = auth()->user();
+        if ($user->resume_creations_remaining <= 0) {
+            throw new \Exception('رصيد الإنشاءات منتهٍ، لا يمكن إكمال العملية.');
+        }
+        $user->decrement('resume_creations_remaining');
+
         DB::commit();
 
         // تنظيف الجلسة
         session()->forget('_old_input');
         session()->forget('url.intended');
-        
-        // توجيه مباشر بدون رسائل (لتجنب too big header)
+
         return redirect()->route('resume.show', $resume->uuid);
 
     } catch (\Exception $e) {
