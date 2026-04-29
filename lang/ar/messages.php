@@ -25,7 +25,14 @@ return [
 'extra_sections' => 'أقسام إضافية',
 'profile_photo' => 'الصورة الشخصية',
 'interests' => 'الاهتمامات',
-
+'remaining_creations' => 'الرصيد المتبقي من السير',
+'remaining_cover_letters' => 'الرصيد المتبقي من خطابات التغطية',
+'no_resumes_found' => 'لا توجد سير ذاتية بعد. ابدأ بإنشاء سيرتك الأولى!',
+'plan' => 'الباقة',
+'usage' => 'الاستخدام',
+'cv' => 'السيرة الذاتية',
+'upgrade_plan' => 'ترقية الباقة',
+'upgrade_to_download' => 'رقّي باقتك لتحميل السيرة',
 // الأزرار والتحكم
 'add_hobby' => '+ أضف هواية',
 'add_reference' => '+ أضف مرجعاً',
