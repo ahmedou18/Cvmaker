@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Payment;
 use App\Notifications\PlanActivated;
+use Illuminate\Support\Facades\DB;
 
 class PaymentObserver
 {
@@ -14,31 +15,31 @@ class PaymentObserver
             $plan = $payment->plan;
 
             if ($user && $plan) {
-                // حساب تاريخ انتهاء الصلاحية بناءً على مدة الباقة
-                $expiresAt = now()->addDays($plan->duration_in_days ?? 30);
+                DB::transaction(function () use ($user, $plan) {
+                    $user = $user->fresh();
+                    $expiresAt = now()->addDays($plan->duration_in_days ?? 30);
 
-                // تحديث بيانات المستخدم
-                $updateData = [
-                    'plan_id' => $plan->id,
-                    'plan_expires_at' => $expiresAt,
-                ];
+                    $updateData = [
+                        'plan_id' => $plan->id,
+                        'plan_expires_at' => $expiresAt,
+                    ];
 
-                // رصيد الذكاء الاصطناعي
-                if ($plan->ai_credits !== null) {
-                    $updateData['ai_credits_balance'] = $plan->ai_credits;
-                }
+                    // رصيد الذكاء الاصطناعي (يُستبدل)
+                    if ($plan->ai_credits !== null) {
+                        $updateData['ai_credits_balance'] = $plan->ai_credits;
+                    }
 
-                // رصيد خطابات التغطية = عدد السير المسموحة (إذا كانت الباقة تدعمها)
-                if ($plan->has_cover_letter) {
-                    $updateData['cover_letters_balance'] = $plan->cv_limit; // عدد الرسائل = عدد السير
-                } else {
-                    $updateData['cover_letters_balance'] = 0;
-                }
+                    // رصيد خطابات التغطية (يُستبدل)
+                    $updateData['cover_letters_balance'] = $plan->has_cover_letter ? $plan->cv_limit : 0;
 
-                $user->update($updateData);
+                    // رصيد إنشاء السير (يُضاف إلى الرصيد الحالي)
+                    $newBalance = $user->resume_creations_remaining + $plan->cv_limit;
+                    $updateData['resume_creations_remaining'] = $newBalance;
 
-                // إرسال الإشعار
-                $user->notify(new PlanActivated($plan->name));
+                    $user->update($updateData);
+
+                    $user->notify(new PlanActivated($plan->name));
+                });
             }
         }
     }
