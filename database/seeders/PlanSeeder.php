@@ -41,7 +41,7 @@ class PlanSeeder extends Seeder
                 'price' => 200.00,
                 'duration_in_days' => 90, // 3 أشهر
                 'cv_limit' => 1,
-                'ai_credits' => 50,
+                'ai_credits' => 30,
                 'remove_watermark' => true,
                 'has_cover_letter' => true,
                 'priority_support' => false,
@@ -55,7 +55,7 @@ class PlanSeeder extends Seeder
                 'price' => 500.00,
                 'duration_in_days' => 365, // سنة كاملة
                 'cv_limit' => 5,
-                'ai_credits' => 200,
+                'ai_credits' => 50,
                 'remove_watermark' => true,
                 'has_cover_letter' => true,
                 'priority_support' => true,
