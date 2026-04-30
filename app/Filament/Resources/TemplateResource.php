@@ -41,8 +41,8 @@ class TemplateResource extends Resource
                 FileUpload::make('thumbnail')
                     ->label('الصورة المصغرة')
                     ->image()
-                    ->disk('template_thumbnails')   // ✅ القرص المخصص: public/assets/images/templates
-                    ->directory('')                 // لا مجلد فرعي
+                    ->disk('public_root')                       // ✅ القرص الجديد
+                    ->directory('assets/images/templates')     // ✅ المسار النسبي داخل public/
                     ->visibility('public')
                     ->required(),
                 Select::make('view_path')
@@ -62,7 +62,7 @@ class TemplateResource extends Resource
             ->columns([
                 ImageColumn::make('thumbnail')
                     ->label('الصورة')
-                    ->disk('template_thumbnails') // اختياري لكنه يضمن الاتساق
+                    ->disk('public_root')                      // ✅ نفس القرص
                     ->size(60)
                     ->circular(),
                 TextColumn::make('name')
