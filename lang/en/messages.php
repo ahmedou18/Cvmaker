@@ -2,6 +2,14 @@
 
 return [
 
+'no_creation_ability' => 'Cannot create a new resume',
+'plan_expired' => 'Your current plan has expired. Please upgrade to continue.',
+'no_remaining_creations' => 'You have used all your available resume creations.',
+'need_subscription_to_create' => 'You need a subscription to create a new resume.',
+'no_resumes_yet' => 'No resumes yet',
+'no_resumes_description' => 'Create your first professional resume and start your career journey.',
+'last_updated' => 'Last updated',
+
     'back_to_dashboard' => 'Back to Dashboard',
 'edit_data' => 'Edit Data',
 'profile_photo' => 'Profile Photo',
