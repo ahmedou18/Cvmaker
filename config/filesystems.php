@@ -38,14 +38,12 @@ return [
             'report' => false,
         ],
 
-        'public' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
-            'visibility' => 'public',
-            'throw' => false,
-            'report' => false,
-        ],
+        'public_root' => [
+    'driver' => 'local',
+    'root' => public_path(),
+    'url' => env('APP_URL'),
+    'visibility' => 'public',
+],
 
 'template_thumbnails' => [
     'driver' => 'local',
