@@ -2,6 +2,14 @@
 
 return [
 
+'no_creation_ability' => 'Impossible de créer un nouveau CV',
+'plan_expired' => 'Votre forfait a expiré. Veuillez passer à un forfait supérieur pour continuer.',
+'no_remaining_creations' => 'Vous avez utilisé tous vos crédits de création de CV.',
+'need_subscription_to_create' => 'Vous devez être abonné pour créer un nouveau CV.',
+'no_resumes_yet' => 'Aucun CV pour l\'instant',
+'no_resumes_description' => 'Créez votre premier CV professionnel et lancez votre carrière.',
+'last_updated' => 'Dernière mise à jour',
+
     'back_to_dashboard' => 'Retour au tableau de bord',
 'edit_data' => 'Modifier les données',
 'profile_photo' => 'Photo de profil',
