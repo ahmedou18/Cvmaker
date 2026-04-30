@@ -11,6 +11,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Columns\BooleanColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -40,7 +41,8 @@ class TemplateResource extends Resource
                 FileUpload::make('thumbnail')
                     ->label('الصورة المصغرة')
                     ->image()
-                    ->directory('templates/thumbnails')
+                    ->disk('template_thumbnails')   // ✅ القرص المخصص: public/assets/images/templates
+                    ->directory('')                 // لا مجلد فرعي
                     ->visibility('public')
                     ->required(),
                 Select::make('view_path')
@@ -60,6 +62,7 @@ class TemplateResource extends Resource
             ->columns([
                 ImageColumn::make('thumbnail')
                     ->label('الصورة')
+                    ->disk('template_thumbnails') // اختياري لكنه يضمن الاتساق
                     ->size(60)
                     ->circular(),
                 TextColumn::make('name')
@@ -81,7 +84,11 @@ class TemplateResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn (Template $record) => $record->resumes()->count() === 0)
+                    ->tooltip(fn (Template $record) => $record->resumes()->count() > 0
+                        ? 'لا يمكن حذف قالب مستخدم في سير ذاتية'
+                        : null),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
