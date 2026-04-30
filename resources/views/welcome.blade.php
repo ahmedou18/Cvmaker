@@ -230,7 +230,7 @@
                             <li class="flex items-center gap-3">@if($plan->priority_support)<span class="text-green-500 text-lg">✔️</span><span>{{ __('messages.priority_support_label') }}</span>@else<span class="text-gray-400 text-lg">🔒</span><span class="text-gray-400">{{ __('messages.normal_support_label') }}</span>@endif</li>
                         </ul>
                         @auth
-                        <form action="{{ route('payment.checkout', $plan->slug) }}" method="POST">@csrf<button type="submit" class="w-full py-4 rounded-full font-bold transition-all {{ $isPopular ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('messages.btn_upgrade') }}</button></form>
+                        <a href="{{ route('payment.checkout', $plan->slug) }}" class="w-full text-center py-4 rounded-full font-bold transition-all {{ $isPopular ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('messages.btn_upgrade') }}</a>
                         @else
                         <a href="{{ route('register', ['plan' => $plan->id]) }}" class="w-full text-center py-4 rounded-full font-bold transition-all {{ $isPopular ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ $plan->price == 0 ? __('messages.free_plan_btn') : __('messages.choose_plan_btn') }}</a>
                         @endauth
