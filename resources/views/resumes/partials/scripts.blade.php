@@ -35,7 +35,7 @@ getFieldError(field) {
         }
     }
     return Array.isArray(error) ? error[0] : error;
-}
+},
             stepLabels: [
                 window.translations.stepPersonal || "المعلومات الشخصية",
                 window.translations.stepEducation || "المؤهلات الأكاديمية",
