@@ -51,6 +51,7 @@ Route::middleware('auth')->group(function () {
     // AI
     Route::post('/ai/generate', [AiGenerationController::class, 'generate'])->name('ai.generate');
     Route::post('/ai/review', [AiGenerationController::class, 'reviewResume'])->name('ai.review');
+    Route::post('/ai/suggest-skills', [AiGenerationController::class, 'suggestSkills'])->name('ai.suggest-skills'); // ✅ المسار الجديد لاقتراح المهارات
     Route::post('/api/cv-parse', [AiResumeController::class, 'parseFile'])->name('api.cv.parse');
     
     // Profile
