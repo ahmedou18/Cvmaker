@@ -9,21 +9,25 @@ use Illuminate\Support\Facades\Log; // ← استيراد صحيح
 class ResumePolicy
 {
     public function create(User $user): bool
-    {
-        Log::info('Policy create called', [
-            'user_id' => $user->id,
-            'remaining' => $user->resume_creations_remaining,
-            'expired' => $user->plan_expires_at && $user->plan_expires_at->isPast(),
-        ]);
-
-        // لا يمكن الإنشاء إذا كانت الباقة منتهية
-        if ($user->plan_expires_at && $user->plan_expires_at->isPast()) {
-            return false;
-        }
-
-        // يُسمح فقط إذا كان هناك رصيد متبقي
-        return $user->resume_creations_remaining > 0;
+{
+    if ($user->plan_expires_at && $user->plan_expires_at->isPast()) {
+        return false;
     }
+
+    $plan = $user->plan;
+    if (!$plan) {
+        return false;
+    }
+
+    // لو كان الحقل 0، نحسب الرصيد الحقيقي من الباقة
+    if ($user->resume_creations_remaining <= 0) {
+        $used = $user->resumes()->count();
+        $remaining = max(0, $plan->cv_limit - $used);
+        return $remaining > 0;
+    }
+
+    return $user->resume_creations_remaining > 0;
+}
 
     public function download(User $user, Resume $resume): bool
     {
