@@ -17,6 +17,12 @@
                     <div class="flex flex-wrap gap-3 mb-4 items-center bg-gray-50 p-3 rounded">
                         <div class="flex-1 min-w-[150px]">
                             <input type="text" :name="'skills_array['+idx+'][name]'" x-model="skill.name" class="sharp-input w-full" placeholder="المهارة (مثال: Laravel)">
+                            <span x-show="getFieldError(`skills_array.${idx}.name`)" 
+                                  x-text="getFieldError(`skills_array.${idx}.name`)" 
+                                  class="text-red-500 text-xs mt-1"></span>
+                            <span x-show="getFieldError(`skills_array.${idx}.percentage`)" 
+                                  x-text="getFieldError(`skills_array.${idx}.percentage`)" 
+                                  class="text-red-500 text-xs mt-1"></span>
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="range" :name="'skills_array['+idx+'][percentage]'" x-model="skill.percentage" min="0" max="100" class="w-32">
@@ -39,6 +45,9 @@
                     <button type="button" class="sharp-btn-ai" @click="generateSummaryAI()" :disabled="aiCredits <= 0">{{ __('messages.ai_write_summary', [], $currentLang) }}</button>
                 </div>
                 <textarea name="summary" x-model="summary" rows="5" class="sharp-input"></textarea>
+                <span x-show="getFieldError('summary')" 
+                      x-text="getFieldError('summary')" 
+                      class="text-red-500 text-xs mt-1"></span>
             </div>
         </div>
     </div>
