@@ -7,8 +7,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Filament\Models\Contracts\FilamentUser; // أضف هذا السطر
-use Filament\Panel; // أضف هذا السطر
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -19,8 +19,10 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'plan_id',
+        'plan_expires_at',               // ✅ مطلوب لتحديث تاريخ انتهاء الباقة
         'ai_credits_balance',
         'cover_letters_balance',
+        'resume_creations_remaining',    // ✅ مطلوب لتحديث رصيد إنشاء السير
         'support_code',
     ];
 
@@ -34,6 +36,7 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'plan_expires_at' => 'datetime',     // ✅ إضافة cast ليتعامل Laravel مع التاريخ بشكل صحيح
         ];
     }
 
@@ -66,7 +69,6 @@ class User extends Authenticatable implements FilamentUser
      */
     public function hasActivePlan(): bool
     {
-        // إذا كان plan_id ليس فارغاً، فهذا يعني أن المستخدم مشترك في باقة
         return !is_null($this->plan_id);
     }
 
@@ -108,8 +110,7 @@ class User extends Authenticatable implements FilamentUser
     }
 
     public function canAccessPanel(Panel $panel): bool
-{
-    // السماح بالوصول لبريدك الإلكتروني الشخصي فقط
-    return $this->email === 'kmed2498@gmail.com';
-}
+    {
+        return $this->email === 'kmed2498@gmail.com';
+    }
 }
