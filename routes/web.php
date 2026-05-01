@@ -31,6 +31,8 @@ Route::get('/dashboard', function () {
 Route::get('/cv/{uuid}', [ResumeController::class, 'show'])->name('resume.show')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
+
+Route::delete('/cv/{uuid}', [ResumeController::class, 'destroy'])->name('resume.destroy');
     // Cover Letters
     Route::put('/cover-letters/{id}', [CoverLetterController::class, 'update'])->name('cover-letters.update');
     Route::get('/cover-letters/{id}/combined-download', [CoverLetterController::class, 'combinedDownload'])->name('cover-letters.combined-download');
