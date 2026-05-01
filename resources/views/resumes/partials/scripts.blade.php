@@ -18,6 +18,24 @@
             aiCredits: {{ auth()->user()->ai_credits_balance ?? 0 }},
             showPlansModal: false,
             currentLang: "{{ $currentLang }}",
+// ... في بداية الكائن المُعاد
+
+// حامل الأخطاء القادم من الخادم
+errors: initialData.errors || {},
+
+// دالة مساعدة لجلب رسالة الخطأ لحقل (يدعم أسماء المصفوفات مثل skills_array.0.name)
+getFieldError(field) {
+    const parts = field.split('.');
+    let error = this.errors;
+    for (let part of parts) {
+        if (error && error[part] !== undefined) {
+            error = error[part];
+        } else {
+            return null;
+        }
+    }
+    return Array.isArray(error) ? error[0] : error;
+}
             stepLabels: [
                 window.translations.stepPersonal || "المعلومات الشخصية",
                 window.translations.stepEducation || "المؤهلات الأكاديمية",
