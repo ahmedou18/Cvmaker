@@ -49,23 +49,34 @@
         @keyframes typing { from { width: 0 } to { width: 100% } }
         @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #4f46e5; } }
 
-        /* تحسينات السلايدر الاحترافي */
+        /* === تحسينات سلايدر Coverflow الاحترافي === */
+        .templates-swiper {
+            padding-top: 60px;
+            padding-bottom: 60px;
+        }
         .templates-swiper .swiper-slide {
             opacity: 0.5;
-            transform: scale(0.9);
             transition: all 0.5s ease;
         }
         .templates-swiper .swiper-slide-active {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1.05);
+            z-index: 3;
+        }
+        .template-card {
+            transition: all 0.5s ease;
+        }
+        .templates-swiper .swiper-slide-active .template-card {
+            border: 2px solid #4f46e5;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+        .templates-swiper .swiper-slide:not(.swiper-slide-active) {
+            filter: blur(2px);
         }
         .swiper-pagination-bullet-active {
             background: #4f46e5 !important;
             width: 24px !important;
             border-radius: 5px !important;
-        }
-        .template-card:hover {
-            border-color: rgba(79, 70, 229, 0.2);
         }
     </style>
 </head>
@@ -259,66 +270,62 @@
         </div>
     </section>
 
-    {{-- Templates Slider - النسخة الاحترافية المحدثة --}}
+    {{-- Templates Slider (Coverflow 3D) --}}
     <section id="templates" class="py-24 bg-white overflow-hidden">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6" data-aos="fade-up">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                 <div class="max-w-xl">
-                    <span class="text-indigo-600 font-bold text-sm tracking-widest uppercase mb-2 block">المظهر المهني</span>
-                    <h2 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4">{{ __('messages.templates_title') }}</h2>
-                    <p class="text-slate-500 text-lg leading-relaxed">{{ __('messages.templates_subtitle') }}</p>
+                    <span class="text-indigo-600 font-bold text-sm uppercase mb-2 block">المظهر المهني</span>
+                    <h2 class="text-3xl md:text-5xl font-extrabold text-slate-900 mb-4">
+                        {{ __('messages.templates_title') }}
+                    </h2>
+                    <p class="text-slate-500 text-lg">
+                        {{ __('messages.templates_subtitle') }}
+                    </p>
                 </div>
+
                 <div class="flex gap-3 mb-2">
-                    <button class="swiper-nav-prev w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all duration-300 shadow-sm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    <button class="swiper-nav-prev w-12 h-12 rounded-full border flex items-center justify-center hover:bg-indigo-600 hover:text-white transition">
+                        ←
                     </button>
-                    <button class="swiper-nav-next w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all duration-300 shadow-sm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <button class="swiper-nav-next w-12 h-12 rounded-full border flex items-center justify-center hover:bg-indigo-600 hover:text-white transition">
+                        →
                     </button>
                 </div>
             </div>
 
-            <div class="swiper templates-swiper !overflow-visible">
-                <div class="swiper-wrapper pb-12">
-                    @forelse($templates ?? [] as $template)
-                    <div class="swiper-slide w-[300px] sm:w-[380px] transition-all duration-500">
-                        <div class="template-card group relative rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden">
-                            <div class="aspect-[1/1.4] bg-slate-50 relative overflow-hidden">
-                                @if($template->thumbnail)
-                                    <img src="{{ asset($template->thumbnail) }}" alt="{{ $template->name }}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
-                                @else
-                                    <div class="w-full h-full bg-gradient-to-br from-slate-100 to-indigo-50 flex flex-col items-center justify-center p-8 text-center">
-                                        <svg class="w-16 h-16 text-indigo-200 mb-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
-                                        <span class="text-slate-400 font-bold text-sm">{{ __('messages.template_preview') }}</span>
-                                    </div>
-                                @endif
+            <div class="swiper templates-swiper">
+                <div class="swiper-wrapper">
 
-                                <div class="absolute inset-0 bg-indigo-900/60 opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[3px] flex flex-col items-center justify-center gap-4 p-6 text-center">
-                                    <p class="text-white text-sm font-medium transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">تصميم معتمد من قبل خبراء التوظيف (ATS Friendly)</p>
-                                    <a href="{{ route('templates.choose') }}" class="bg-white text-indigo-600 px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-all transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75 shadow-xl">
-                                        {{ __('messages.use_template') ?? 'استخدام القالب' }}
+                    @foreach($templates as $template)
+                    <div class="swiper-slide">
+                        <div class="template-card bg-white rounded-2xl overflow-hidden border shadow-sm">
+
+                            <div class="aspect-[1/1.4] bg-slate-100 overflow-hidden relative">
+                                <img src="{{ asset($template->thumbnail) }}" class="w-full h-full object-cover">
+
+                                <div class="absolute inset-0 bg-indigo-900/60 opacity-0 hover:opacity-100 transition flex flex-col items-center justify-center gap-4">
+                                    <a href="{{ route('templates.choose') }}"
+                                       class="bg-white text-indigo-600 px-6 py-2 rounded-lg font-bold">
+                                        استخدام القالب
                                     </a>
                                 </div>
                             </div>
 
-                            <div class="p-5 flex justify-between items-center bg-white border-t border-slate-50">
-                                <div>
-                                    <h3 class="font-extrabold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ $template->name }}</h3>
-                                    <p class="text-xs text-slate-400 mt-1">تستخدمه +{{ rand(100, 500) }} شخص</p>
-                                </div>
-                                <span class="text-[10px] font-bold px-3 py-1.5 rounded-lg {{ isset($template->is_premium) && $template->is_premium ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100' }}">
-                                    {{ isset($template->is_premium) && $template->is_premium ? 'PREMIUM' : 'FREE' }}
+                            <div class="p-4 flex justify-between items-center">
+                                <h3 class="font-bold">{{ $template->name }}</h3>
+                                <span class="text-xs px-2 py-1 rounded bg-gray-100">
+                                    {{ $template->is_premium ? 'Premium' : 'Free' }}
                                 </span>
                             </div>
+
                         </div>
                     </div>
-                    @empty
-                    <div class="swiper-slide w-full text-center py-20">
-                        <p class="text-slate-500">{{ __('messages.no_templates_message') }}</p>
-                    </div>
-                    @endforelse
+                    @endforeach
+
                 </div>
-                <div class="swiper-pagination !-bottom-2"></div>
+
+                <div class="swiper-pagination mt-10"></div>
             </div>
         </div>
     </section>
@@ -377,32 +384,53 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             AOS.init({ once: true, duration: 800 });
 
             new Swiper('.templates-swiper', {
-                slidesPerView: 'auto',
-                spaceBetween: 30,
+                effect: 'coverflow',
                 centeredSlides: true,
                 loop: true,
                 grabCursor: true,
+
+                slidesPerView: 1.2,
+
+                coverflowEffect: {
+                    rotate: 20,
+                    depth: 150,
+                    stretch: 0,
+                    modifier: 1,
+                    slideShadows: false,
+                },
+
                 autoplay: {
                     delay: 4000,
                     disableOnInteraction: false,
                 },
+
                 pagination: {
                     el: '.swiper-pagination',
                     clickable: true,
-                    dynamicBullets: true,
                 },
+
                 navigation: {
                     nextEl: '.swiper-nav-next',
                     prevEl: '.swiper-nav-prev',
                 },
+
                 breakpoints: {
-                    320: { spaceBetween: 20 },
-                    768: { spaceBetween: 30 },
-                    1024: { spaceBetween: 40 }
+                    640: {
+                        slidesPerView: 1.5,
+                    },
+                    768: {
+                        slidesPerView: 2,
+                    },
+                    1024: {
+                        slidesPerView: 2.5,
+                    },
+                    1280: {
+                        slidesPerView: 3,
+                    }
                 }
             });
         });
