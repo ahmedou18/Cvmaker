@@ -9,7 +9,8 @@
             <div>
                 <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
                     <label class="sharp-label mb-0">{{ __('messages.skills_label', [], $currentLang) }}</label>
-                    <button type="button" class="sharp-btn-ai text-xs" @click="generateSkillsAI()" :disabled="aiCredits <= 0">✨ {{ __('messages.ai_suggest_skills', [], $currentLang) }}</button>
+                    {{-- زر اقتراح المهارات معطل مؤقتاً --}}
+                    {{-- <button type="button" class="sharp-btn-ai text-xs" @click="generateSkillsAI()" :disabled="aiCredits <= 0">✨ {{ __('messages.ai_suggest_skills', [], $currentLang) }}</button> --}}
                 </div>
                 
                 <template x-for="(skill, idx) in skillsArray" :key="skill.id">
