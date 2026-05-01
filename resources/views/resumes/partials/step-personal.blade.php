@@ -56,6 +56,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {{-- الاسم الكامل --}}
             <div>
                 <label class="sharp-label">{{ __('messages.full_name_label', [], $currentLang) }}</label>
                 <input type="text" name="full_name" x-model="full_name" 
@@ -65,22 +66,45 @@
                            @change="showNameWarning()"
                        @endif
                 >
+                <span x-show="getFieldError('full_name')" 
+                      x-text="getFieldError('full_name')" 
+                      class="text-red-500 text-xs mt-1"></span>
             </div>
-            <div class="col-span-full md:col-span-1">
+
+            {{-- رقم الهاتف --}}
+            <div>
                 <label class="sharp-label">{{ __('messages.phone_label', [], $currentLang) }}</label>
                 <input type="tel" name="phone" x-model="phone" class="sharp-input" required>
+                <span x-show="getFieldError('phone')" 
+                      x-text="getFieldError('phone')" 
+                      class="text-red-500 text-xs mt-1"></span>
             </div>
+
+            {{-- المسمى الوظيفي --}}
             <div>
                 <label class="sharp-label">{{ __('messages.job_title_label', [], $currentLang) }}</label>
                 <input type="text" name="job_title" x-model="job_title" class="sharp-input">
+                <span x-show="getFieldError('job_title')" 
+                      x-text="getFieldError('job_title')" 
+                      class="text-red-500 text-xs mt-1"></span>
             </div>
+
+            {{-- البريد الإلكتروني --}}
             <div>
                 <label class="sharp-label">{{ __('messages.email_label', [], $currentLang) }}</label>
                 <input type="email" name="email" x-model="email" class="sharp-input">
+                <span x-show="getFieldError('email')" 
+                      x-text="getFieldError('email')" 
+                      class="text-red-500 text-xs mt-1"></span>
             </div>
+
+            {{-- العنوان --}}
             <div class="col-span-full">
                 <label class="sharp-label">{{ __('messages.address_label', [], $currentLang) }}</label>
                 <input type="text" name="address" x-model="address" class="sharp-input">
+                <span x-show="getFieldError('address')" 
+                      x-text="getFieldError('address')" 
+                      class="text-red-500 text-xs mt-1"></span>
             </div>
         </div>
     </div>
