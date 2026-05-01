@@ -8,6 +8,9 @@
                 <div class="flex-grow">
                     <label class="sharp-label">{{ __('messages.language_name', [], $currentLang) }}</label>
                     <input type="text" :name="'languages['+index+'][name]'" x-model="lang.name" class="sharp-input" placeholder="{{ __('messages.language_placeholder', [], $currentLang) }}">
+                    <span x-show="getFieldError(`languages.${index}.name`)" 
+                          x-text="getFieldError(`languages.${index}.name`)" 
+                          class="text-red-500 text-xs mt-1"></span>
                 </div>
                 <div class="w-48">
                     <label class="sharp-label">المستوى (1-5)</label>
@@ -17,6 +20,9 @@
                         </template>
                     </div>
                     <input type="number" :name="'languages['+index+'][level]'" x-model="lang.level" class="sharp-input w-20 text-center" min="1" max="5">
+                    <span x-show="getFieldError(`languages.${index}.level`)" 
+                          x-text="getFieldError(`languages.${index}.level`)" 
+                          class="text-red-500 text-xs mt-1"></span>
                 </div>
                 <div class="w-1/3">
                     <label class="sharp-label">{{ __('messages.proficiency', [], $currentLang) }}</label>
@@ -26,6 +32,9 @@
                         <option value="{{ __('messages.advanced', [], $currentLang) }}">{{ __('messages.advanced', [], $currentLang) }}</option>
                         <option value="{{ __('messages.native', [], $currentLang) }}">{{ __('messages.native', [], $currentLang) }}</option>
                     </select>
+                    <span x-show="getFieldError(`languages.${index}.proficiency`)" 
+                          x-text="getFieldError(`languages.${index}.proficiency`)" 
+                          class="text-red-500 text-xs mt-1"></span>
                 </div>
                 <button type="button" @click="languages.splice(index, 1)" class="bg-red-500 text-white p-3 h-[50px] mt-8 flex items-center justify-center rounded">{{ __('messages.delete', [], $currentLang) }}</button>
             </div>
