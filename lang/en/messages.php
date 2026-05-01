@@ -9,6 +9,12 @@ return [
 'no_resumes_yet' => 'No resumes yet',
 'no_resumes_description' => 'Create your first professional resume and start your career journey.',
 'last_updated' => 'Last updated',
+'final_touches' => 'Final Touches',
+'email' => 'Email',
+'phone' => 'Phone',
+'step_hobbies' => 'Hobbies & Interests',
+'notes' => 'Notes',
+'add_skill' => 'Add Skill',
 
     'back_to_dashboard' => 'Back to Dashboard',
 'edit_data' => 'Edit Data',
