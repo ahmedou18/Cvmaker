@@ -76,6 +76,13 @@ class ResumeController extends Controller
     /**
      * حفظ سيرة ذاتية جديدة (جميع البيانات).
      */
+public function destroy($uuid)
+{
+    $resume = Resume::where('uuid', $uuid)->where('user_id', auth()->id())->firstOrFail();
+    $resume->delete();
+
+    return redirect()->route('dashboard')->with('success', 'تم حذف السيرة الذاتية بنجاح.');
+}
     public function store(Request $request)
     {
         // التحقق من صلاحية الإنشاء (باستخدام ResumePolicy الجديد الذي يعتمد على الرصيد)
