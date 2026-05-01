@@ -8,6 +8,12 @@ return [
 'need_subscription_to_create' => 'Vous devez être abonné pour créer un nouveau CV.',
 'no_resumes_yet' => 'Aucun CV pour l\'instant',
 'no_resumes_description' => 'Créez votre premier CV professionnel et lancez votre carrière.',
+'final_touches' => 'Dernières retouches',
+'email' => 'Email',
+'phone' => 'Téléphone',
+'step_hobbies' => 'Loisirs et intérêts',
+'notes' => 'Notes',
+'add_skill' => 'Ajouter une compétence',
 'last_updated' => 'Dernière mise à jour',
 
     'back_to_dashboard' => 'Retour au tableau de bord',
