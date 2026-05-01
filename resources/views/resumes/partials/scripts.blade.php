@@ -67,6 +67,11 @@
                 return this.skillsArray.map(s => s.name).filter(n => n).join(', ');
             },
 
+            // دالة مساعدة لتحديث حقل skills النصي بعد تغيير المهارات
+            updateSkillsText() {
+                this.skills = this.skillsArray.map(s => s.name).filter(n => n).join(', ');
+            },
+
             // --- دوال إضافة وحذف العناصر الأساسية (موجودة) ---
             addLanguage() {
                 if (this.languages.length && !this.languages[this.languages.length-1].name.trim()) {
@@ -124,7 +129,7 @@
                 });
             },
 
-            // --- دوال إدارة extra_sections (جديدة) ---
+            // --- دوال إدارة extra_sections ---
             addExtraSection() {
                 this.extra_sections.push({ title: '', content: '' });
             },
@@ -142,7 +147,7 @@
                 }
             },
 
-            // --- دوال الذكاء الاصطناعي (لا تغيير) ---
+            // --- استدعاء API المعياري (موجود) ---
             async callAiApi(type, context) {
                 if (this.aiCredits <= 0) { this.showPlansModal = true; return null; }
                 try {
@@ -157,28 +162,11 @@
                 } catch (e) { return null; }
             },
 
-            async generateExperienceAI(index) {
-                const exp = this.experiences[index];
-                const company = exp.company?.trim() || '';
-                const position = exp.position?.trim() || '';
-                if (!position) return alert(window.translations.alertEnterJobTitleFirst || 'يرجى كتابة المسمى الوظيفي أولاً');
-                if (!company) return alert(window.translations.alertEnterCompanyFirst || 'يرجى كتابة اسم الشركة أولاً (لتحسين دقة التوليد)');
-                
-                let context = `المسمى الوظيفي: ${position}\nالشركة: ${company}`;
-                if (exp.start_date) {
-                    context += `\nتاريخ البداية: ${exp.start_date}`;
-                    if (exp.end_date) context += `\nتاريخ النهاية: ${exp.end_date}`;
-                    else if (exp.is_current) context += `\nتاريخ النهاية: حتى الآن`;
-                }
-                
-                this.experiences[index].description = window.translations.aiGenerating || '⏳ جاري التوليد بناءً على الشركة والمسمى والتواريخ...';
-                const result = await this.callAiApi('description', context);
-                this.experiences[index].description = result || "";
-            },
-
+            // --- توليد المهارات (مُحسَّن لاستقبال JSON الحقيقي) ---
             async generateSkillsAI() {
-                let contextParts = [];
                 if (!this.job_title) return alert(window.translations.alertEnterJobTitleFirstSkills || 'أدخل المسمى الوظيفي أولاً');
+                
+                let contextParts = [];
                 contextParts.push(`المسمى الوظيفي: ${this.job_title}`);
                 
                 if (this.experiences.length > 0) {
@@ -209,16 +197,61 @@
                 this.skills = window.translations.aiAnalyzingSkills || '⏳ جاري تحليل بياناتك واقتراح المهارات المناسبة...';
                 const result = await this.callAiApi('skills', fullContext);
                 if (result) {
-                    const skillsNames = result.split(',').map(s => s.trim()).filter(s => s);
-                    this.skillsArray = skillsNames.map((name, idx) => ({
-                        id: Date.now() + idx,
-                        name: name,
-                        percentage: 80
-                    }));
-                    this.skills = result;
+                    try {
+                        // *** التعديل الأساسي: result هو JSON يحتوي على مصفوفة كائنات ***
+                        let skillsArray = JSON.parse(result);
+                        if (Array.isArray(skillsArray)) {
+                            // نأخذ أول 5 عناصر فقط، ونتأكد من وجود name و percentage
+                            this.skillsArray = skillsArray.slice(0, 5).map((s, idx) => ({
+                                id: Date.now() + Math.random() + idx,
+                                name: s.name || 'مهارة',
+                                percentage: s.percentage || 80
+                            }));
+                        } else {
+                            // fallback: لو لم تكن مصفوفة، نتعامل معه كنص مفصول بفواصل
+                            const skillsNames = result.split(',').map(s => s.trim()).filter(s => s && !s.match(/\{/));
+                            this.skillsArray = skillsNames.slice(0, 5).map((name, idx) => ({
+                                id: Date.now() + Math.random() + idx,
+                                name: name,
+                                percentage: 80
+                            }));
+                        }
+                        this.updateSkillsText();
+                    } catch (e) {
+                        // fallback عند فشل تحليل JSON (حالة نادرة)
+                        console.error('Failed parsing skills JSON, using text fallback', e);
+                        const skillsNames = result.split(',').map(s => s.trim()).filter(s => s && !s.match(/\{/));
+                        this.skillsArray = skillsNames.slice(0, 5).map((name, idx) => ({
+                            id: Date.now() + Math.random() + idx,
+                            name: name,
+                            percentage: 80
+                        }));
+                        this.updateSkillsText();
+                    }
                 }
             },
 
+            // --- توليد وصف خبرة (بدون تغيير) ---
+            async generateExperienceAI(index) {
+                const exp = this.experiences[index];
+                const company = exp.company?.trim() || '';
+                const position = exp.position?.trim() || '';
+                if (!position) return alert(window.translations.alertEnterJobTitleFirst || 'يرجى كتابة المسمى الوظيفي أولاً');
+                if (!company) return alert(window.translations.alertEnterCompanyFirst || 'يرجى كتابة اسم الشركة أولاً (لتحسين دقة التوليد)');
+                
+                let context = `المسمى الوظيفي: ${position}\nالشركة: ${company}`;
+                if (exp.start_date) {
+                    context += `\nتاريخ البداية: ${exp.start_date}`;
+                    if (exp.end_date) context += `\nتاريخ النهاية: ${exp.end_date}`;
+                    else if (exp.is_current) context += `\nتاريخ النهاية: حتى الآن`;
+                }
+                
+                this.experiences[index].description = window.translations.aiGenerating || '⏳ جاري التوليد بناءً على الشركة والمسمى والتواريخ...';
+                const result = await this.callAiApi('description', context);
+                this.experiences[index].description = result || "";
+            },
+
+            // --- توليد الملخص (بدون تغيير) ---
             async generateSummaryAI() {
                 if (!this.job_title) return alert(window.translations.alertEnterJobTitleFirst || 'أدخل المسمى الوظيفي أولاً');
                 
@@ -269,11 +302,12 @@
                 if (result) this.summary = result;
             },
 
+            // --- مراجعة كاملة (مُحسَّنة للتعامل مع المهارات بصيغ متعددة) ---
             async reviewEntireResumeAI() {
                 if (this.aiCredits <= 0) { this.showPlansModal = true; return; }
                 this.isReviewing = true;
                 try {
-                    const skillsText = this.skillsArray.map(s => s.name).join(', ');
+                    const skillsText = this.skillsTextForAI;
                     const payload = {
                         lang: this.currentLang,
                         job_title: this.job_title,
@@ -290,20 +324,47 @@
                         body: JSON.stringify(payload)
                     });
                     const data = await res.json();
-                    if (!res.ok) throw new Error(data.error);
+                    if (!res.ok) throw new Error(data.error || 'Error');
                     if (data.success && data.data) {
                         const imp = data.data;
                         if (imp.job_title) this.job_title = imp.job_title;
                         if (imp.summary) this.summary = imp.summary;
+                        
+                        // *** تحديث المهارات بذكاء حسب الصيغة الواردة من السيرفر ***
                         if (imp.skills) {
-                            const newSkillsNames = imp.skills.split(',').map(s => s.trim()).filter(s => s);
-                            this.skillsArray = newSkillsNames.map((name, idx) => ({
-                                id: Date.now() + idx,
-                                name: name,
-                                percentage: 80
-                            }));
-                            this.skills = imp.skills;
+                            if (Array.isArray(imp.skills)) {
+                                // مصفوفة كائنات مثل [{name: "..", percentage: 80}]
+                                this.skillsArray = imp.skills.map((s, idx) => ({
+                                    id: Date.now() + Math.random() + idx,
+                                    name: s.name || s,
+                                    percentage: s.percentage || 80
+                                }));
+                            } else if (typeof imp.skills === 'string') {
+                                // نص عادي، قد يكون JSON أحيانًا
+                                try {
+                                    const parsed = JSON.parse(imp.skills);
+                                    if (Array.isArray(parsed)) {
+                                        this.skillsArray = parsed.map((s, idx) => ({
+                                            id: Date.now() + Math.random() + idx,
+                                            name: s.name || s,
+                                            percentage: s.percentage || 80
+                                        }));
+                                    } else {
+                                        throw new Error('Not array');
+                                    }
+                                } catch (e) {
+                                    // فشل التحليل، نعتبره أسماء مفصولة بفواصل
+                                    const names = imp.skills.split(',').map(s => s.trim()).filter(s => s);
+                                    this.skillsArray = names.map((name, idx) => ({
+                                        id: Date.now() + Math.random() + idx,
+                                        name: name,
+                                        percentage: 80
+                                    }));
+                                }
+                            }
+                            this.updateSkillsText();
                         }
+                        
                         if (imp.experiences?.length) {
                             this.experiences = imp.experiences.map((exp, idx) => ({ ...exp, id: this.experiences[idx]?.id || Date.now() + Math.random() }));
                         }
@@ -314,6 +375,7 @@
                             this.languages = imp.languages.map((lang, idx) => ({ ...lang, id: this.languages[idx]?.id || Date.now() + Math.random() }));
                         }
                         if (imp.extra_sections) this.extra_sections = imp.extra_sections;
+                        
                         if (data.remaining_credits !== undefined) this.aiCredits = data.remaining_credits;
                         this.reviewSuccessMessage = window.translations.aiReviewSuccess || 'تمت مراجعة الأجزاء المهنية وتحسينها بنجاح!';
                         setTimeout(() => this.reviewSuccessMessage = '', 5000);
@@ -325,6 +387,7 @@
                 }
             },
 
+            // --- رفع وتحليل السيرة من ملف (بدون تغيير) ---
             async uploadAndParseCV(e) {
                 const file = e.target.files[0];
                 if (!file || this.aiCredits <= 0) return;
@@ -353,7 +416,7 @@
                                 name: name,
                                 percentage: 80
                             }));
-                            this.skills = this.skillsArray.map(s => s.name).join(', ');
+                            this.updateSkillsText();
                         }
                         if (data.data.extra_sections && data.data.extra_sections.length) {
                             this.extra_sections = data.data.extra_sections;
@@ -365,7 +428,7 @@
                 finally { this.isUploading = false; e.target.value = ''; }
             },
 
-            // --- دوال الصورة والمحصول ---
+            // --- دوال الصورة والمحصول (بدون تغيير) ---
             initFile(e) {
                 const file = e.target.files[0];
                 if (!file) return;
