@@ -7,32 +7,52 @@
             <div class="mb-10 p-6 border border-gray-200 bg-gray-50 relative">
                 <button type="button" @click="experiences.splice(index, 1)" class="absolute top-0 left-0 bg-red-600 text-white px-3 py-1 text-xs font-bold">{{ __('messages.delete', [], $currentLang) }}</button>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                    {{-- الشركة --}}
                     <div>
                         <label class="sharp-label">{{ __('messages.company', [], $currentLang) }}</label>
                         <input type="text" :name="'experiences['+index+'][company]'" x-model="exp.company" class="sharp-input">
+                        <span x-show="getFieldError(`experiences.${index}.company`)" 
+                              x-text="getFieldError(`experiences.${index}.company`)" 
+                              class="text-red-500 text-xs mt-1"></span>
                     </div>
+                    {{-- المسمى الوظيفي --}}
                     <div>
                         <label class="sharp-label">{{ __('messages.position', [], $currentLang) }}</label>
                         <input type="text" :name="'experiences['+index+'][position]'" x-model="exp.position" class="sharp-input">
+                        <span x-show="getFieldError(`experiences.${index}.position`)" 
+                              x-text="getFieldError(`experiences.${index}.position`)" 
+                              class="text-red-500 text-xs mt-1"></span>
                     </div>
+                    {{-- تاريخ البداية --}}
                     <div>
                         <label class="sharp-label">{{ __('messages.start_date', [], $currentLang) }}</label>
                         <input type="date" :name="'experiences['+index+'][start_date]'" x-model="exp.start_date" class="sharp-input">
+                        <span x-show="getFieldError(`experiences.${index}.start_date`)" 
+                              x-text="getFieldError(`experiences.${index}.start_date`)" 
+                              class="text-red-500 text-xs mt-1"></span>
                     </div>
+                    {{-- تاريخ النهاية --}}
                     <div>
                         <label class="sharp-label">{{ __('messages.end_date', [], $currentLang) }}</label>
                         <input type="date" :name="'experiences['+index+'][end_date]'" x-model="exp.end_date" class="sharp-input" :disabled="exp.is_current" :class="{'opacity-50 bg-gray-100': exp.is_current}">
+                        <span x-show="getFieldError(`experiences.${index}.end_date`)" 
+                              x-text="getFieldError(`experiences.${index}.end_date`)" 
+                              class="text-red-500 text-xs mt-1"></span>
                         <div class="mt-3 flex items-center">
                             <input type="checkbox" x-model="exp.is_current" @change="if(exp.is_current) exp.end_date = ''" class="ml-2">
                             <label class="text-sm font-bold text-gray-700">{{ __('messages.currently_working', [], $currentLang) }}</label>
                         </div>
                     </div>
+                    {{-- الوصف --}}
                     <div class="col-span-full">
                         <div class="flex justify-between items-center mb-2">
                             <label class="sharp-label mb-0">{{ __('messages.description', [], $currentLang) }}</label>
                             <button type="button" class="sharp-btn-ai" @click="generateExperienceAI(index)" :disabled="aiCredits <= 0">{{ __('messages.ai_generate', [], $currentLang) }}</button>
                         </div>
                         <textarea :name="'experiences['+index+'][description]'" x-model="exp.description" rows="4" class="sharp-input"></textarea>
+                        <span x-show="getFieldError(`experiences.${index}.description`)" 
+                              x-text="getFieldError(`experiences.${index}.description`)" 
+                              class="text-red-500 text-xs mt-1"></span>
                     </div>
                 </div>
             </div>
