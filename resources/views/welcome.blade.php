@@ -20,6 +20,55 @@
         .swiper-button-next:hover, .swiper-button-prev:hover { transform: scale(1.05); }
         .swiper-button-next:after, .swiper-button-prev:after { font-size: 16px !important; font-weight: bold; }
         [x-cloak] { display: none !important; }
+
+        /* تأثير المنظور ثلاثي الأبعاد للمعاينة */
+        .perspective-container {
+            perspective: 2000px;
+        }
+
+        .cv-mockup-wrapper {
+            transform: rotateX(15deg) rotateY(-15deg) rotateZ(5deg);
+            transition: all 0.5s ease-in-out;
+        }
+
+        .cv-mockup-wrapper:hover {
+            transform: rotateX(5deg) rotateY(-5deg) rotateZ(2deg);
+        }
+
+        /* حركة الأيقونة العائمة */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes bounce-slow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 3s ease-in-out infinite;
+        }
+
+        /* تأثير محاكاة الكتابة */
+        .typing-text {
+            overflow: hidden;
+            border-right: 2px solid #4f46e5;
+            white-space: nowrap;
+            animation: typing 3.5s steps(30, end) infinite, blink-caret .75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #4f46e5; }
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased overflow-x-hidden">
@@ -73,32 +122,32 @@
         </div>
 
         {{-- قائمة الجوال (بسيطة وعملية + مبدل اللغة) --}}
-<div x-show="mobileMenuOpen" x-cloak class="md:hidden bg-white border-t border-slate-100 shadow-xl absolute w-full">
-    <div class="flex flex-col p-6 gap-4 text-base font-semibold text-slate-700">
-        <a href="#how-it-works" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_how_it_works') }}</a>
-        <a href="#features" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_features') }}</a>
-        <a href="#templates" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_templates') }}</a>
-        <a href="#pricing" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_pricing') }}</a>
+        <div x-show="mobileMenuOpen" x-cloak class="md:hidden bg-white border-t border-slate-100 shadow-xl absolute w-full">
+            <div class="flex flex-col p-6 gap-4 text-base font-semibold text-slate-700">
+                <a href="#how-it-works" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_how_it_works') }}</a>
+                <a href="#features" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_features') }}</a>
+                <a href="#templates" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_templates') }}</a>
+                <a href="#pricing" @click="mobileMenuOpen = false" class="p-2 rounded-lg hover:bg-slate-50">{{ __('messages.nav_pricing') }}</a>
 
-        {{-- مبدل اللغة للهاتف (نمط كبسولة) --}}
-        <div class="flex items-center justify-center bg-slate-100/50 rounded-full p-1 border border-slate-200/50 w-fit mx-auto my-2">
-            <a href="{{ route('lang.switch', 'ar') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'ar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">AR</a>
-            <a href="{{ route('lang.switch', 'en') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'en' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">EN</a>
-            <a href="{{ route('lang.switch', 'fr') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'fr' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">FR</a>
+                {{-- مبدل اللغة للهاتف (نمط كبسولة) --}}
+                <div class="flex items-center justify-center bg-slate-100/50 rounded-full p-1 border border-slate-200/50 w-fit mx-auto my-2">
+                    <a href="{{ route('lang.switch', 'ar') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'ar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">AR</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'en' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">EN</a>
+                    <a href="{{ route('lang.switch', 'fr') }}" class="px-4 py-1.5 text-sm font-bold rounded-full transition-all {{ app()->getLocale() == 'fr' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">FR</a>
+                </div>
+
+                <hr class="border-slate-100 my-2">
+                @auth
+                <a href="{{ route('dashboard') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_dashboard') }}</a>
+                @else
+                <a href="{{ route('login') }}" class="text-center p-2">{{ __('messages.nav_login') }}</a>
+                <a href="{{ route('register') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_register') }}</a>
+                @endauth
+            </div>
         </div>
-
-        <hr class="border-slate-100 my-2">
-        @auth
-        <a href="{{ route('dashboard') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_dashboard') }}</a>
-        @else
-        <a href="{{ route('login') }}" class="text-center p-2">{{ __('messages.nav_login') }}</a>
-        <a href="{{ route('register') }}" class="bg-indigo-600 text-white text-center px-6 py-3 rounded-xl">{{ __('messages.nav_register') }}</a>
-        @endauth
-    </div>
-</div>
     </nav>
 
-    {{-- Hero Section --}}
+    {{-- Hero Section (محدث بالمعاينة المتفاعلة) --}}
     <section class="relative pt-32 md:pt-48 pb-20 md:pb-32 px-6 overflow-hidden">
         <div class="absolute inset-0 bg-grid-pattern opacity-[0.3] -z-10"></div>
         <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-[600px] h-[600px] bg-indigo-100 rounded-full blur-[100px] opacity-50 -z-10"></div>
@@ -122,9 +171,72 @@
                 @endauth
                 <a href="#templates" class="bg-white border border-slate-200 text-slate-700 text-lg font-bold px-8 py-4 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all">{{ __('messages.btn_browse_templates') }}</a>
             </div>
-            <div class="relative mx-auto rounded-2xl md:rounded-[2rem] border border-slate-200/50 shadow-2xl overflow-hidden bg-white/80 backdrop-blur-sm max-w-4xl" data-aos="zoom-in-up" data-aos-delay="300">
-                <div class="h-10 bg-slate-50 border-b border-slate-100 flex items-center px-4 gap-2"><div class="w-3 h-3 rounded-full bg-rose-400"></div><div class="w-3 h-3 rounded-full bg-amber-400"></div><div class="w-3 h-3 rounded-full bg-emerald-400"></div></div>
-                <img src="https://placehold.co/1200x650/f8fafc/64748b?text=CV+Builder+Interface" alt="CV Builder App" class="w-full h-auto object-cover">
+
+            <!-- 🧠 واجهة بناء السيرة الذاتية المائلة (تحل محل صورة placeholder) -->
+            <div class="relative w-full max-w-4xl mx-auto perspective-container" data-aos="zoom-in-up" data-aos-delay="300">
+                <div class="cv-mockup-wrapper bg-white rounded-2xl shadow-2xl border border-slate-200/50 p-4 md:p-8 overflow-hidden">
+                    
+                    {{-- شريط النوافذ الوهمي --}}
+                    <div class="h-8 bg-slate-50 rounded-t-xl flex items-center px-4 gap-2 mb-4 -mx-4 md:-mx-8 -mt-4 md:-mt-8 border-b border-slate-100">
+                        <div class="w-3 h-3 rounded-full bg-rose-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                    </div>
+
+                    {{-- هيكل السيرة الذاتية (المصغر) --}}
+                    <div class="flex flex-col md:flex-row gap-6 text-left" dir="rtl">
+                        <!-- العمود الجانبي -->
+                        <div class="w-full md:w-1/3 border-r border-indigo-100 pr-4">
+                            <div class="w-20 h-20 bg-indigo-50 rounded-lg mb-4"></div>
+                            <div class="h-4 bg-indigo-100 rounded w-3/4 mb-2"></div>
+                            <div class="h-4 bg-indigo-100 rounded w-1/2 mb-6"></div>
+                            
+                            <div class="space-y-3">
+                                <div class="h-2 bg-indigo-50 rounded w-full"></div>
+                                <div class="h-2 bg-indigo-50 rounded w-full"></div>
+                                <div class="h-2 bg-indigo-50 rounded w-2/3"></div>
+                            </div>
+                        </div>
+
+                        <!-- العمود الرئيسي -->
+                        <div class="w-full md:w-2/3 relative">
+                            {{-- أيقونة ذكاء اصطناعي عائمة --}}
+                            <div class="absolute -top-2 -right-2 bg-indigo-600 text-white p-2 rounded-lg shadow-lg animate-bounce-slow">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+
+                            <div class="mb-6">
+                                <div class="h-6 bg-indigo-200 rounded w-1/3 mb-4"></div>
+                                {{-- تأثير الكتابة الحية للذكاء الاصطناعي --}}
+                                <div class="space-y-3">
+                                    <p class="text-sm text-indigo-600 font-mono typing-text">{{ __('messages.ai_generating') ?? 'جاري التوليد...' }}</p>
+                                    <div class="h-3 bg-gray-100 rounded w-full animate-pulse"></div>
+                                    <div class="h-3 bg-gray-100 rounded w-full animate-pulse delay-75"></div>
+                                    <div class="h-3 bg-gray-100 rounded w-4/5 animate-pulse delay-150"></div>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-50 pt-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                                </div>
+                                <div class="h-3 bg-gray-100 rounded w-full mb-2"></div>
+                                <div class="h-3 bg-gray-100 rounded w-5/6"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- بطاقة إشعار عائمة --}}
+                    <div class="absolute -bottom-6 -left-6 bg-white p-3 rounded-lg shadow-xl border border-indigo-100 flex items-center gap-3 animate-float">
+                        <div class="bg-indigo-100 p-2 rounded-full">
+                            <span class="text-indigo-600 text-xs font-bold">✨ AI</span>
+                        </div>
+                        <div class="text-xs text-slate-700 font-semibold">ATS Score Optimized: 98%</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -154,31 +266,31 @@
     </section>
 
     {{-- Features --}}
-<section id="features" class="py-24 bg-slate-50/50">
-    <div class="max-w-7xl mx-auto px-6">
-        <div class="text-center mb-16" data-aos="fade-up">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4">{{ __('messages.features_title') }}</h2>
-            <p class="text-slate-500 text-lg max-w-2xl mx-auto">{{ __('messages.features_subtitle') }}</p>
+    <section id="features" class="py-24 bg-slate-50/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-4">{{ __('messages.features_title') }}</h2>
+                <p class="text-slate-500 text-lg max-w-2xl mx-auto">{{ __('messages.features_subtitle') }}</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                @php
+                    $featureKeys = [
+                        ['icon' => '📄', 'title_key' => 'feature_1_title', 'desc_key' => 'feature_1_desc'],
+                        ['icon' => '📥', 'title_key' => 'feature_2_title', 'desc_key' => 'feature_2_desc'],
+                        ['icon' => '🌐', 'title_key' => 'feature_3_title', 'desc_key' => 'feature_3_desc'],
+                        ['icon' => '🤖', 'title_key' => 'feature_4_title', 'desc_key' => 'feature_4_desc'],
+                    ];
+                @endphp
+                @foreach($featureKeys as $index => $feature)
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:shadow-xl transition-all duration-300 group" data-aos="fade-up" data-aos-delay="{{ $index * 50 }}">
+                        <div class="text-3xl mb-4">{{ $feature['icon'] }}</div>
+                        <h3 class="text-lg font-bold mb-2">{{ __("messages.{$feature['title_key']}") }}</h3>
+                        <p class="text-sm text-slate-500">{{ __("messages.{$feature['desc_key']}") }}</p>
+                    </div>
+                @endforeach
+            </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            @php
-                $featureKeys = [
-                    ['icon' => '📄', 'title_key' => 'feature_1_title', 'desc_key' => 'feature_1_desc'],
-                    ['icon' => '📥', 'title_key' => 'feature_2_title', 'desc_key' => 'feature_2_desc'],
-                    ['icon' => '🌐', 'title_key' => 'feature_3_title', 'desc_key' => 'feature_3_desc'],
-                    ['icon' => '🤖', 'title_key' => 'feature_4_title', 'desc_key' => 'feature_4_desc'],
-                ];
-            @endphp
-            @foreach($featureKeys as $index => $feature)
-                <div class="bg-white p-6 rounded-2xl border border-slate-100 hover:shadow-xl transition-all duration-300 group" data-aos="fade-up" data-aos-delay="{{ $index * 50 }}">
-                    <div class="text-3xl mb-4">{{ $feature['icon'] }}</div>
-                    <h3 class="text-lg font-bold mb-2">{{ __("messages.{$feature['title_key']}") }}</h3>
-                    <p class="text-sm text-slate-500">{{ __("messages.{$feature['desc_key']}") }}</p>
-                </div>
-            @endforeach
-        </div>
-    </div>
-</section>
+    </section>
 
     {{-- Templates Slider --}}
     <section id="templates" class="py-20 bg-white overflow-hidden">
