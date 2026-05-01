@@ -2,15 +2,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     @include('resumes.partials.styles')
 
-@if($errors->any())
-<div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
-    <ul>
-        @foreach($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-</div>
-@endif
+    {{-- عرض قائمة الأخطاء التقليدية (اختياري، يُترك عادة للاستثناءات) --}}
+    @if($errors->any())
+    <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
+        <ul>
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
     @php
         $personal = $resume->personalDetail;
@@ -90,6 +91,7 @@
             'references' => $references,
             'extra_sections' => $extraSections,
             'existingPhoto' => $personal->photo_path ? asset('storage/' . $personal->photo_path) : '',
+            'errors' => $errors->toArray(), // ✅ إضافة الأخطاء لتمكين getFieldError
         ];
 
         // ضمان وجود عنصر واحد على الأقل لكل مجموعة لتجنب الخرائط الفارغة
