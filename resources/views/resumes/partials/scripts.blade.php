@@ -65,6 +65,7 @@
                 this.skills = this.skillsArray.map(s => s.name).filter(n => n).join(', ');
             },
 
+            // دوال إضافة العناصر
             addLanguage() {
                 if (this.languages.length && !this.languages[this.languages.length-1].name.trim()) {
                     alert(window.translations.alertEnterLanguageFirst || 'يرجى كتابة اسم اللغة أولاً');
@@ -100,6 +101,57 @@
                 if (index < this.extra_sections.length - 1) [this.extra_sections[index+1], this.extra_sections[index]] = [this.extra_sections[index], this.extra_sections[index+1]];
             },
 
+            // ========== استدعاء API الخاص باقتراح المهارات (المسار الجديد) ==========
+            async callSuggestSkillsApi(payload) {
+                if (this.aiCredits <= 0) { this.showPlansModal = true; return null; }
+                try {
+                    const res = await fetch("{{ route('ai.suggest-skills') }}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.remaining_credits !== undefined) this.aiCredits = data.remaining_credits;
+                    return data.skills; // مصفوفة كائنات {name, percentage}
+                } catch (e) { return null; }
+            },
+
+            // ========== دالة اقتراح المهارات (تستخدم suggest-skills) ==========
+            async generateSkillsAI() {
+                if (!this.job_title) return alert(window.translations.alertEnterJobTitleFirstSkills || 'أدخل المسمى الوظيفي أولاً');
+
+                const payload = {
+                    job_title: this.job_title,
+                    experiences: this.experiences,
+                    educations: this.educations,
+                    lang: this.currentLang
+                };
+
+                this.skills = window.translations.aiAnalyzingSkills || '⏳ جاري تحليل بياناتك واقتراح المهارات المناسبة...';
+                const skills = await this.callSuggestSkillsApi(payload);
+                if (skills && Array.isArray(skills)) {
+                    const filtered = skills
+                        .filter(s => s && typeof s.name === 'string' && s.name.trim() !== '' && !/^\d+%?$/.test(s.name.trim()))
+                        .slice(0, 5)
+                        .map((s, idx) => ({
+                            id: Date.now() + Math.random() + idx,
+                            name: s.name.trim(),
+                            percentage: s.percentage || 80
+                        }));
+
+                    if (filtered.length > 0) {
+                        this.skillsArray = filtered;
+                    } else {
+                        this.skillsArray = [
+                            { id: Date.now(), name: 'Communication', percentage: 80 },
+                            { id: Date.now()+1, name: 'Teamwork', percentage: 80 }
+                        ];
+                    }
+                    this.updateSkillsText();
+                }
+            },
+
+            // ========== استدعاء api.generate القديم (لغير المهارات) ==========
             async callAiApi(type, context) {
                 if (this.aiCredits <= 0) { this.showPlansModal = true; return null; }
                 try {
@@ -112,71 +164,6 @@
                     if (data.remaining_credits !== undefined) this.aiCredits = data.remaining_credits;
                     return data.result;
                 } catch (e) { return null; }
-            },
-
-            // --- توليد المهارات (محسن بالكامل) ---
-            async generateSkillsAI() {
-                if (!this.job_title) return alert(window.translations.alertEnterJobTitleFirstSkills || 'أدخل المسمى الوظيفي أولاً');
-
-                let context = `Job Title: ${this.job_title}`;
-                if (this.experiences.length) {
-                    let exp = this.experiences.filter(e => e.position && e.company)
-                        .map(e => `${e.position} at ${e.company} (${e.description?.substring(0,80) || ''})`)
-                        .join('; ');
-                    if (exp) context += `\nExperiences: ${exp}`;
-                }
-                if (this.educations.length) {
-                    let edu = this.educations.filter(e => e.degree || e.field_of_study)
-                        .map(e => `${e.degree} in ${e.field_of_study} from ${e.institution}`)
-                        .join('; ');
-                    if (edu) context += `\nEducation: ${edu}`;
-                }
-                if (this.extra_sections && this.extra_sections.length) {
-                    let extra = this.extra_sections
-                        .map(sec => `${sec.title}: ${sec.content?.substring(0,100) || ''}`)
-                        .join('; ');
-                    if (extra) context += `\nExtra: ${extra}`;
-                }
-
-                this.skills = window.translations.aiAnalyzingSkills || '⏳ جاري تحليل بياناتك واقتراح المهارات المناسبة...';
-                const result = await this.callAiApi('skills', context);
-                if (result) {
-                    let skillsArray = [];
-                    try {
-                        skillsArray = JSON.parse(result);
-                    } catch (e) {
-                        console.warn('Skills result was not JSON, using text parsing');
-                        const names = result.split(/[,\n]/).map(s => s.trim())
-                            .filter(s => s && s !== 'object Object' && !/^[\[\]{}"]+$/.test(s) && !/^\d+%?$/.test(s));
-                        skillsArray = names.slice(0,5).map(name => ({ name, percentage: 80 }));
-                    }
-
-                    if (!Array.isArray(skillsArray)) skillsArray = [];
-                    
-                    // فلترة صارمة
-                    skillsArray = skillsArray.filter(item => 
-                        item && typeof item === 'object' && typeof item.name === 'string' && item.name.trim() !== ''
-                    );
-                    skillsArray = skillsArray.filter(item => !/^\d+%?$/.test(item.name.trim()));
-                    skillsArray = skillsArray.filter(item => item.name.trim() !== 'object Object' && item.name.trim() !== 'null');
-                    skillsArray = skillsArray.slice(0, 5);
-                    
-                    skillsArray = skillsArray.map((item, idx) => ({
-                        id: Date.now() + Math.random() + idx,
-                        name: item.name?.trim() || `Skill ${idx+1}`,
-                        percentage: item.percentage || 80
-                    }));
-
-                    if (skillsArray.length === 0) {
-                        skillsArray = [
-                            { id: Date.now(), name: 'Communication', percentage: 80 },
-                            { id: Date.now()+1, name: 'Teamwork', percentage: 80 }
-                        ];
-                    }
-
-                    this.skillsArray = skillsArray;
-                    this.updateSkillsText();
-                }
             },
 
             async generateExperienceAI(index) {
