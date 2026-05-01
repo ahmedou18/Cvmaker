@@ -20,6 +20,7 @@
             'references' => [],
             'extra_sections' => [],
             'existingPhoto' => '',
+            'errors' => $errors->toArray(), // ✅ تمرير أخطاء التحقق من الخادم
         ];
     @endphp
 
