@@ -10,9 +10,15 @@
                 </div>
                 <div class="flex-1">
                     <input type="text" :name="'hobbies['+idx+'][name]'" x-model="hobby.name" class="sharp-input w-full" placeholder="الهواية (مثال: القراءة)">
+                    <span x-show="getFieldError(`hobbies.${idx}.name`)" 
+                          x-text="getFieldError(`hobbies.${idx}.name`)" 
+                          class="text-red-500 text-xs mt-1"></span>
                 </div>
                 <div class="flex-1">
                     <input type="text" :name="'hobbies['+idx+'][description]'" x-model="hobby.description" class="sharp-input w-full" placeholder="وصف قصير (اختياري)">
+                    <span x-show="getFieldError(`hobbies.${idx}.description`)" 
+                          x-text="getFieldError(`hobbies.${idx}.description`)" 
+                          class="text-red-500 text-xs mt-1"></span>
                 </div>
                 <button type="button" @click="hobbiesArray.splice(idx,1)" class="text-red-600 px-3 py-2 text-xl">✕</button>
             </div>
