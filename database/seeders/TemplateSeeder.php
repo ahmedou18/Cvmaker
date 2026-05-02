@@ -7,8 +7,12 @@ use Illuminate\Support\Facades\DB;
 
 class TemplateSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
+        // مسح البيانات القديمة لتجنب التكرار
         DB::table('templates')->truncate();
 
         DB::table('templates')->insert([
@@ -36,7 +40,7 @@ class TemplateSeeder extends Seeder
             [
                 'name' => 'Modern Orange',
                 'slug' => 'modern-orange',
-                'thumbnail' => 'assets/images/templates/Orange.png',
+                'thumbnail' => 'assets/images/templates/Orange.png', // حرف O كبير كما في الصورة
                 'view_path' => 'templates.modern-orange',
                 'is_premium' => false,
             ],
