@@ -58,14 +58,14 @@ class TemplateSeeder extends Seeder
                 'name' => 'Modern Blue',
                 'slug' => 'modern-blue',
                 'thumbnail' => 'assets/images/templates/blue.jpg',
-                'view_path' => 'templates.modern-minimalist',
+                'view_path' => 'templates.modern-blue',
                 'is_premium' => false,
             ],
             [
                 'name' => 'Modern Minimalist',
                 'slug' => 'modern-minimalist',
                 'thumbnail' => 'assets/images/templates/simple.png',
-                'view_path' => 'templates.modern-blue',
+                'view_path' => 'templates.modern-minimalist',
                 'is_premium' => false,
             ],
         ]);
