@@ -9,31 +9,65 @@ class TemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        // نقوم بإفراغ الجدول أولاً لتجنب التكرار إذا قمت بتشغيل السيدر مرة أخرى
         DB::table('templates')->truncate();
 
         DB::table('templates')->insert([
             [
-                'name' => 'Green Classic',
-                'slug' => 'green-classic',
-                'thumbnail' => 'assets/images/templates/green-classic.png',
-                'view_path' => 'templates.green-classic', // يشير إلى resources/views/templates/green-classic.blade.php
-                'is_premium' => false,
-            ],
-            [
                 'name' => 'Minimalist',
                 'slug' => 'minimalist',
                 'thumbnail' => 'assets/images/templates/minimalist.png',
-                'view_path' => 'templates.minimalist', // يشير إلى resources/views/templates/minimalist.blade.php
+                'view_path' => 'templates.minimalist',
                 'is_premium' => false,
             ],
             [
-                'name' => 'Modern Sidebar',
-                'slug' => 'modern-sidebar',
-                'thumbnail' => 'assets/images/templates/modern-sidebar.png',
-                'view_path' => 'templates.modern_sidebar', 
-                'is_premium' => false, // جعلتها مدفوعة كمثال، يمكنك تغييرها إلى false
-            ]
+                'name' => 'Modern',
+                'slug' => 'modern',
+                'thumbnail' => 'assets/images/templates/violet.jpg',
+                'view_path' => 'templates.modern_sidebar',
+                'is_premium' => false,
+            ],
+            [
+                'name' => 'Modern Green',
+                'slug' => 'modern-green',
+                'thumbnail' => 'assets/images/templates/green.jpg',
+                'view_path' => 'templates.modern-green',
+                'is_premium' => false,
+            ],
+            [
+                'name' => 'Modern Orange',
+                'slug' => 'modern-orange',
+                'thumbnail' => 'assets/images/templates/Orange.png',
+                'view_path' => 'templates.modern-orange',
+                'is_premium' => false,
+            ],
+            [
+                'name' => 'Pikachu Gold',
+                'slug' => 'pikachu-gold',
+                'thumbnail' => 'assets/images/templates/gold.jpg',
+                'view_path' => 'templates.pikachu-gold',
+                'is_premium' => false,
+            ],
+            [
+                'name' => 'Ditto Pink',
+                'slug' => 'ditto-pink',
+                'thumbnail' => 'assets/images/templates/ditto.jpg',
+                'view_path' => 'templates.ditto-pink',
+                'is_premium' => false,
+            ],
+            [
+                'name' => 'Modern Blue',
+                'slug' => 'modern-blue',
+                'thumbnail' => 'assets/images/templates/blue.jpg',
+                'view_path' => 'templates.modern-minimalist',
+                'is_premium' => false,
+            ],
+            [
+                'name' => 'Modern Minimalist',
+                'slug' => 'modern-minimalist',
+                'thumbnail' => 'assets/images/templates/simple.png',
+                'view_path' => 'templates.modern-blue',
+                'is_premium' => false,
+            ],
         ]);
     }
 }
